@@ -11,21 +11,12 @@ import {
 } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
-import ytdl from "@distube/ytdl-core";
 import { getTrackInfo } from "@/lib/spotify";
-import { searchYouTube } from "@/lib/youtube";
+import { searchYouTube, getAudioStreamUrl } from "@/lib/youtube";
 
 const execAsync = promisify(exec);
 
 export const maxDuration = 120;
-
-async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of stream) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-  }
-  return Buffer.concat(chunks);
-}
 
 export async function POST(request: NextRequest) {
   let tempDir: string | null = null;
@@ -50,24 +41,28 @@ export async function POST(request: NextRequest) {
     const track = await getTrackInfo(url);
     console.log("[download] Track:", track.artist, "-", track.name);
 
-    // Step 2: Search YouTube for the track
-    const query = `${track.artist} - ${track.name} audio`;
+    // Step 2: Search YouTube via Piped
+    const query = `${track.artist} - ${track.name}`;
     console.log("[download] Searching YouTube for:", query);
-    const youtubeUrl = await searchYouTube(query);
+    const videoId = await searchYouTube(query);
 
-    if (!youtubeUrl) {
+    if (!videoId) {
       throw new Error("Could not find this track on YouTube");
     }
-    console.log("[download] Found YouTube URL:", youtubeUrl);
 
-    // Step 3: Download audio from YouTube using ytdl-core
-    console.log("[download] Downloading audio with ytdl-core...");
-    const audioStream = ytdl(youtubeUrl, {
-      filter: "audioonly",
-      quality: "highestaudio",
+    // Step 3: Get audio stream URL from Piped (proxied through your instance)
+    const audioUrl = await getAudioStreamUrl(videoId);
+    console.log("[download] Downloading audio from Piped proxy...");
+
+    const audioRes = await fetch(audioUrl, {
+      signal: AbortSignal.timeout(60000),
     });
 
-    const audioBuffer = await streamToBuffer(audioStream);
+    if (!audioRes.ok) {
+      throw new Error(`Audio download failed: ${audioRes.status}`);
+    }
+
+    const audioBuffer = Buffer.from(await audioRes.arrayBuffer());
     console.log("[download] Downloaded", audioBuffer.length, "bytes");
 
     if (audioBuffer.length === 0) {
@@ -97,8 +92,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Escape metadata values for ffmpeg
-    const escMeta = (s: string) => s.replace(/"/g, '\\"').replace(/\\/g, "\\\\");
+    const escMeta = (s: string) => s.replace(/"/g, '\\"');
 
     const ffmpegArgs = [
       "ffmpeg",
