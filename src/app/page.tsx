@@ -1,65 +1,204 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import Header from "@/components/Header";
+import SpotifyInput from "@/components/SpotifyInput";
+
+interface TrackInfo {
+  name: string;
+  artist: string;
+  album: string;
+  albumArt: string;
+  duration: string;
+  spotifyUrl: string;
+}
+
+type AppState = "idle" | "fetching" | "ready" | "downloading" | "done" | "error";
 
 export default function Home() {
+  const [state, setState] = useState<AppState>("idle");
+  const [track, setTrack] = useState<TrackInfo | null>(null);
+  const [error, setError] = useState("");
+  const [progress, setProgress] = useState(0);
+
+  const handleSubmit = async (url: string) => {
+    setState("fetching");
+    setError("");
+    setTrack(null);
+
+    try {
+      const res = await fetch("/api/metadata", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to fetch track info");
+      }
+
+      const data = await res.json();
+      setTrack(data);
+      setState("ready");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+      setState("error");
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!track) return;
+    setState("downloading");
+    setProgress(0);
+
+    try {
+      const res = await fetch("/api/download", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: track.spotifyUrl }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Download failed");
+      }
+
+      const blob = await res.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = `${track.artist} - ${track.name}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+
+      setState("done");
+      setTimeout(() => setState("ready"), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Download failed");
+      setState("error");
+    }
+  };
+
+  const handleReset = () => {
+    setState("idle");
+    setTrack(null);
+    setError("");
+    setProgress(0);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+    <div className="min-h-screen flex flex-col">
+      <Header />
+
+      <main className="flex-1 flex flex-col items-center justify-center px-6">
+        <div className="w-full max-w-xl space-y-8">
+          {/* Title */}
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold text-text">
+              spotify<span className="text-lavender">dl</span>
+            </h1>
+            <p className="text-sm text-subtext0">
+              paste a spotify link. get the mp3. metadata included.
+            </p>
+          </div>
+
+          {/* Input */}
+          <SpotifyInput
+            onSubmit={handleSubmit}
+            disabled={state === "fetching" || state === "downloading"}
+          />
+
+          {/* Loading */}
+          {state === "fetching" && (
+            <div className="border border-surface0 rounded-lg p-6 flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-lavender animate-pulse" />
+              <span className="text-sm text-subtext0">fetching track info...</span>
+            </div>
+          )}
+
+          {/* Error */}
+          {state === "error" && (
+            <div className="border border-red/30 rounded-lg p-6 space-y-3">
+              <p className="text-sm text-red">{error}</p>
+              <button
+                onClick={handleReset}
+                className="text-xs text-subtext0 hover:text-text transition-colors uppercase tracking-wider"
+              >
+                try again
+              </button>
+            </div>
+          )}
+
+          {/* Track Card */}
+          {track && (state === "ready" || state === "downloading" || state === "done") && (
+            <div className="border border-surface0 rounded-lg overflow-hidden">
+              {/* Downloading progress bar */}
+              {state === "downloading" && (
+                <div className="h-0.5 bg-surface0">
+                  <div className="h-full bg-lavender animate-pulse w-full" />
+                </div>
+              )}
+
+              {/* Done bar */}
+              {state === "done" && (
+                <div className="h-0.5 bg-green" />
+              )}
+
+              <div className="p-6 flex gap-5">
+                {/* Album Art */}
+                <img
+                  src={track.albumArt}
+                  alt={track.album}
+                  className="w-24 h-24 rounded-md object-cover flex-shrink-0"
+                />
+
+                {/* Track Info */}
+                <div className="flex-1 min-w-0 space-y-1">
+                  <p className="text-base font-bold text-text truncate">
+                    {track.name}
+                  </p>
+                  <p className="text-sm text-subtext0 truncate">{track.artist}</p>
+                  <p className="text-xs text-overlay0 truncate">{track.album}</p>
+                  <p className="text-xs text-overlay0">{track.duration}</p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="border-t border-surface0 flex">
+                <button
+                  onClick={handleDownload}
+                  disabled={state === "downloading"}
+                  className="flex-1 px-4 py-3 text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 hover:bg-surface0"
+                  style={{
+                    color: state === "done" ? "var(--color-green)" : "var(--color-lavender)",
+                  }}
+                >
+                  {state === "downloading"
+                    ? "downloading..."
+                    : state === "done"
+                      ? "downloaded ✓"
+                      : "download mp3"}
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="px-4 py-3 text-xs text-overlay0 hover:text-text border-l border-surface0 transition-colors uppercase tracking-wider"
+                >
+                  new
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-surface0 px-6 py-4 flex items-center justify-between text-xs text-overlay0">
+        <span>spotdl — spotify downloader</span>
+        <span>metadata included</span>
+      </footer>
     </div>
   );
 }

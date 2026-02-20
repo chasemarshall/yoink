@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@fontsource/jetbrains-mono": "^5.2.8",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3"
