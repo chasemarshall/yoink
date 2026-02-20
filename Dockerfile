@@ -1,17 +1,9 @@
 FROM node:20-slim AS base
 
-# Install Python, ffmpeg, and spotdl
+# Only need ffmpeg for metadata embedding
 RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    python3-venv \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
-
-RUN python3 -m venv /opt/spotdl-venv && \
-    /opt/spotdl-venv/bin/pip install spotdl
-
-ENV PATH="/opt/spotdl-venv/bin:$PATH"
 
 WORKDIR /app
 
