@@ -11,13 +11,21 @@ import {
 } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
+import ytdl from "@distube/ytdl-core";
 import { getTrackInfo } from "@/lib/spotify";
 import { searchYouTube } from "@/lib/youtube";
-import { getAudioDownloadUrl, downloadAudio } from "@/lib/cobalt";
 
 const execAsync = promisify(exec);
 
 export const maxDuration = 120;
+
+async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
+}
 
 export async function POST(request: NextRequest) {
   let tempDir: string | null = null;
@@ -43,7 +51,7 @@ export async function POST(request: NextRequest) {
     console.log("[download] Track:", track.artist, "-", track.name);
 
     // Step 2: Search YouTube for the track
-    const query = `${track.artist} - ${track.name}`;
+    const query = `${track.artist} - ${track.name} audio`;
     console.log("[download] Searching YouTube for:", query);
     const youtubeUrl = await searchYouTube(query);
 
@@ -52,15 +60,23 @@ export async function POST(request: NextRequest) {
     }
     console.log("[download] Found YouTube URL:", youtubeUrl);
 
-    // Step 3: Get download URL from cobalt
-    const audioUrl = await getAudioDownloadUrl(youtubeUrl);
+    // Step 3: Download audio from YouTube using ytdl-core
+    console.log("[download] Downloading audio with ytdl-core...");
+    const audioStream = ytdl(youtubeUrl, {
+      filter: "audioonly",
+      quality: "highestaudio",
+    });
 
-    // Step 4: Download the audio
-    const audioBuffer = await downloadAudio(audioUrl);
+    const audioBuffer = await streamToBuffer(audioStream);
+    console.log("[download] Downloaded", audioBuffer.length, "bytes");
 
-    // Step 5: Embed metadata using ffmpeg
+    if (audioBuffer.length === 0) {
+      throw new Error("Downloaded audio is empty");
+    }
+
+    // Step 4: Embed metadata using ffmpeg
     tempDir = await mkdtemp(join(tmpdir(), "dl-"));
-    const inputPath = join(tempDir, "input.mp3");
+    const inputPath = join(tempDir, "input.webm");
     const outputPath = join(tempDir, "output.mp3");
     const artPath = join(tempDir, "cover.jpg");
 
@@ -81,39 +97,30 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Build ffmpeg command to embed metadata
-    const metadataArgs = [
+    // Escape metadata values for ffmpeg
+    const escMeta = (s: string) => s.replace(/"/g, '\\"').replace(/\\/g, "\\\\");
+
+    const ffmpegArgs = [
       "ffmpeg",
-      "-i",
-      `"${inputPath}"`,
+      "-i", `"${inputPath}"`,
       ...(hasArt ? ["-i", `"${artPath}"`] : []),
-      "-map",
-      "0:a",
-      ...(hasArt ? ["-map", "1:0"] : []),
-      "-c",
-      "copy",
-      ...(hasArt
-        ? ["-metadata:s:v", 'title="Album cover"', "-metadata:s:v", 'comment="Cover (front)"']
-        : []),
-      `-metadata`,
-      `title="${track.name.replace(/"/g, '\\"')}"`,
-      `-metadata`,
-      `artist="${track.artist.replace(/"/g, '\\"')}"`,
-      `-metadata`,
-      `album="${track.album.replace(/"/g, '\\"')}"`,
-      ...(hasArt ? ["-disposition:v:0", "attached_pic"] : []),
-      "-y",
-      `"${outputPath}"`,
+      "-map", "0:a",
+      ...(hasArt ? ["-map", "1:0", "-c:v", "mjpeg", "-disposition:v:0", "attached_pic"] : []),
+      "-c:a", "libmp3lame",
+      "-b:a", "192k",
+      `-metadata`, `title="${escMeta(track.name)}"`,
+      `-metadata`, `artist="${escMeta(track.artist)}"`,
+      `-metadata`, `album="${escMeta(track.album)}"`,
+      ...(hasArt ? [`-metadata:s:v`, `title="Album cover"`, `-metadata:s:v`, `comment="Cover (front)"`] : []),
+      "-y", `"${outputPath}"`,
     ].join(" ");
 
-    console.log("[download] Running ffmpeg for metadata embedding...");
+    console.log("[download] Running ffmpeg...");
     try {
-      const { stderr } = await execAsync(metadataArgs, { timeout: 30000 });
-      if (stderr) console.log("[download] ffmpeg stderr:", stderr.slice(0, 500));
+      await execAsync(ffmpegArgs, { timeout: 60000 });
     } catch (e) {
-      console.error("[download] ffmpeg failed:", e);
-      // If ffmpeg fails, serve the raw audio without metadata
-      console.log("[download] Serving raw audio without metadata");
+      console.error("[download] ffmpeg error:", e);
+      // Fallback: serve raw audio without metadata
       const filename = `${track.artist} - ${track.name}.mp3`;
       return new NextResponse(new Uint8Array(audioBuffer), {
         headers: {
