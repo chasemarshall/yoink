@@ -81,39 +81,38 @@ export async function POST(request: NextRequest) {
     let hasArt = false;
     if (track.albumArt) {
       try {
+        console.log("[download] Fetching album art:", track.albumArt);
         const artRes = await fetch(track.albumArt);
         if (artRes.ok) {
           const artBuffer = Buffer.from(await artRes.arrayBuffer());
           await writeFile(artPath, artBuffer);
           hasArt = true;
+          console.log("[download] Album art saved:", artBuffer.length, "bytes");
+        } else {
+          console.log("[download] Album art fetch failed:", artRes.status);
         }
-      } catch {
-        console.log("[download] Could not fetch album art, skipping");
+      } catch (e) {
+        console.log("[download] Could not fetch album art:", e);
       }
     }
 
-    const escMeta = (s: string) => s.replace(/"/g, '\\"');
+    // Build ffmpeg command as array and join — avoid shell quoting issues
+    const escShell = (s: string) => s.replace(/'/g, "'\\''");
 
-    const ffmpegArgs = [
-      "ffmpeg",
-      "-i", `"${inputPath}"`,
-      ...(hasArt ? ["-i", `"${artPath}"`] : []),
-      "-map", "0:a",
-      ...(hasArt ? ["-map", "1:0", "-c:v", "mjpeg", "-disposition:v:0", "attached_pic"] : []),
-      "-c:a", "libmp3lame",
-      "-b:a", "192k",
-      `-metadata`, `title="${escMeta(track.name)}"`,
-      `-metadata`, `artist="${escMeta(track.artist)}"`,
-      `-metadata`, `album="${escMeta(track.album)}"`,
-      ...(hasArt ? [`-metadata:s:v`, `title="Album cover"`, `-metadata:s:v`, `comment="Cover (front)"`] : []),
-      "-y", `"${outputPath}"`,
-    ].join(" ");
+    const ffmpegCmd = hasArt
+      ? `ffmpeg -i '${escShell(inputPath)}' -i '${escShell(artPath)}' -map 0:a -map 1:0 -c:a libmp3lame -b:a 192k -c:v copy -id3v2_version 3 -metadata:s:v title='Album cover' -metadata:s:v comment='Cover (front)' -disposition:v attached_pic -metadata title='${escShell(track.name)}' -metadata artist='${escShell(track.artist)}' -metadata album='${escShell(track.album)}' -y '${escShell(outputPath)}'`
+      : `ffmpeg -i '${escShell(inputPath)}' -c:a libmp3lame -b:a 192k -id3v2_version 3 -metadata title='${escShell(track.name)}' -metadata artist='${escShell(track.artist)}' -metadata album='${escShell(track.album)}' -y '${escShell(outputPath)}'`;
 
-    console.log("[download] Running ffmpeg...");
+    console.log("[download] Running ffmpeg (hasArt:", hasArt, ")...");
+    console.log("[download] ffmpeg cmd:", ffmpegCmd);
     try {
-      await execAsync(ffmpegArgs, { timeout: 60000 });
-    } catch (e) {
-      console.error("[download] ffmpeg error:", e);
+      const { stdout: ffOut, stderr: ffErr } = await execAsync(ffmpegCmd, { timeout: 60000 });
+      if (ffOut) console.log("[download] ffmpeg stdout:", ffOut.slice(0, 300));
+      if (ffErr) console.log("[download] ffmpeg stderr:", ffErr.slice(0, 500));
+    } catch (e: unknown) {
+      const execErr = e as { stderr?: string; message?: string };
+      console.error("[download] ffmpeg failed:", execErr.message);
+      if (execErr.stderr) console.error("[download] ffmpeg stderr:", execErr.stderr.slice(0, 1000));
       // Fallback: serve raw audio without metadata
       const filename = `${track.artist} - ${track.name}.mp3`;
       return new NextResponse(new Uint8Array(audioBuffer), {
