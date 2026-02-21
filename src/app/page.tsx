@@ -95,7 +95,7 @@ export default function Home() {
           {/* Title */}
           <div className="space-y-3 animate-fade-in-up" style={{ opacity: 0, animationDelay: "0ms" }}>
             <h1 className="text-4xl sm:text-5xl font-bold text-text leading-tight">
-              spotify<span className="text-lavender">dl</span>
+              spot<span className="text-lavender">.dl</span>
             </h1>
             <p className="text-sm text-subtext0/80 leading-relaxed max-w-sm">
               paste a spotify link. get the mp3.<br />
@@ -224,7 +224,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-surface0/40 px-6 py-4 flex items-center justify-between text-xs text-overlay0/50">
-        <span>spotdl</span>
+        <span>spot.dl</span>
         <span>metadata included</span>
       </footer>
     </div>
