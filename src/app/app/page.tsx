@@ -195,6 +195,7 @@ export default function Home() {
           <SpotifyInput
             onSubmit={handleSubmit}
             disabled={state === "fetching" || state === "downloading"}
+            clear={state === "done"}
           />
 
           {/* Loading */}
