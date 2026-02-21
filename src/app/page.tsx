@@ -5,7 +5,7 @@ import Link from "next/link";
 const features = [
   {
     label: "tracks",
-    desc: "paste a spotify track link. get the mp3 with full id3 metadata — title, artist, album, cover art. 192kbps.",
+    desc: "paste a spotify track link. get the mp3 with full id3 metadata — title, artist, album, cover art. 320kbps.",
   },
   {
     label: "playlists",
@@ -158,7 +158,7 @@ export default function LandingPage() {
           </p>
           <div className="space-y-4 text-sm text-overlay1 leading-relaxed">
             <p>
-              yoink converts spotify tracks to 192kbps mp3 files with full id3v2
+              yoink converts spotify tracks to 320kbps mp3 files with full id3v2
               metadata and embedded album art via ffmpeg. audio is sourced from
               youtube through the piped api.
             </p>
