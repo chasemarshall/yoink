@@ -166,15 +166,29 @@ export async function fetchDeezerAudio(
   track: TrackInfo
 ): Promise<DeezerAudioResult | null> {
   const arl = getArlToken();
-  if (!arl) return null;
+  if (!arl) {
+    console.log("[deezer] no ARL token set");
+    return null;
+  }
+  console.log("[deezer] ARL token present, length:", arl.length);
 
   try {
     const trackData = await getDeezerTrackData(deezerId, arl);
-    if (!trackData) return null;
+    if (!trackData) {
+      console.log("[deezer] getDeezerTrackData returned null — ARL may be expired");
+      return null;
+    }
+    console.log("[deezer] got track data:", {
+      SNG_ID: trackData.SNG_ID,
+      ISRC: trackData.ISRC,
+      DURATION: trackData.DURATION,
+      MP3_320: trackData.FILESIZE_MP3_320,
+      MP3_128: trackData.FILESIZE_MP3_128,
+    });
 
     // Verify this is the right track
     if (!verifyMatch(trackData, track)) {
-      console.warn("[deezer] Track mismatch, skipping");
+      console.warn("[deezer] Track mismatch — deezer ISRC:", trackData.ISRC, "spotify ISRC:", track.isrc, "deezer duration:", trackData.DURATION, "spotify durationMs:", track.durationMs);
       return null;
     }
 
@@ -190,8 +204,10 @@ export async function fetchDeezerAudio(
       format = 1;
       bitrate = 128;
     } else {
-      return null; // No suitable format
+      console.log("[deezer] no MP3 format available");
+      return null;
     }
+    console.log("[deezer] using format:", format, "bitrate:", bitrate);
 
     const cdnUrl = buildCdnUrl(
       trackData.MD5_ORIGIN,
@@ -199,13 +215,18 @@ export async function fetchDeezerAudio(
       trackData.SNG_ID,
       format
     );
+    console.log("[deezer] CDN URL:", cdnUrl.substring(0, 80) + "...");
 
     const audioRes = await fetch(cdnUrl, {
       signal: AbortSignal.timeout(30000),
     });
-    if (!audioRes.ok) return null;
+    if (!audioRes.ok) {
+      console.log("[deezer] CDN fetch failed:", audioRes.status);
+      return null;
+    }
 
     const encrypted = Buffer.from(await audioRes.arrayBuffer());
+    console.log("[deezer] downloaded encrypted:", encrypted.length, "bytes");
     if (encrypted.length === 0) return null;
 
     const decrypted = decryptAudio(encrypted, trackData.SNG_ID);
