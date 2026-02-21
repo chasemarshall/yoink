@@ -12,7 +12,7 @@ import {
 import { join } from "path";
 import { tmpdir } from "os";
 import { getTrackInfo } from "@/lib/spotify";
-import { searchYouTube, getAudioStreamUrl } from "@/lib/youtube";
+import { fetchBestAudio } from "@/lib/audio-sources";
 import { fetchLyrics } from "@/lib/lyrics";
 import { rateLimit } from "@/lib/ratelimit";
 
@@ -28,14 +28,6 @@ function isAllowedUrl(url: string, allowedHosts: string[]): boolean {
     return false;
   }
 }
-
-const ALLOWED_AUDIO_HOSTS = [
-  "googlevideo.com",
-  "youtube.com",
-  "pipedproxy.kavin.rocks",
-  "pipedproxy.adminforge.de",
-  "withmilo.xyz",
-];
 
 const ALLOWED_ART_HOSTS = [
   "i.scdn.co",
@@ -73,45 +65,20 @@ export async function POST(request: NextRequest) {
     // Step 1: Get track metadata from Spotify
     const track = await getTrackInfo(url);
 
-    // Step 2: Search YouTube + fetch lyrics in parallel
-    const query = `${track.artist} - ${track.name}`;
-    const [videoId, lyrics] = await Promise.all([
-      searchYouTube(query),
+    // Step 2: Fetch best audio + lyrics in parallel
+    const [audio, lyrics] = await Promise.all([
+      fetchBestAudio(track),
       fetchLyrics(track.artist, track.name),
     ]);
 
-    if (!videoId) {
-      throw new Error("Could not find this track on YouTube");
-    }
-
-    // Step 3: Get audio stream URL from Piped
-    const audioUrl = await getAudioStreamUrl(videoId);
-
-    if (!isAllowedUrl(audioUrl, ALLOWED_AUDIO_HOSTS)) {
-      throw new Error("Audio source URL is not from an allowed host");
-    }
-
-    const audioRes = await fetch(audioUrl, {
-      signal: AbortSignal.timeout(60000),
-    });
-
-    if (!audioRes.ok) {
-      throw new Error(`Audio download failed: ${audioRes.status}`);
-    }
-
-    const audioBuffer = Buffer.from(await audioRes.arrayBuffer());
-
-    if (audioBuffer.length === 0) {
-      throw new Error("Downloaded audio is empty");
-    }
-
-    // Step 4: Embed metadata using ffmpeg
+    // Step 3: Embed metadata using ffmpeg
     tempDir = await mkdtemp(join(tmpdir(), "dl-"));
-    const inputPath = join(tempDir, "input.webm");
+    const inputExt = audio.format === "webm" ? "webm" : audio.format === "flac" ? "flac" : "mp3";
+    const inputPath = join(tempDir, `input.${inputExt}`);
     const outputPath = join(tempDir, "output.mp3");
     const artPath = join(tempDir, "cover.jpg");
 
-    await writeFile(inputPath, audioBuffer);
+    await writeFile(inputPath, audio.buffer);
 
     // Download album art (validate URL host)
     let hasArt = false;
@@ -128,13 +95,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Build ffmpeg args as array — no shell interpolation, no injection
+    // Build ffmpeg args based on source format
     const ffmpegArgs: string[] = [];
     ffmpegArgs.push("-i", inputPath);
     if (hasArt) {
       ffmpegArgs.push("-i", artPath, "-map", "0:a", "-map", "1:0");
     }
-    ffmpegArgs.push("-c:a", "libmp3lame", "-b:a", "320k");
+
+    // Format-aware encoding:
+    // - Deezer 320kbps MP3: copy audio (no re-encode), just add metadata
+    // - Deezer FLAC: transcode to 320k MP3
+    // - YouTube WebM/Opus: transcode to 320k MP3 (existing behavior)
+    if (audio.source === "deezer" && audio.format === "mp3") {
+      ffmpegArgs.push("-c:a", "copy");
+    } else {
+      ffmpegArgs.push("-c:a", "libmp3lame", "-b:a", "320k");
+    }
+
     if (hasArt) {
       ffmpegArgs.push(
         "-c:v", "copy",
@@ -161,8 +138,8 @@ export async function POST(request: NextRequest) {
         timeout: 60000,
         maxBuffer: 10 * 1024 * 1024,
       });
-    } catch (ffmpegError) {
-      // Fallback: try converting without metadata/art (ffmpeg might still work for format conversion)
+    } catch {
+      // Fallback: try converting without metadata/art
       try {
         await execFileAsync(
           "ffmpeg",
@@ -170,13 +147,17 @@ export async function POST(request: NextRequest) {
           { timeout: 60000, maxBuffer: 10 * 1024 * 1024 }
         );
       } catch {
-        // ffmpeg completely unavailable — serve raw audio as webm
-        const filename = `${track.artist} - ${track.name}.webm`;
-        return new NextResponse(new Uint8Array(audioBuffer), {
+        // ffmpeg completely unavailable — serve raw audio
+        const ext = audio.format === "webm" ? "webm" : "mp3";
+        const mimeType = audio.format === "webm" ? "audio/webm" : "audio/mpeg";
+        const filename = `${track.artist} - ${track.name}.${ext}`;
+        return new NextResponse(new Uint8Array(audio.buffer), {
           headers: {
-            "Content-Type": "audio/webm",
+            "Content-Type": mimeType,
             "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
-            "Content-Length": audioBuffer.length.toString(),
+            "Content-Length": audio.buffer.length.toString(),
+            "X-Audio-Source": audio.source,
+            "X-Audio-Quality": `${audio.bitrate}`,
           },
         });
       }
@@ -190,6 +171,8 @@ export async function POST(request: NextRequest) {
         "Content-Type": "audio/mpeg",
         "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
         "Content-Length": outputBuffer.length.toString(),
+        "X-Audio-Source": audio.source,
+        "X-Audio-Quality": `${audio.bitrate}`,
       },
     });
   } catch (error) {
