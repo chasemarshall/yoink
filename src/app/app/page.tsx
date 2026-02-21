@@ -21,6 +21,11 @@ interface PlaylistInfo {
 
 type TrackStatus = "pending" | "downloading" | "done" | "error";
 
+interface QualityInfo {
+  source: string;
+  bitrate: string;
+}
+
 type AppState = "idle" | "fetching" | "ready" | "downloading" | "done" | "error";
 
 export default function Home() {
@@ -29,6 +34,7 @@ export default function Home() {
   const [playlist, setPlaylist] = useState<PlaylistInfo | null>(null);
   const [trackStatuses, setTrackStatuses] = useState<TrackStatus[]>([]);
   const [error, setError] = useState("");
+  const [quality, setQuality] = useState<QualityInfo | null>(null);
   const abortRef = useRef(false);
 
   const handleSubmit = async (url: string) => {
@@ -66,7 +72,7 @@ export default function Home() {
     }
   };
 
-  const downloadTrack = useCallback(async (trackInfo: TrackInfo): Promise<boolean> => {
+  const downloadTrack = useCallback(async (trackInfo: TrackInfo): Promise<QualityInfo | false> => {
     try {
       const res = await fetch("/api/download", {
         method: "POST",
@@ -79,6 +85,9 @@ export default function Home() {
         throw new Error(data.error || "Download failed");
       }
 
+      const audioSource = res.headers.get("X-Audio-Source") || "youtube";
+      const audioBitrate = res.headers.get("X-Audio-Quality") || "~160";
+
       const blob = await res.blob();
       const downloadUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -88,7 +97,7 @@ export default function Home() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(downloadUrl);
-      return true;
+      return { source: audioSource, bitrate: audioBitrate };
     } catch {
       return false;
     }
@@ -97,9 +106,11 @@ export default function Home() {
   const handleDownload = async () => {
     if (!track) return;
     setState("downloading");
+    setQuality(null);
 
-    const success = await downloadTrack(track);
-    if (success) {
+    const result = await downloadTrack(track);
+    if (result) {
+      setQuality(result);
       setState("done");
       setTimeout(() => setState("ready"), 3000);
     } else {
@@ -122,11 +133,11 @@ export default function Home() {
         return next;
       });
 
-      const success = await downloadTrack(playlist.tracks[i]);
+      const result = await downloadTrack(playlist.tracks[i]);
 
       setTrackStatuses((prev) => {
         const next = [...prev];
-        next[i] = success ? "done" : "error";
+        next[i] = result ? "done" : "error";
         return next;
       });
     }
@@ -141,6 +152,7 @@ export default function Home() {
     setPlaylist(null);
     setTrackStatuses([]);
     setError("");
+    setQuality(null);
     abortRef.current = true;
   };
 
@@ -238,6 +250,11 @@ export default function Home() {
                     <span className="text-overlay0/40">·</span>
                     <p className="text-xs text-overlay0 flex-shrink-0">{track.duration}</p>
                   </div>
+                  {quality && state === "done" && (
+                    <p className="text-[10px] text-overlay0/60 animate-fade-in" style={{ opacity: 0 }}>
+                      {quality.source === "youtube" ? "~" : ""}{quality.bitrate}kbps via {quality.source}
+                    </p>
+                  )}
                 </div>
               </div>
 
