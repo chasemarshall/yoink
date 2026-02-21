@@ -77,6 +77,7 @@ export interface TrackInfo {
   durationMs: number;
   isrc: string | null;
   genre: string | null;
+  releaseDate: string | null;
   spotifyUrl: string;
 }
 
@@ -121,6 +122,7 @@ export async function getTrackInfo(url: string): Promise<TrackInfo> {
     durationMs: data.duration_ms,
     isrc: data.external_ids?.isrc || null,
     genre,
+    releaseDate: data.album.release_date || null,
     spotifyUrl: data.external_urls.spotify,
   };
 }
@@ -172,7 +174,7 @@ export async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
   }
 
   const tracks: TrackInfo[] = validItems
-    .map((item: { track: { name: string; artists: { id: string; name: string }[]; album: { name: string; images: { url: string }[] }; duration_ms: number; external_ids?: { isrc?: string }; external_urls: { spotify: string } } }) => ({
+    .map((item: { track: { name: string; artists: { id: string; name: string }[]; album: { name: string; images: { url: string }[]; release_date?: string }; duration_ms: number; external_ids?: { isrc?: string }; external_urls: { spotify: string } } }) => ({
       name: item.track.name,
       artist: item.track.artists.map((a) => a.name).join(", "),
       album: item.track.album.name,
@@ -181,6 +183,7 @@ export async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
       durationMs: item.track.duration_ms,
       isrc: item.track.external_ids?.isrc || null,
       genre: genreMap.get(item.track.artists[0]?.id) || null,
+      releaseDate: item.track.album.release_date || null,
       spotifyUrl: item.track.external_urls.spotify,
     }));
 

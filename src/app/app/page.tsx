@@ -4,7 +4,6 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import Header from "@/components/Header";
 import SpotifyInput from "@/components/SpotifyInput";
 import FormatToggle, { type Format } from "@/components/FormatToggle";
-import { useLanguage } from "@/components/LanguageProvider";
 
 interface TrackInfo {
   name: string;
@@ -41,7 +40,6 @@ export default function Home() {
   const [format, setFormat] = useState<Format>("mp3");
   const abortRef = useRef(false);
   const downloadTriggeredRef = useRef(false);
-  const { t } = useLanguage();
 
   // Enter key triggers download when track/playlist is ready
   useEffect(() => {
@@ -143,7 +141,7 @@ export default function Home() {
       setState("done");
       setTimeout(() => setState("ready"), 3000);
     } else {
-      setError(t("downloadFailed"));
+      setError("Download failed");
       setState("error");
     }
   };
@@ -153,37 +151,50 @@ export default function Home() {
     setState("downloading");
     abortRef.current = false;
 
-    const BATCH_SIZE = 3;
-    for (let batch = 0; batch < playlist.tracks.length; batch += BATCH_SIZE) {
-      if (abortRef.current) break;
+    // Mark all tracks as downloading
+    setTrackStatuses(new Array(playlist.tracks.length).fill("downloading"));
 
-      const batchIndices = Array.from(
-        { length: Math.min(BATCH_SIZE, playlist.tracks.length - batch) },
-        (_, j) => batch + j
-      );
+    try {
+      const res = await fetch("/api/download-playlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: originalUrl, format }),
+      });
 
-      // Mark batch as downloading
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Playlist download failed");
+      }
+
+      const errorCount = parseInt(res.headers.get("X-Error-Count") || "0", 10);
+      const blob = await res.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = `${playlist.name}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+
+      // Mark tracks as done/error based on server response
       setTrackStatuses((prev) => {
         const next = [...prev];
-        for (const i of batchIndices) next[i] = "downloading";
+        // Mark last N as errors if any failed
+        const successCount = next.length - errorCount;
+        for (let i = 0; i < next.length; i++) {
+          next[i] = i < successCount ? "done" : "error";
+        }
         return next;
       });
 
-      // Download batch in parallel
-      const results = await Promise.all(
-        batchIndices.map((i) => downloadTrack(playlist.tracks[i]).then((r) => ({ i, r })))
-      );
-
-      // Update statuses
-      setTrackStatuses((prev) => {
-        const next = [...prev];
-        for (const { i, r } of results) next[i] = r ? "done" : "error";
-        return next;
-      });
+      setState("done");
+      setTimeout(() => setState("ready"), 3000);
+    } catch (err) {
+      setTrackStatuses((prev) => prev.map(() => "error"));
+      setError(err instanceof Error ? err.message : "Playlist download failed");
+      setState("error");
     }
-
-    setState("done");
-    setTimeout(() => setState("ready"), 3000);
   };
 
   const handleReset = () => {
@@ -216,7 +227,7 @@ export default function Home() {
             </h1>
             <p className="text-sm text-subtext0/80 leading-relaxed max-w-sm">
               paste a spotify link. get the {format}.<br />
-              tracks and playlists. {t("metadataIncluded")}.
+              tracks and playlists. metadata included.
             </p>
           </div>
 
@@ -247,7 +258,7 @@ export default function Home() {
                 <div className="loading-dot w-1.5 h-1.5 rounded-full bg-lavender" />
                 <div className="loading-dot w-1.5 h-1.5 rounded-full bg-lavender" />
               </div>
-              <span className="text-sm text-subtext0">{t("fetchingInfo")}</span>
+              <span className="text-sm text-subtext0">fetching info</span>
             </div>
           )}
 
@@ -262,7 +273,7 @@ export default function Home() {
                 onClick={handleReset}
                 className="btn-press text-xs text-subtext0 hover:text-text transition-colors uppercase tracking-wider"
               >
-                {t("tryAgain")}
+                try again
               </button>
             </div>
           )}
@@ -330,17 +341,17 @@ export default function Home() {
                         <span className="loading-dot w-1 h-1 rounded-full bg-lavender/70" />
                         <span className="loading-dot w-1 h-1 rounded-full bg-lavender/70" />
                       </span>
-                      {t("downloading")}
+                      downloading
                     </span>
                   )}
-                  {state === "done" && t("downloaded")}
-                  {state === "ready" && `${t("download")} ${format}`}
+                  {state === "done" && "downloaded"}
+                  {state === "ready" && `download ${format}`}
                 </button>
                 <button
                   onClick={handleReset}
                   className="btn-press px-5 py-3.5 text-xs text-overlay0 hover:text-text hover:bg-surface0/20 border-l border-surface0/60 transition-all duration-200 uppercase tracking-wider"
                 >
-                  {t("new")}
+                  new
                 </button>
               </div>
             </div>
@@ -383,12 +394,12 @@ export default function Home() {
                   </p>
                   {state === "downloading" && (
                     <p className="text-xs text-lavender animate-fade-in" style={{ opacity: 0 }}>
-                      {doneCount}/{totalCount} {t("downloaded")}
+                      {doneCount}/{totalCount} downloaded
                     </p>
                   )}
                   {state === "done" && (
                     <p className="text-xs text-green animate-fade-in" style={{ opacity: 0 }}>
-                      {doneCount}/{totalCount} {t("downloaded")}
+                      {doneCount}/{totalCount} downloaded
                     </p>
                   )}
                 </div>
@@ -461,15 +472,15 @@ export default function Home() {
                       {doneCount}/{totalCount}
                     </span>
                   )}
-                  {state === "done" && `${t("downloaded")} ${doneCount}/${totalCount}`}
-                  {state === "ready" && t("downloadAll")}
+                  {state === "done" && `downloaded ${doneCount}/${totalCount}`}
+                  {state === "ready" && "download all"}
                 </button>
                 <button
                   onClick={handleReset}
                   disabled={state === "downloading"}
                   className="btn-press px-5 py-3.5 text-xs text-overlay0 hover:text-text hover:bg-surface0/20 border-l border-surface0/60 transition-all duration-200 uppercase tracking-wider disabled:opacity-50"
                 >
-                  {t("new")}
+                  new
                 </button>
               </div>
             </div>
@@ -479,7 +490,7 @@ export default function Home() {
           {state === "idle" && (
             <div className="animate-fade-in-up flex items-center gap-2 text-xs text-overlay0/40" style={{ opacity: 0, animationDelay: "300ms" }}>
               <kbd className="px-1.5 py-0.5 rounded border border-surface0/60 text-overlay0/50 text-[10px]">Enter</kbd>
-              <span>{t("enterToDownload")}</span>
+              <span>to download</span>
             </div>
           )}
         </div>
@@ -495,9 +506,9 @@ export default function Home() {
             rel="noopener noreferrer"
             className="hover:text-peach transition-colors duration-200"
           >
-            {t("tipJar")}
+            tip jar
           </a>
-          <span>{t("metadataIncluded")}</span>
+          <span>metadata included</span>
         </div>
       </footer>
     </div>

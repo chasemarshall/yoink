@@ -190,6 +190,9 @@ export async function POST(request: NextRequest) {
     if (track.genre) {
       ffmpegArgs.push("-metadata", `genre=${track.genre}`);
     }
+    if (track.releaseDate) {
+      ffmpegArgs.push("-metadata", `date=${track.releaseDate}`);
+    }
     if (lyrics) {
       ffmpegArgs.push("-metadata", `lyrics=${lyrics}`);
     }
