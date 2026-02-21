@@ -19,7 +19,7 @@ export default function Header() {
         >
           tip jar
         </a>
-        <span className="text-xs text-surface2">v1.0</span>
+        <span className="text-xs text-surface2">v3.0</span>
       </div>
     </header>
   );
