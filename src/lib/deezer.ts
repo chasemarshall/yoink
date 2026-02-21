@@ -229,6 +229,22 @@ function verifyMatch(
   return false;
 }
 
+// Look up Deezer track ID by ISRC (public API, no auth needed)
+export async function lookupDeezerByIsrc(isrc: string): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://api.deezer.com/2.0/track/isrc:${encodeURIComponent(isrc)}`,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.error || !data.id) return null;
+    return String(data.id);
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchDeezerAudio(
   deezerId: string,
   track: TrackInfo
