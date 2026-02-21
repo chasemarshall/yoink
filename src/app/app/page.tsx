@@ -345,12 +345,16 @@ export default function Home() {
           {track && (state === "ready" || state === "downloading" || state === "done") && (
             <div className="animate-fade-in-up border border-surface0/60 rounded-lg overflow-hidden bg-mantle/40" style={{ opacity: 0 }}>
               {state === "downloading" && (
-                <div className="shimmer-bar h-0.5 bg-lavender/30">
-                  <div className="h-full bg-lavender w-full" />
+                <div className="progress-bar h-1 bg-surface0/40">
+                  <div className="progress-bar-fill" />
                 </div>
               )}
-              {state === "done" && <div className="h-0.5 bg-green animate-fade-in" />}
-              {state === "ready" && <div className="h-0.5" />}
+              {state === "done" && (
+                <div className="progress-bar h-1 bg-surface0/40">
+                  <div className="progress-bar-fill done" />
+                </div>
+              )}
+              {state === "ready" && <div className="h-1" />}
 
               <div className="p-6 flex gap-5 stagger">
                 <div className="relative w-[100px] h-[100px] flex-shrink-0">
@@ -416,12 +420,19 @@ export default function Home() {
           {playlist && (state === "ready" || state === "downloading" || state === "done") && (
             <div className="animate-fade-in-up border border-surface0/60 rounded-lg overflow-hidden bg-mantle/40" style={{ opacity: 0 }}>
               {state === "downloading" && (
-                <div className="shimmer-bar h-0.5 bg-lavender/30">
-                  <div className="h-full bg-lavender w-full" />
+                <div className="h-1 bg-surface0/40">
+                  <div
+                    className="h-full bg-lavender transition-all duration-500 ease-out"
+                    style={{ width: `${totalCount > 0 ? (doneCount / totalCount) * 100 : 0}%` }}
+                  />
                 </div>
               )}
-              {state === "done" && <div className="h-0.5 bg-green animate-fade-in" />}
-              {state === "ready" && <div className="h-0.5" />}
+              {state === "done" && (
+                <div className="h-1 bg-surface0/40">
+                  <div className="h-full bg-green w-full transition-all duration-300" />
+                </div>
+              )}
+              {state === "ready" && <div className="h-1" />}
 
               {/* Playlist header */}
               <div className="p-6 flex gap-5">
