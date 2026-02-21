@@ -51,7 +51,8 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const url = body.url;
-    const preferFlac = body.format === "flac";
+    const requestedFormat = body.format as string | undefined; // "mp3" | "flac" | "alac"
+    const preferLossless = requestedFormat === "flac" || requestedFormat === "alac";
 
     if (!url || typeof url !== "string") {
       return NextResponse.json({ error: "URL is required" }, { status: 400 });
@@ -69,16 +70,18 @@ export async function POST(request: NextRequest) {
 
     // Step 2: Fetch best audio + lyrics in parallel
     const [audio, lyrics] = await Promise.all([
-      fetchBestAudio(track, preferFlac),
+      fetchBestAudio(track, preferLossless),
       fetchLyrics(track.artist, track.name),
     ]);
 
     // Step 3: Embed metadata using ffmpeg
-    const wantFlac = preferFlac && audio.source === "deezer";
+    const canLossless = preferLossless && audio.source === "deezer";
+    const wantAlac = canLossless && requestedFormat === "alac";
+    const wantFlac = canLossless && requestedFormat === "flac";
     tempDir = await mkdtemp(join(tmpdir(), "dl-"));
     const inputExt = audio.format === "webm" ? "webm" : audio.format === "flac" ? "flac" : "mp3";
     const inputPath = join(tempDir, `input.${inputExt}`);
-    const outputExt = wantFlac ? "flac" : "mp3";
+    const outputExt = wantAlac ? "m4a" : wantFlac ? "flac" : "mp3";
     const outputPath = join(tempDir, `output.${outputExt}`);
     const artPath = join(tempDir, "cover.jpg");
 
@@ -103,7 +106,16 @@ export async function POST(request: NextRequest) {
     const ffmpegArgs: string[] = [];
     ffmpegArgs.push("-i", inputPath);
 
-    if (wantFlac) {
+    if (wantAlac) {
+      // ALAC output (.m4a)
+      if (hasArt) {
+        ffmpegArgs.push("-i", artPath, "-map", "0:a", "-map", "1:0");
+      }
+      ffmpegArgs.push("-c:a", "alac");
+      if (hasArt) {
+        ffmpegArgs.push("-c:v", "copy", "-disposition:v", "attached_pic");
+      }
+    } else if (wantFlac) {
       // FLAC output
       if (hasArt) {
         ffmpegArgs.push("-i", artPath, "-map", "0:a", "-map", "1:0");
@@ -160,9 +172,11 @@ export async function POST(request: NextRequest) {
     } catch {
       // Fallback: try converting without metadata/art
       try {
-        const fallbackArgs = wantFlac
-          ? ["-y", "-i", inputPath, "-c:a", "flac", outputPath]
-          : ["-y", "-i", inputPath, "-c:a", "libmp3lame", "-b:a", "320k", outputPath];
+        const fallbackArgs = wantAlac
+          ? ["-y", "-i", inputPath, "-c:a", "alac", outputPath]
+          : wantFlac
+            ? ["-y", "-i", inputPath, "-c:a", "flac", outputPath]
+            : ["-y", "-i", inputPath, "-c:a", "libmp3lame", "-b:a", "320k", outputPath];
         await execFileAsync("ffmpeg", fallbackArgs, {
           timeout: 120000,
           maxBuffer: 50 * 1024 * 1024,
@@ -187,8 +201,8 @@ export async function POST(request: NextRequest) {
 
     const outputBuffer = await readFile(outputPath);
     const filename = `${track.artist} - ${track.name}.${outputExt}`;
-    const contentType = wantFlac ? "audio/flac" : "audio/mpeg";
-    const qualityLabel = wantFlac && audio.format === "flac" ? "lossless" : `${audio.bitrate}`;
+    const contentType = wantAlac ? "audio/mp4" : wantFlac ? "audio/flac" : "audio/mpeg";
+    const qualityLabel = (wantFlac || wantAlac) && audio.format === "flac" ? "lossless" : `${audio.bitrate}`;
 
     return new NextResponse(new Uint8Array(outputBuffer), {
       headers: {
