@@ -39,11 +39,12 @@ body {
   color: var(--color-crust);
 }
 
-/* Subtle dot grid background with gentle breathing effect */
+/* Dot grid background with soft pulsing circles */
 .bg-grid {
   position: relative;
 }
 
+/* Base dot grid — always full opacity */
 .bg-grid::before {
   content: "";
   position: fixed;
@@ -51,8 +52,23 @@ body {
   pointer-events: none;
   background-image: radial-gradient(circle, var(--color-surface0) 1px, transparent 1px);
   background-size: 24px 24px;
-  animation: dot-breathe 8s ease-in-out infinite;
+  opacity: 0.6;
   z-index: 0;
+}
+
+/* Dim overlay — slow-moving radial spots that reduce dots to ~70% */
+.bg-grid::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 280px 260px at 20% 30%, rgba(30,30,46,0.35) 0%, transparent 70%),
+    radial-gradient(ellipse 320px 300px at 75% 60%, rgba(30,30,46,0.30) 0%, transparent 70%),
+    radial-gradient(ellipse 240px 220px at 50% 85%, rgba(30,30,46,0.32) 0%, transparent 70%),
+    radial-gradient(ellipse 260px 280px at 85% 15%, rgba(30,30,46,0.28) 0%, transparent 70%);
+  animation: dot-dim-drift 20s ease-in-out infinite alternate;
 }
 
 .bg-grid > * {
@@ -60,9 +76,25 @@ body {
   z-index: 1;
 }
 
-@keyframes dot-breathe {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.7; }
+@keyframes dot-dim-drift {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  40% {
+    opacity: 0.3;
+  }
+  60% {
+    opacity: 0.9;
+  }
+  80% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 0.8;
+  }
 }
 
 /* Animations */
