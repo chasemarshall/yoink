@@ -9,7 +9,7 @@ const features = [
   },
   {
     label: "playlists",
-    desc: "paste a playlist link. see every track. download them all sequentially with per-track progress.",
+    desc: "paste a playlist link. see every track. download them all as a single zip file.",
   },
   {
     label: "metadata",
@@ -20,7 +20,7 @@ const features = [
 const steps = [
   { num: "01", text: "paste a spotify link" },
   { num: "02", text: "we fetch the metadata" },
-  { num: "03", text: "find the audio on youtube" },
+  { num: "03", text: "find the best audio source" },
   { num: "04", text: "convert, tag, deliver" },
 ];
 
@@ -166,7 +166,7 @@ export default function LandingPage() {
             <p>
               yoink converts spotify tracks to 320kbps mp3 files with full id3v2
               metadata and embedded album art via ffmpeg. audio is sourced from
-              youtube through the piped api.
+              the best available provider.
             </p>
             <p>
               no accounts required. no data stored. your downloads happen
