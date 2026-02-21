@@ -151,8 +151,8 @@ export default function Home() {
     setState("downloading");
     abortRef.current = false;
 
-    // Mark all tracks as downloading
-    setTrackStatuses(new Array(playlist.tracks.length).fill("downloading"));
+    // Mark all tracks as pending
+    setTrackStatuses(new Array(playlist.tracks.length).fill("pending"));
 
     try {
       const res = await fetch("/api/download-playlist", {
@@ -166,32 +166,89 @@ export default function Home() {
         throw new Error(data.error || "Playlist download failed");
       }
 
-      const errorCount = parseInt(res.headers.get("X-Error-Count") || "0", 10);
-      const blob = await res.blob();
-      const downloadUrl = URL.createObjectURL(blob);
+      const reader = res.body!.getReader();
+      const chunks: Uint8Array[] = [];
+      let textBuffer = "";
+      let zipFilename = `${playlist.name}.zip`;
+      let zipStarted = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        if (zipStarted) {
+          // After zip marker, all data is binary zip
+          chunks.push(value);
+          continue;
+        }
+
+        // Try to parse as text (progress events are newline-delimited JSON)
+        const text = new TextDecoder().decode(value);
+        textBuffer += text;
+
+        const lines = textBuffer.split("\n");
+        // Keep the last incomplete line in the buffer
+        textBuffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const event = JSON.parse(line);
+
+            if (event.type === "batch") {
+              // Mark batch tracks as downloading
+              setTrackStatuses((prev) => {
+                const next = [...prev];
+                for (const idx of event.indices) next[idx] = "downloading";
+                return next;
+              });
+            } else if (event.type === "done") {
+              setTrackStatuses((prev) => {
+                const next = [...prev];
+                next[event.index] = "done";
+                return next;
+              });
+            } else if (event.type === "error") {
+              setTrackStatuses((prev) => {
+                const next = [...prev];
+                next[event.index] = "error";
+                return next;
+              });
+            } else if (event.type === "fatal") {
+              throw new Error(event.error);
+            } else if (event.type === "zip") {
+              zipFilename = event.filename;
+              zipStarted = true;
+              // Any remaining data in textBuffer is binary zip data
+              if (textBuffer.length > 0) {
+                chunks.push(new TextEncoder().encode(textBuffer));
+                textBuffer = "";
+              }
+            }
+          } catch (e) {
+            // If JSON parse fails and zip has started, it's binary data
+            if (zipStarted) {
+              chunks.push(new TextEncoder().encode(line + "\n"));
+            }
+          }
+        }
+      }
+
+      // Assemble zip and trigger download
+      const zipBlob = new Blob(chunks.map((c) => c.buffer as ArrayBuffer), { type: "application/zip" });
+      const downloadUrl = URL.createObjectURL(zipBlob);
       const a = document.createElement("a");
       a.href = downloadUrl;
-      a.download = `${playlist.name}.zip`;
+      a.download = zipFilename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(downloadUrl);
 
-      // Mark tracks as done/error based on server response
-      setTrackStatuses((prev) => {
-        const next = [...prev];
-        // Mark last N as errors if any failed
-        const successCount = next.length - errorCount;
-        for (let i = 0; i < next.length; i++) {
-          next[i] = i < successCount ? "done" : "error";
-        }
-        return next;
-      });
-
       setState("done");
       setTimeout(() => setState("ready"), 3000);
     } catch (err) {
-      setTrackStatuses((prev) => prev.map(() => "error"));
+      setTrackStatuses((prev) => prev.map((s) => s === "downloading" || s === "pending" ? "error" : s));
       setError(err instanceof Error ? err.message : "Playlist download failed");
       setState("error");
     }

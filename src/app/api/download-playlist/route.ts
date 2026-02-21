@@ -147,7 +147,6 @@ async function processTrack(
           maxBuffer: 50 * 1024 * 1024,
         });
       } catch {
-        // ffmpeg unavailable — return raw audio
         const filename = `${track.artist} - ${track.name}.${audio.format}`;
         return { filename, buffer: audio.buffer };
       }
@@ -167,7 +166,6 @@ async function processTrack(
   }
 }
 
-// Sanitize filename for zip entry (remove path separators and problematic chars)
 function sanitizeFilename(name: string): string {
   return name.replace(/[/\\:*?"<>|]/g, "_");
 }
@@ -190,69 +188,95 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "URL is required" }, { status: 400 });
     }
 
-    // Fetch playlist metadata
     const playlist = await getPlaylistInfo(url);
     if (!playlist.tracks.length) {
       return NextResponse.json({ error: "Playlist has no tracks" }, { status: 400 });
     }
 
-    // Process tracks in parallel with concurrency limit of 5
-    const CONCURRENCY = 5;
-    const results: { filename: string; buffer: Buffer }[] = new Array(playlist.tracks.length);
-    const errors: number[] = [];
+    // Stream progress events, then the zip binary
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        const send = (data: Record<string, unknown>) => {
+          controller.enqueue(encoder.encode(JSON.stringify(data) + "\n"));
+        };
 
-    for (let i = 0; i < playlist.tracks.length; i += CONCURRENCY) {
-      const batch = playlist.tracks.slice(i, i + CONCURRENCY);
-      const batchResults = await Promise.allSettled(
-        batch.map((track) => processTrack(track, requestedFormat))
-      );
+        send({ type: "start", total: playlist.tracks.length });
 
-      for (let j = 0; j < batchResults.length; j++) {
-        const result = batchResults[j];
-        if (result.status === "fulfilled") {
-          results[i + j] = result.value;
-        } else {
-          errors.push(i + j);
-          console.error(`[playlist] track ${i + j} failed:`, result.reason);
+        const CONCURRENCY = 5;
+        const results: { filename: string; buffer: Buffer }[] = new Array(playlist.tracks.length);
+        const errors: number[] = [];
+
+        for (let i = 0; i < playlist.tracks.length; i += CONCURRENCY) {
+          const batch = playlist.tracks.slice(i, i + CONCURRENCY);
+          const batchIndices = batch.map((_, j) => i + j);
+
+          // Notify which tracks started
+          send({ type: "batch", indices: batchIndices });
+
+          const batchResults = await Promise.allSettled(
+            batch.map((track, j) =>
+              processTrack(track, requestedFormat).then((result) => {
+                // Send progress as each individual track completes
+                send({ type: "done", index: i + j });
+                return result;
+              })
+            )
+          );
+
+          for (let j = 0; j < batchResults.length; j++) {
+            const result = batchResults[j];
+            if (result.status === "fulfilled") {
+              results[i + j] = result.value;
+            } else {
+              errors.push(i + j);
+              send({ type: "error", index: i + j });
+              console.error(`[playlist] track ${i + j} failed:`, result.reason);
+            }
+          }
         }
-      }
-    }
 
-    if (results.filter(Boolean).length === 0) {
-      return NextResponse.json({ error: "All tracks failed to download" }, { status: 500 });
-    }
+        if (results.filter(Boolean).length === 0) {
+          send({ type: "fatal", error: "All tracks failed to download" });
+          controller.close();
+          return;
+        }
 
-    // Bundle into zip using fflate (level 0 = store, no compression for already-compressed audio)
-    const zipEntries: Record<string, Uint8Array> = {};
-    const usedNames = new Set<string>();
+        // Build zip
+        send({ type: "zipping" });
 
-    for (const result of results) {
-      if (!result) continue;
-      let name = sanitizeFilename(result.filename);
-      // Deduplicate filenames
-      if (usedNames.has(name)) {
-        const ext = name.lastIndexOf(".");
-        const base = name.slice(0, ext);
-        const extStr = name.slice(ext);
-        let counter = 2;
-        while (usedNames.has(`${base} (${counter})${extStr}`)) counter++;
-        name = `${base} (${counter})${extStr}`;
-      }
-      usedNames.add(name);
-      zipEntries[name] = new Uint8Array(result.buffer);
-    }
+        const zipEntries: Record<string, Uint8Array> = {};
+        const usedNames = new Set<string>();
 
-    const zipBuffer = zipSync(zipEntries, { level: 0 });
+        for (const result of results) {
+          if (!result) continue;
+          let name = sanitizeFilename(result.filename);
+          if (usedNames.has(name)) {
+            const ext = name.lastIndexOf(".");
+            const base = name.slice(0, ext);
+            const extStr = name.slice(ext);
+            let counter = 2;
+            while (usedNames.has(`${base} (${counter})${extStr}`)) counter++;
+            name = `${base} (${counter})${extStr}`;
+          }
+          usedNames.add(name);
+          zipEntries[name] = new Uint8Array(result.buffer);
+        }
 
-    const zipFilename = `${sanitizeFilename(playlist.name)}.zip`;
+        const zipBuffer = zipSync(zipEntries, { level: 0 });
+        const zipFilename = sanitizeFilename(playlist.name) + ".zip";
 
-    return new NextResponse(Buffer.from(zipBuffer), {
+        // Send zip metadata then binary
+        send({ type: "zip", filename: zipFilename, size: zipBuffer.length });
+        controller.enqueue(zipBuffer);
+        controller.close();
+      },
+    });
+
+    return new Response(stream, {
       headers: {
-        "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename="${encodeURIComponent(zipFilename)}"`,
-        "Content-Length": zipBuffer.length.toString(),
-        "X-Track-Count": String(results.filter(Boolean).length),
-        "X-Error-Count": String(errors.length),
+        "Content-Type": "application/octet-stream",
+        "X-Content-Type": "playlist-stream",
       },
     });
   } catch (error) {
