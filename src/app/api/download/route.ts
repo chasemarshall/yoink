@@ -157,17 +157,29 @@ export async function POST(request: NextRequest) {
     ffmpegArgs.push("-y", outputPath);
 
     try {
-      await execFileAsync("ffmpeg", ffmpegArgs, { timeout: 60000 });
-    } catch {
-      // Fallback: serve raw audio without metadata
-      const filename = `${track.artist} - ${track.name}.mp3`;
-      return new NextResponse(new Uint8Array(audioBuffer), {
-        headers: {
-          "Content-Type": "audio/mpeg",
-          "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
-          "Content-Length": audioBuffer.length.toString(),
-        },
+      await execFileAsync("ffmpeg", ffmpegArgs, {
+        timeout: 60000,
+        maxBuffer: 10 * 1024 * 1024,
       });
+    } catch (ffmpegError) {
+      // Fallback: try converting without metadata/art (ffmpeg might still work for format conversion)
+      try {
+        await execFileAsync(
+          "ffmpeg",
+          ["-y", "-i", inputPath, "-c:a", "libmp3lame", "-b:a", "192k", outputPath],
+          { timeout: 60000, maxBuffer: 10 * 1024 * 1024 }
+        );
+      } catch {
+        // ffmpeg completely unavailable — serve raw audio as webm
+        const filename = `${track.artist} - ${track.name}.webm`;
+        return new NextResponse(new Uint8Array(audioBuffer), {
+          headers: {
+            "Content-Type": "audio/webm",
+            "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
+            "Content-Length": audioBuffer.length.toString(),
+          },
+        });
+      }
     }
 
     const outputBuffer = await readFile(outputPath);
