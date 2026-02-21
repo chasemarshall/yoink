@@ -236,22 +236,31 @@ export default function LandingPage() {
         </div>
         <div className="space-y-3 text-[10px] text-overlay0/40 leading-relaxed">
           <p>
-            yoink converts spotify tracks to high-quality audio files with full id3v2
-            metadata and embedded album art via ffmpeg. audio is sourced from
-            the best available provider. no accounts required. no data stored. your
-            downloads happen server-side and stream directly to your browser.
+            yoink is not affiliated with, endorsed by, or connected to
+            spotify AB or any other streaming service. &quot;spotify&quot; is a
+            trademark of spotify AB — we use the name for context only, not
+            to claim ownership. yoink does not host, store, or archive any
+            copyrighted material on its servers. free third-party services
+            are used to search for and retrieve audio. no content is cached
+            or retained after your request completes.
           </p>
           <p>
-            yoink is not affiliated with, endorsed by, or connected to
-            spotify AB in any way. &quot;spotify&quot; is a trademark of
-            spotify AB — we use the name for context only, not to claim
-            ownership. yoink does not host any copyrighted material. audio
-            is fetched through third-party services at the time of your
-            request and is never stored on our servers. this tool is
-            intended for personal use — downloading music you already own
-            or have the right to access. please respect the rights of
-            artists and copyright holders. by using yoink, you agree to
-            take responsibility for how you use it.
+            this tool is intended for personal and non-commercial use only —
+            downloading music you already own or have the right to access.
+            users are solely responsible for ensuring compliance with
+            applicable copyright laws and the terms of service of any
+            streaming platform. yoink is not responsible for any violation
+            of applicable laws. by using yoink, you agree to take full
+            responsibility for how you use it. please respect the rights of
+            artists and copyright holders.
+          </p>
+          <p>
+            if you believe that your copyrighted work is being used in a way
+            that constitutes infringement, please contact us at{" "}
+            <a href="mailto:dmca@yoinkify.lol" className="underline hover:text-overlay0/60">
+              dmca@yoinkify.lol
+            </a>{" "}
+            and we will promptly address any valid concerns.
           </p>
         </div>
       </footer>
