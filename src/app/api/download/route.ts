@@ -13,6 +13,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 import { getTrackInfo } from "@/lib/spotify";
 import { searchYouTube, getAudioStreamUrl } from "@/lib/youtube";
+import { fetchLyrics } from "@/lib/lyrics";
 
 const execFileAsync = promisify(execFile);
 
@@ -62,9 +63,12 @@ export async function POST(request: NextRequest) {
     // Step 1: Get track metadata from Spotify
     const track = await getTrackInfo(url);
 
-    // Step 2: Search YouTube via Piped
+    // Step 2: Search YouTube + fetch lyrics in parallel
     const query = `${track.artist} - ${track.name}`;
-    const videoId = await searchYouTube(query);
+    const [videoId, lyrics] = await Promise.all([
+      searchYouTube(query),
+      fetchLyrics(track.artist, track.name),
+    ]);
 
     if (!videoId) {
       throw new Error("Could not find this track on YouTube");
@@ -136,8 +140,11 @@ export async function POST(request: NextRequest) {
       "-metadata", `title=${track.name}`,
       "-metadata", `artist=${track.artist}`,
       "-metadata", `album=${track.album}`,
-      "-y", outputPath
     );
+    if (lyrics) {
+      ffmpegArgs.push("-metadata", `lyrics=${lyrics}`);
+    }
+    ffmpegArgs.push("-y", outputPath);
 
     try {
       await execFileAsync("ffmpeg", ffmpegArgs, { timeout: 60000 });
