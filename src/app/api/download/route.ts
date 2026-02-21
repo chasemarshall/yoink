@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    const { allowed, retryAfter } = rateLimit(`dl:${ip}`, 3, 60_000);
+    const { allowed, retryAfter } = rateLimit(`dl:${ip}`, 30, 60_000);
     if (!allowed) {
       return NextResponse.json(
         { error: `slow down — try again in ${retryAfter}s` },

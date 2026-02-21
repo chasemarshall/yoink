@@ -124,20 +124,31 @@ export default function Home() {
     setState("downloading");
     abortRef.current = false;
 
-    for (let i = 0; i < playlist.tracks.length; i++) {
+    const BATCH_SIZE = 3;
+    for (let batch = 0; batch < playlist.tracks.length; batch += BATCH_SIZE) {
       if (abortRef.current) break;
 
+      const batchIndices = Array.from(
+        { length: Math.min(BATCH_SIZE, playlist.tracks.length - batch) },
+        (_, j) => batch + j
+      );
+
+      // Mark batch as downloading
       setTrackStatuses((prev) => {
         const next = [...prev];
-        next[i] = "downloading";
+        for (const i of batchIndices) next[i] = "downloading";
         return next;
       });
 
-      const result = await downloadTrack(playlist.tracks[i]);
+      // Download batch in parallel
+      const results = await Promise.all(
+        batchIndices.map((i) => downloadTrack(playlist.tracks[i]).then((r) => ({ i, r })))
+      );
 
+      // Update statuses
       setTrackStatuses((prev) => {
         const next = [...prev];
-        next[i] = result ? "done" : "error";
+        for (const { i, r } of results) next[i] = r ? "done" : "error";
         return next;
       });
     }
