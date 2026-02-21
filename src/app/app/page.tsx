@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import Header from "@/components/Header";
 import SpotifyInput from "@/components/SpotifyInput";
-import FormatToggle from "@/components/FormatToggle";
+import FormatToggle, { type Format } from "@/components/FormatToggle";
 
 interface TrackInfo {
   name: string;
@@ -36,7 +36,7 @@ export default function Home() {
   const [trackStatuses, setTrackStatuses] = useState<TrackStatus[]>([]);
   const [error, setError] = useState("");
   const [quality, setQuality] = useState<QualityInfo | null>(null);
-  const [format, setFormat] = useState<"mp3" | "flac">("mp3");
+  const [format, setFormat] = useState<Format>("mp3");
   const abortRef = useRef(false);
   const downloadTriggeredRef = useRef(false);
 
@@ -110,7 +110,8 @@ export default function Home() {
       const audioBitrate = res.headers.get("X-Audio-Quality") || "~160";
       const audioFormat = res.headers.get("X-Audio-Format") || "mp3";
 
-      const ext = audioFormat === "flac" ? "flac" : "mp3";
+      const extMap: Record<string, string> = { flac: "flac", alac: "m4a", mp3: "mp3" };
+      const ext = extMap[audioFormat] || "mp3";
       const blob = await res.blob();
       const downloadUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -209,7 +210,7 @@ export default function Home() {
               <span className="text-lavender">k</span>
             </h1>
             <p className="text-sm text-subtext0/80 leading-relaxed max-w-sm">
-              paste a spotify link. get the {format === "flac" ? "flac" : "mp3"}.<br />
+              paste a spotify link. get the {format}.<br />
               tracks and playlists. metadata included.
             </p>
           </div>
@@ -228,7 +229,7 @@ export default function Home() {
                 disabled={state === "downloading"}
               />
               <span className="text-[10px] text-overlay0/30 tracking-wider">
-                {format === "flac" ? "~40mb per track" : "~8mb per track"}
+                {format === "mp3" ? "~8mb per track" : "~40mb per track"}
               </span>
             </div>
           </div>
