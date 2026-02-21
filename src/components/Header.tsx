@@ -4,7 +4,7 @@ export default function Header() {
       <div className="flex items-center gap-3">
         <div className="status-dot w-2 h-2 rounded-full bg-green" />
         <span className="text-sm font-bold tracking-wider uppercase text-text">
-          spot.dl
+          yoink
         </span>
       </div>
       <div className="flex items-center gap-4">
