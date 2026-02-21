@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "spotdl — Spotify Downloader",
+  title: "spot.dl — Spotify Downloader",
   description: "Download Spotify tracks with full metadata",
 };
 
