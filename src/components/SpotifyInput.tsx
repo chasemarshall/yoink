@@ -27,7 +27,7 @@ export default function SpotifyInput({ onSubmit, disabled }: SpotifyInputProps) 
 
   return (
     <form onSubmit={handleSubmit} className="w-full animate-fade-in-up" style={{ animationDelay: "100ms", opacity: 0 }}>
-      <div className="input-glow border border-surface0 rounded-lg flex items-stretch overflow-hidden transition-all duration-200 focus-within:border-lavender bg-mantle/50">
+      <div className="input-glow border border-surface0/60rounded-lg flex items-stretch overflow-hidden transition-all duration-200 focus-within:border-lavender bg-mantle/50">
         <input
           type="text"
           value={url}
@@ -40,16 +40,16 @@ export default function SpotifyInput({ onSubmit, disabled }: SpotifyInputProps) 
           type="button"
           onClick={handlePaste}
           disabled={disabled}
-          className="btn-press flex-shrink-0 px-4 py-3.5 text-xs text-subtext0 hover:text-lavender hover:bg-surface0/30 border-l border-surface0 transition-all duration-200 uppercase tracking-wider disabled:opacity-50"
+          className="btn-press flex-shrink-0 px-4 py-3.5 text-xs text-subtext0 hover:text-lavender hover:bg-surface0/30 border-l border-surface0/60transition-all duration-200 uppercase tracking-wider disabled:opacity-50"
         >
-          Paste
+          paste
         </button>
         <button
           type="submit"
           disabled={disabled || !url.trim()}
           className="btn-press flex-shrink-0 px-5 py-3.5 text-xs text-crust bg-lavender hover:bg-mauve border-l border-lavender/20 transition-all duration-200 uppercase tracking-wider font-bold disabled:opacity-40 disabled:bg-surface1 disabled:text-overlay0 disabled:border-surface0"
         >
-          Go
+          go
         </button>
       </div>
     </form>
