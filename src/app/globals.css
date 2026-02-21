@@ -39,10 +39,31 @@ body {
   color: var(--color-crust);
 }
 
-/* Subtle dot grid background */
+/* Subtle dot grid background with organic opacity variation */
 .bg-grid {
   background-image: radial-gradient(circle, var(--color-surface0) 1px, transparent 1px);
   background-size: 24px 24px;
+  position: relative;
+}
+
+.bg-grid::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 600px 500px at 12% 18%, rgba(30,30,46,0.45), transparent),
+    radial-gradient(ellipse 350px 300px at 72% 55%, rgba(30,30,46,0.4), transparent),
+    radial-gradient(ellipse 500px 400px at 38% 78%, rgba(30,30,46,0.35), transparent),
+    radial-gradient(ellipse 300px 250px at 88% 12%, rgba(30,30,46,0.4), transparent),
+    radial-gradient(ellipse 420px 380px at 55% 32%, rgba(30,30,46,0.3), transparent),
+    radial-gradient(ellipse 280px 240px at 25% 50%, rgba(30,30,46,0.35), transparent);
+  z-index: 0;
+}
+
+.bg-grid > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* Animations */
