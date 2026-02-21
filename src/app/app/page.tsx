@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import Header from "@/components/Header";
 import SpotifyInput from "@/components/SpotifyInput";
 import FormatToggle, { type Format } from "@/components/FormatToggle";
+import { useLanguage } from "@/components/LanguageProvider";
 
 interface TrackInfo {
   name: string;
@@ -39,6 +40,7 @@ export default function Home() {
   const [format, setFormat] = useState<Format>("mp3");
   const abortRef = useRef(false);
   const downloadTriggeredRef = useRef(false);
+  const { t } = useLanguage();
 
   // Enter key triggers download when track/playlist is ready
   useEffect(() => {
@@ -138,7 +140,7 @@ export default function Home() {
       setState("done");
       setTimeout(() => setState("ready"), 3000);
     } else {
-      setError("Download failed");
+      setError(t("downloadFailed"));
       setState("error");
     }
   };
@@ -211,7 +213,7 @@ export default function Home() {
             </h1>
             <p className="text-sm text-subtext0/80 leading-relaxed max-w-sm">
               paste a spotify link. get the {format}.<br />
-              tracks and playlists. metadata included.
+              tracks and playlists. {t("metadataIncluded")}.
             </p>
           </div>
 
@@ -242,7 +244,7 @@ export default function Home() {
                 <div className="loading-dot w-1.5 h-1.5 rounded-full bg-lavender" />
                 <div className="loading-dot w-1.5 h-1.5 rounded-full bg-lavender" />
               </div>
-              <span className="text-sm text-subtext0">fetching info</span>
+              <span className="text-sm text-subtext0">{t("fetchingInfo")}</span>
             </div>
           )}
 
@@ -257,7 +259,7 @@ export default function Home() {
                 onClick={handleReset}
                 className="btn-press text-xs text-subtext0 hover:text-text transition-colors uppercase tracking-wider"
               >
-                try again
+                {t("tryAgain")}
               </button>
             </div>
           )}
@@ -325,17 +327,17 @@ export default function Home() {
                         <span className="loading-dot w-1 h-1 rounded-full bg-lavender/70" />
                         <span className="loading-dot w-1 h-1 rounded-full bg-lavender/70" />
                       </span>
-                      downloading
+                      {t("downloading")}
                     </span>
                   )}
-                  {state === "done" && "downloaded"}
-                  {state === "ready" && `download ${format}`}
+                  {state === "done" && t("downloaded")}
+                  {state === "ready" && `${t("download")} ${format}`}
                 </button>
                 <button
                   onClick={handleReset}
                   className="btn-press px-5 py-3.5 text-xs text-overlay0 hover:text-text hover:bg-surface0/20 border-l border-surface0/60 transition-all duration-200 uppercase tracking-wider"
                 >
-                  new
+                  {t("new")}
                 </button>
               </div>
             </div>
@@ -378,12 +380,12 @@ export default function Home() {
                   </p>
                   {state === "downloading" && (
                     <p className="text-xs text-lavender animate-fade-in" style={{ opacity: 0 }}>
-                      {doneCount}/{totalCount} downloaded
+                      {doneCount}/{totalCount} {t("downloaded")}
                     </p>
                   )}
                   {state === "done" && (
                     <p className="text-xs text-green animate-fade-in" style={{ opacity: 0 }}>
-                      {doneCount}/{totalCount} downloaded
+                      {doneCount}/{totalCount} {t("downloaded")}
                     </p>
                   )}
                 </div>
@@ -456,15 +458,15 @@ export default function Home() {
                       {doneCount}/{totalCount}
                     </span>
                   )}
-                  {state === "done" && `downloaded ${doneCount}/${totalCount}`}
-                  {state === "ready" && "download all"}
+                  {state === "done" && `${t("downloaded")} ${doneCount}/${totalCount}`}
+                  {state === "ready" && t("downloadAll")}
                 </button>
                 <button
                   onClick={handleReset}
                   disabled={state === "downloading"}
                   className="btn-press px-5 py-3.5 text-xs text-overlay0 hover:text-text hover:bg-surface0/20 border-l border-surface0/60 transition-all duration-200 uppercase tracking-wider disabled:opacity-50"
                 >
-                  new
+                  {t("new")}
                 </button>
               </div>
             </div>
@@ -474,7 +476,7 @@ export default function Home() {
           {state === "idle" && (
             <div className="animate-fade-in-up flex items-center gap-2 text-xs text-overlay0/40" style={{ opacity: 0, animationDelay: "300ms" }}>
               <kbd className="px-1.5 py-0.5 rounded border border-surface0/60 text-overlay0/50 text-[10px]">Enter</kbd>
-              <span>to download</span>
+              <span>{t("enterToDownload")}</span>
             </div>
           )}
         </div>
@@ -490,9 +492,9 @@ export default function Home() {
             rel="noopener noreferrer"
             className="hover:text-peach transition-colors duration-200"
           >
-            tip jar
+            {t("tipJar")}
           </a>
-          <span>metadata included</span>
+          <span>{t("metadataIncluded")}</span>
         </div>
       </footer>
     </div>
