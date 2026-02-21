@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLanguage } from "@/components/LanguageProvider";
 
 interface SpotifyInputProps {
   onSubmit: (url: string) => void;
@@ -10,6 +11,7 @@ interface SpotifyInputProps {
 
 export default function SpotifyInput({ onSubmit, disabled, clear }: SpotifyInputProps) {
   const [url, setUrl] = useState("");
+  const { t } = useLanguage();
 
   // Clear input when parent signals
   const [lastClear, setLastClear] = useState(false);
@@ -43,7 +45,7 @@ export default function SpotifyInput({ onSubmit, disabled, clear }: SpotifyInput
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           disabled={disabled}
-          placeholder="https://open.spotify.com/track or playlist..."
+          placeholder={t("inputPlaceholder")}
           className="flex-1 min-w-0 bg-transparent px-4 py-3.5 text-sm text-text placeholder:text-overlay0/60 outline-none font-mono disabled:opacity-50"
         />
         <button
@@ -52,7 +54,7 @@ export default function SpotifyInput({ onSubmit, disabled, clear }: SpotifyInput
           disabled={disabled}
           className="btn-press flex-shrink-0 px-4 py-3.5 text-xs text-subtext0 hover:text-lavender hover:bg-surface0/30 border-l border-surface0/60 transition-all duration-200 uppercase tracking-wider disabled:opacity-50"
         >
-          paste
+          {t("paste")}
         </button>
         <button
           type="submit"
