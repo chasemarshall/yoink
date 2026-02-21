@@ -79,6 +79,12 @@ export default function LandingPage() {
             >
               local files
             </Link>
+            <Link
+              href="/players"
+              className="text-sm text-overlay1 hover:text-text transition-colors duration-200"
+            >
+              players
+            </Link>
           </div>
         </div>
       </section>
