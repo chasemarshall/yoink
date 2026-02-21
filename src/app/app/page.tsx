@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Header from "@/components/Header";
 import SpotifyInput from "@/components/SpotifyInput";
 
@@ -36,6 +36,24 @@ export default function Home() {
   const [error, setError] = useState("");
   const [quality, setQuality] = useState<QualityInfo | null>(null);
   const abortRef = useRef(false);
+  const downloadTriggeredRef = useRef(false);
+
+  // Enter key triggers download when track/playlist is ready
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "Enter") return;
+      if (state !== "ready") return;
+      if (downloadTriggeredRef.current) return;
+      // Don't trigger if focused on the input
+      const active = document.activeElement;
+      if (active && active.tagName === "INPUT") return;
+      downloadTriggeredRef.current = true;
+      if (track) handleDownload();
+      else if (playlist) handleDownloadAll();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  });
 
   const handleSubmit = async (url: string) => {
     setState("fetching");
@@ -44,6 +62,7 @@ export default function Home() {
     setPlaylist(null);
     setTrackStatuses([]);
     abortRef.current = false;
+    downloadTriggeredRef.current = false;
 
     try {
       const res = await fetch("/api/metadata", {
