@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import DotPulse from "@/components/DotPulse";
 import LanguageProvider from "@/components/LanguageProvider";
 import "./globals.css";
 
@@ -55,6 +54,31 @@ export const metadata: Metadata = {
   },
 };
 
+// Static JSON-LD structured data for SEO - no user input, safe to inline
+const jsonLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "yoink",
+  url: "https://yoink.chasefrazier.dev",
+  description:
+    "Download Spotify tracks and playlists as high-quality 320kbps MP3 files with full metadata, album art, and lyrics.",
+  applicationCategory: "MultimediaApplication",
+  operatingSystem: "Any",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+  featureList: [
+    "Spotify track download",
+    "Spotify playlist download",
+    "ID3v2 metadata embedding",
+    "Album art embedding",
+    "Lyrics embedding",
+    "320kbps MP3 conversion",
+  ],
+});
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -65,36 +89,11 @@ export default function RootLayout({
       <head>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebApplication",
-              name: "yoink",
-              url: "https://yoink.chasefrazier.dev",
-              description:
-                "Download Spotify tracks and playlists as high-quality 320kbps MP3 files with full metadata, album art, and lyrics.",
-              applicationCategory: "MultimediaApplication",
-              operatingSystem: "Any",
-              offers: {
-                "@type": "Offer",
-                price: "0",
-                priceCurrency: "USD",
-              },
-              featureList: [
-                "Spotify track download",
-                "Spotify playlist download",
-                "ID3v2 metadata embedding",
-                "Album art embedding",
-                "Lyrics embedding",
-                "320kbps MP3 conversion",
-              ],
-            }),
-          }}
+          dangerouslySetInnerHTML={{ __html: jsonLd }}
         />
       </head>
       <body className="antialiased min-h-screen">
         <LanguageProvider>
-          <DotPulse />
           {children}
         </LanguageProvider>
         <Script
