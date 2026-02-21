@@ -154,7 +154,7 @@ export default function Home() {
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
         <div className="w-full max-w-xl space-y-8">
           {/* Title */}
-          <div className="space-y-3 animate-fade-in-up" style={{ opacity: 0, animationDelay: "0ms" }}>
+          <div className="space-y-3 animate-fade-in-up" style={{ opacity: 0 }}>
             <h1 className="text-4xl sm:text-5xl font-bold leading-tight">
               <span className="text-lavender">y</span>
               <span className="logo-expand" style={{ animationDelay: "0.3s" }}>o</span>
@@ -405,7 +405,17 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-surface0/40 px-6 py-4 flex items-center justify-between text-xs text-overlay0/50">
         <span>yoink</span>
-        <span>metadata included</span>
+        <div className="flex items-center gap-4">
+          <a
+            href="https://chasefrazier.dev/tip"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-peach transition-colors duration-200"
+          >
+            tip jar
+          </a>
+          <span>metadata included</span>
+        </div>
       </footer>
     </div>
   );
