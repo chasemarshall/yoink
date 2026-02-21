@@ -180,17 +180,35 @@ export default function HowPage() {
           style={{ opacity: 0 }}
         >
           <p className="text-xs text-overlay0 uppercase tracking-[0.3em]">
-            mobile sync
+            mobile
           </p>
-          <div className="border border-surface0/60 rounded-lg p-6 bg-mantle/40 space-y-3">
+          <div className="border border-surface0/60 rounded-lg p-6 bg-mantle/40 space-y-4">
             <p className="text-sm font-bold text-text">
               want local files on your phone?
             </p>
             <p className="text-sm text-overlay1 leading-relaxed">
-              add your local tracks to a playlist on desktop. open spotify on
-              your phone while on the same wifi network. the playlist will show
-              your local files — tap download and they&apos;re saved to your
-              device. no premium needed for local file sync.
+              transfer your mp3s to your phone however you like — airdrop,
+              files app, usb, cloud storage. then in the spotify app:
+            </p>
+            <div className="space-y-2 text-sm text-overlay1 leading-relaxed">
+              <p>
+                <span className="text-surface2">1.</span> tap your profile
+                picture → <span className="text-text font-bold">settings
+                and privacy</span>
+              </p>
+              <p>
+                <span className="text-surface2">2.</span> go
+                to <span className="text-text font-bold">apps and
+                devices</span>
+              </p>
+              <p>
+                <span className="text-surface2">3.</span> toggle <span className="text-text font-bold">local
+                audio files</span> on
+              </p>
+            </div>
+            <p className="text-sm text-overlay1 leading-relaxed">
+              your tracks show up in your library → local files. no premium
+              needed.
             </p>
           </div>
         </div>
