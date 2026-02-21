@@ -60,6 +60,36 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              name: "yoink",
+              url: "https://yoink.chasefrazier.dev",
+              description:
+                "Download Spotify tracks and playlists as high-quality 192kbps MP3 files with full metadata, album art, and lyrics.",
+              applicationCategory: "MultimediaApplication",
+              operatingSystem: "Any",
+              offers: {
+                "@type": "Offer",
+                price: "0",
+                priceCurrency: "USD",
+              },
+              featureList: [
+                "Spotify track download",
+                "Spotify playlist download",
+                "ID3v2 metadata embedding",
+                "Album art embedding",
+                "Lyrics embedding",
+                "192kbps MP3 conversion",
+              ],
+            }),
+          }}
+        />
+      </head>
       <body className="antialiased min-h-screen">
         {children}
         <Script
