@@ -99,6 +99,18 @@ async function getDeezerTrackData(
     console.log("[deezer] getUserData status:", tokenRes.status);
     if (!tokenRes.ok) return null;
 
+    // Capture sid cookie from response for CSRF validation
+    const setCookies = tokenRes.headers.getSetCookie?.() || [];
+    let sid = "";
+    for (const c of setCookies) {
+      const match = c.match(/sid=([^;]+)/);
+      if (match) {
+        sid = match[1];
+        break;
+      }
+    }
+    console.log("[deezer] sid cookie:", sid ? "present" : "missing");
+
     const tokenData = await tokenRes.json();
     const apiToken = tokenData.results?.checkForm;
     const userId = tokenData.results?.USER?.USER_ID;
@@ -108,13 +120,16 @@ async function getDeezerTrackData(
       return null;
     }
 
+    // Build cookie string with both arl and sid
+    const cookieHeader = sid ? `arl=${arl}; sid=${sid}` : `arl=${arl}`;
+
     // Get track data
     const trackRes = await fetch(
       `https://www.deezer.com/ajax/gw-light.php?method=song.getData&input=3&api_version=1.0&api_token=${apiToken}`,
       {
         method: "POST",
         headers: {
-          cookie: `arl=${arl}`,
+          cookie: cookieHeader,
           "content-type": "application/json",
         },
         body: JSON.stringify({ sng_id: deezerId }),
