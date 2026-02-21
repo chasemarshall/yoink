@@ -1,6 +1,6 @@
 import type { TrackInfo } from "./spotify";
 import { resolveSonglink } from "./songlink";
-import { fetchDeezerAudio } from "./deezer";
+import { fetchDeezerAudio, lookupDeezerByIsrc } from "./deezer";
 import { searchYouTube, getAudioStreamUrl } from "./youtube";
 
 export interface AudioResult {
@@ -10,17 +10,31 @@ export interface AudioResult {
   bitrate: number;
 }
 
+async function getDeezerIdForTrack(track: TrackInfo): Promise<string | null> {
+  // Fast path: ISRC lookup via Deezer public API (no rate limit)
+  if (track.isrc) {
+    console.log("[audio] looking up deezer by ISRC:", track.isrc);
+    const id = await lookupDeezerByIsrc(track.isrc);
+    if (id) return id;
+    console.log("[audio] ISRC lookup returned nothing");
+  }
+
+  // Slow path: Song.link (rate limited, used as fallback)
+  const links = await resolveSonglink(track.spotifyUrl);
+  return links?.deezerId || null;
+}
+
 async function tryDeezer(track: TrackInfo): Promise<AudioResult | null> {
   try {
     console.log("[audio] trying deezer for:", track.name);
-    const links = await resolveSonglink(track.spotifyUrl);
-    if (!links?.deezerId) {
-      console.log("[audio] songlink returned no deezer id", links);
+    const deezerId = await getDeezerIdForTrack(track);
+    if (!deezerId) {
+      console.log("[audio] no deezer id found");
       return null;
     }
 
-    console.log("[audio] got deezer id:", links.deezerId);
-    const result = await fetchDeezerAudio(links.deezerId, track);
+    console.log("[audio] got deezer id:", deezerId);
+    const result = await fetchDeezerAudio(deezerId, track);
     if (!result) {
       console.log("[audio] deezer fetch returned null");
       return null;
@@ -89,7 +103,7 @@ async function tryYouTube(track: TrackInfo): Promise<AudioResult> {
 }
 
 export async function fetchBestAudio(track: TrackInfo): Promise<AudioResult> {
-  // Try Deezer first (via Song.link)
+  // Try Deezer first (ISRC lookup, no rate limit)
   const deezerResult = await tryDeezer(track);
   if (deezerResult) return deezerResult;
 
