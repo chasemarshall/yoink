@@ -96,10 +96,13 @@ async function getDeezerTrackData(
         signal: AbortSignal.timeout(10000),
       }
     );
+    console.log("[deezer] getUserData status:", tokenRes.status);
     if (!tokenRes.ok) return null;
 
     const tokenData = await tokenRes.json();
     const apiToken = tokenData.results?.checkForm;
+    const userId = tokenData.results?.USER?.USER_ID;
+    console.log("[deezer] API token:", apiToken ? "present" : "missing", "USER_ID:", userId);
     if (!apiToken) {
       console.warn("[deezer] ARL token may be expired — no API token returned");
       return null;
@@ -118,11 +121,16 @@ async function getDeezerTrackData(
         signal: AbortSignal.timeout(10000),
       }
     );
+    console.log("[deezer] song.getData status:", trackRes.status);
     if (!trackRes.ok) return null;
 
     const trackData = await trackRes.json();
     const r = trackData.results;
-    if (!r?.SNG_ID || !r?.MD5_ORIGIN) return null;
+    console.log("[deezer] song.getData results keys:", r ? Object.keys(r).slice(0, 10) : "null", "error:", trackData.error);
+    if (!r?.SNG_ID || !r?.MD5_ORIGIN) {
+      console.log("[deezer] missing SNG_ID or MD5_ORIGIN — SNG_ID:", r?.SNG_ID, "MD5_ORIGIN:", r?.MD5_ORIGIN);
+      return null;
+    }
 
     return {
       SNG_ID: r.SNG_ID,
@@ -134,7 +142,8 @@ async function getDeezerTrackData(
       ISRC: r.ISRC || "",
       DURATION: r.DURATION || "0",
     };
-  } catch {
+  } catch (e) {
+    console.error("[deezer] getDeezerTrackData error:", e);
     return null;
   }
 }
