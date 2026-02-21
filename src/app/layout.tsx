@@ -10,13 +10,13 @@ export const metadata: Metadata = {
     description: "paste a spotify link. get the mp3. metadata included.",
     siteName: "yoink",
     type: "website",
-    images: [],
+    images: ["/og.png"],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "yoink — spotify downloader",
     description: "paste a spotify link. get the mp3. metadata included.",
-    images: [],
+    images: ["/og.png"],
   },
 };
 
