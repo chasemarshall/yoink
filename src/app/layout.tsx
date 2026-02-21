@@ -6,15 +6,17 @@ export const metadata: Metadata = {
   description: "paste a spotify link. get the mp3. metadata included.",
   metadataBase: new URL("https://yoink.chasefrazier.dev"),
   openGraph: {
-    title: "yoink",
+    title: "yoink — spotify downloader",
     description: "paste a spotify link. get the mp3. metadata included.",
     siteName: "yoink",
     type: "website",
+    images: [],
   },
   twitter: {
     card: "summary",
-    title: "yoink",
+    title: "yoink — spotify downloader",
     description: "paste a spotify link. get the mp3. metadata included.",
+    images: [],
   },
 };
 

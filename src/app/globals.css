@@ -183,10 +183,11 @@ body {
 
 .logo-expand {
   display: inline-block;
-  vertical-align: baseline;
+  vertical-align: top;
   max-width: 0;
   opacity: 0;
   overflow: hidden;
+  line-height: inherit;
   animation: expand-letter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
