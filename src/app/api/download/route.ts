@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 
     if (!url.includes("spotify.com/track") && !url.includes("spotify:track:")) {
       return NextResponse.json(
-        { error: "Invalid Spotify track URL" },
+        { error: "paste a track or playlist link — artist and album pages aren't supported yet" },
         { status: 400 }
       );
     }

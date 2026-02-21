@@ -73,6 +73,12 @@ export default function LandingPage() {
             >
               how it works
             </a>
+            <Link
+              href="/how"
+              className="text-sm text-overlay1 hover:text-text transition-colors duration-200"
+            >
+              local files
+            </Link>
           </div>
         </div>
       </section>

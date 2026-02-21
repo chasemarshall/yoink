@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     if (!urlType) {
       return NextResponse.json(
-        { error: "Please provide a valid Spotify track or playlist URL" },
+        { error: "paste a track or playlist link — artist and album pages aren't supported yet" },
         { status: 400 }
       );
     }
