@@ -36,7 +36,7 @@ export default function FormatToggle({ value, onChange, disabled }: FormatToggle
             type="button"
             onClick={() => onChange(f.id)}
             disabled={disabled}
-            className={`format-btn relative z-10 px-3 py-1.5 text-[10px] uppercase tracking-widest font-bold transition-colors duration-200 disabled:opacity-50 ${
+            className={`format-btn relative z-10 w-14 py-1.5 text-center text-[10px] uppercase tracking-widest font-bold transition-colors duration-200 disabled:opacity-50 ${
               value === f.id ? f.color : "text-overlay0/50 hover:text-overlay0"
             }`}
           >
