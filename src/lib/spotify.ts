@@ -63,6 +63,7 @@ export interface TrackInfo {
   duration: string;
   durationMs: number;
   isrc: string | null;
+  genre: string | null;
   spotifyUrl: string;
 }
 
@@ -79,6 +80,25 @@ export async function getTrackInfo(url: string): Promise<TrackInfo> {
 
   const data = await res.json();
 
+  // Fetch genre from primary artist
+  let genre: string | null = null;
+  try {
+    const artistId = data.artists[0]?.id;
+    if (artistId) {
+      const artistRes = await fetch(`https://api.spotify.com/v1/artists/${artistId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (artistRes.ok) {
+        const artistData = await artistRes.json();
+        if (artistData.genres?.length > 0) {
+          genre = artistData.genres[0];
+        }
+      }
+    }
+  } catch {
+    // Skip genre on failure
+  }
+
   return {
     name: data.name,
     artist: data.artists.map((a: { name: string }) => a.name).join(", "),
@@ -87,6 +107,7 @@ export async function getTrackInfo(url: string): Promise<TrackInfo> {
     duration: formatDuration(data.duration_ms),
     durationMs: data.duration_ms,
     isrc: data.external_ids?.isrc || null,
+    genre,
     spotifyUrl: data.external_urls.spotify,
   };
 }
@@ -111,9 +132,34 @@ export async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
 
   const data = await res.json();
 
-  const tracks: TrackInfo[] = data.tracks.items
-    .filter((item: { track: unknown }) => item.track)
-    .map((item: { track: { name: string; artists: { name: string }[]; album: { name: string; images: { url: string }[] }; duration_ms: number; external_ids?: { isrc?: string }; external_urls: { spotify: string } } }) => ({
+  const validItems = data.tracks.items.filter((item: { track: unknown }) => item.track);
+
+  // Batch fetch artist genres (up to 50 per request)
+  const genreMap = new Map<string, string>();
+  try {
+    const artistIds = [...new Set(
+      validItems.map((item: { track: { artists: { id: string }[] } }) => item.track.artists[0]?.id).filter(Boolean)
+    )] as string[];
+    for (let i = 0; i < artistIds.length; i += 50) {
+      const batch = artistIds.slice(i, i + 50);
+      const artistRes = await fetch(`https://api.spotify.com/v1/artists?ids=${batch.join(",")}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (artistRes.ok) {
+        const artistData = await artistRes.json();
+        for (const artist of artistData.artists) {
+          if (artist?.genres?.length > 0) {
+            genreMap.set(artist.id, artist.genres[0]);
+          }
+        }
+      }
+    }
+  } catch {
+    // Skip genres on failure
+  }
+
+  const tracks: TrackInfo[] = validItems
+    .map((item: { track: { name: string; artists: { id: string; name: string }[]; album: { name: string; images: { url: string }[] }; duration_ms: number; external_ids?: { isrc?: string }; external_urls: { spotify: string } } }) => ({
       name: item.track.name,
       artist: item.track.artists.map((a) => a.name).join(", "),
       album: item.track.album.name,
@@ -121,6 +167,7 @@ export async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
       duration: formatDuration(item.track.duration_ms),
       durationMs: item.track.duration_ms,
       isrc: item.track.external_ids?.isrc || null,
+      genre: genreMap.get(item.track.artists[0]?.id) || null,
       spotifyUrl: item.track.external_urls.spotify,
     }));
 
