@@ -110,8 +110,8 @@ export default function Home() {
       const audioBitrate = res.headers.get("X-Audio-Quality") || "~160";
       const audioFormat = res.headers.get("X-Audio-Format") || "mp3";
 
-      const extMap: Record<string, string> = { flac: "flac", alac: "m4a", mp3: "mp3" };
-      const ext = extMap[audioFormat] || "mp3";
+      const extMap: Record<string, string> = { flac: "flac", m4a: "m4a", alac: "m4a", mp3: "mp3" };
+      const ext = extMap[audioFormat] || audioFormat;
       const blob = await res.blob();
       const downloadUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
