@@ -167,6 +167,11 @@ export default function LandingPage() {
               server-side and stream directly to your browser. nothing is logged
               or saved after the request completes.
             </p>
+            <p className="text-overlay0/80 text-xs">
+              yoink is intended for personal use only — downloading music you
+              already own or have the right to access. we don&apos;t host or
+              store any copyrighted content. use responsibly.
+            </p>
           </div>
         </div>
       </section>
