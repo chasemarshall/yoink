@@ -31,7 +31,13 @@ export default function SpotifyInput({ onSubmit, disabled, clear }: SpotifyInput
     try {
       const text = await navigator.clipboard.readText();
       setUrl(text);
-      if (text.includes("spotify.com")) onSubmit(text.trim());
+      if (
+        text.includes("spotify.com") ||
+        text.includes("music.apple.com") ||
+        text.includes("youtube.com/watch") ||
+        text.includes("youtu.be/") ||
+        text.includes("music.youtube.com")
+      ) onSubmit(text.trim());
     } catch {
       // Clipboard access denied — user can type manually
     }

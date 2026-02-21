@@ -11,7 +11,9 @@ import {
 } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
-import { getTrackInfo } from "@/lib/spotify";
+import { getTrackInfo, detectPlatform, extractYouTubeId } from "@/lib/spotify";
+import { getYouTubeTrackInfo } from "@/lib/youtube";
+import { resolveToSpotify } from "@/lib/songlink";
 import { fetchBestAudio } from "@/lib/audio-sources";
 import { fetchLyrics } from "@/lib/lyrics";
 import { rateLimit } from "@/lib/ratelimit";
@@ -58,15 +60,44 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "URL is required" }, { status: 400 });
     }
 
-    if (!url.includes("spotify.com/track") && !url.includes("spotify:track:")) {
+    const platform = detectPlatform(url);
+    if (!platform) {
       return NextResponse.json(
-        { error: "paste a track or playlist link — artist and album pages aren't supported yet" },
+        { error: "paste a spotify, apple music, or youtube link" },
         { status: 400 }
       );
     }
 
-    // Step 1: Get track metadata from Spotify
-    const track = await getTrackInfo(url);
+    // Step 1: Resolve to Spotify track info
+    let track;
+    let youtubeVideoId: string | null = null;
+
+    if (platform === "apple-music") {
+      const resolved = await resolveToSpotify(url);
+      if (!resolved?.spotifyUrl) {
+        return NextResponse.json({ error: "couldn't match this to spotify" }, { status: 404 });
+      }
+      track = await getTrackInfo(resolved.spotifyUrl);
+    } else if (platform === "youtube") {
+      youtubeVideoId = extractYouTubeId(url);
+      if (!youtubeVideoId) {
+        return NextResponse.json({ error: "invalid youtube link" }, { status: 400 });
+      }
+      // Try to find Spotify match for metadata + Deezer audio
+      const resolved = await resolveToSpotify(url);
+      if (resolved?.spotifyUrl) {
+        try {
+          track = await getTrackInfo(resolved.spotifyUrl);
+        } catch {
+          // Fall through to YouTube-only metadata
+        }
+      }
+      if (!track) {
+        track = await getYouTubeTrackInfo(youtubeVideoId);
+      }
+    } else {
+      track = await getTrackInfo(url);
+    }
 
     // Step 2: Fetch best audio + lyrics in parallel
     const [audio, lyrics] = await Promise.all([

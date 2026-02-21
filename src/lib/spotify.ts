@@ -49,6 +49,19 @@ export function detectUrlType(url: string): "track" | "playlist" | null {
   return null;
 }
 
+export function detectPlatform(url: string): "spotify" | "apple-music" | "youtube" | null {
+  if (url.includes("spotify.com") || url.includes("spotify:")) return "spotify";
+  if (url.includes("music.apple.com")) return "apple-music";
+  if (url.includes("youtube.com/watch") || url.includes("youtu.be/") || url.includes("music.youtube.com")) return "youtube";
+  return null;
+}
+
+export function extractYouTubeId(url: string): string | null {
+  // youtube.com/watch?v=ID or youtu.be/ID or music.youtube.com/watch?v=ID
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|music\.youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/);
+  return match ? match[1] : null;
+}
+
 function formatDuration(ms: number): string {
   const minutes = Math.floor(ms / 60000);
   const seconds = Math.floor((ms % 60000) / 1000);

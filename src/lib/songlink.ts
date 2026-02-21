@@ -5,6 +5,59 @@ interface SonglinkResult {
   tidalId: string | null;
 }
 
+interface SonglinkResolveResult {
+  spotifyUrl: string | null;
+  deezerId: string | null;
+}
+
+// Resolve any music URL to a Spotify URL via Song.link
+export async function resolveToSpotify(
+  url: string
+): Promise<SonglinkResolveResult | null> {
+  if (process.env.SONGLINK_ENABLED !== "true") return null;
+
+  const { allowed } = rateLimit("songlink:global", 8, 60_000);
+  if (!allowed) return null;
+
+  const now = Date.now();
+  const timeSinceLast = now - lastRequestTime;
+  if (lastRequestTime > 0 && timeSinceLast < 7000) {
+    await new Promise((resolve) => setTimeout(resolve, 7000 - timeSinceLast));
+  }
+
+  try {
+    lastRequestTime = Date.now();
+
+    const res = await fetch(
+      `https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(url)}&userCountry=US`,
+      { signal: AbortSignal.timeout(10000) }
+    );
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+
+    let spotifyUrl: string | null = null;
+    const spotifyEntity = data.linksByPlatform?.spotify;
+    if (spotifyEntity?.url) {
+      spotifyUrl = spotifyEntity.url;
+    }
+
+    let deezerId: string | null = null;
+    const deezerEntity = data.linksByPlatform?.deezer;
+    if (deezerEntity?.entityUniqueId) {
+      const deezerData = data.entitiesByUniqueId?.[deezerEntity.entityUniqueId];
+      if (deezerData?.id) {
+        deezerId = String(deezerData.id);
+      }
+    }
+
+    return { spotifyUrl, deezerId };
+  } catch {
+    return null;
+  }
+}
+
 // In-memory cache with 1-hour TTL
 const cache = new Map<string, { result: SonglinkResult; expiresAt: number }>();
 

@@ -34,6 +34,7 @@ export default function Home() {
   const [state, setState] = useState<AppState>("idle");
   const [track, setTrack] = useState<TrackInfo | null>(null);
   const [playlist, setPlaylist] = useState<PlaylistInfo | null>(null);
+  const [originalUrl, setOriginalUrl] = useState("");
   const [trackStatuses, setTrackStatuses] = useState<TrackStatus[]>([]);
   const [error, setError] = useState("");
   const [quality, setQuality] = useState<QualityInfo | null>(null);
@@ -65,6 +66,7 @@ export default function Home() {
     setTrack(null);
     setPlaylist(null);
     setTrackStatuses([]);
+    setOriginalUrl(url);
     abortRef.current = false;
     downloadTriggeredRef.current = false;
 
@@ -97,10 +99,11 @@ export default function Home() {
 
   const downloadTrack = useCallback(async (trackInfo: TrackInfo): Promise<QualityInfo | false> => {
     try {
+      const trackUrl = trackInfo.spotifyUrl || originalUrl;
       const res = await fetch("/api/download", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: trackInfo.spotifyUrl, format }),
+        body: JSON.stringify({ url: trackUrl, format }),
       });
 
       if (!res.ok) {
@@ -127,7 +130,7 @@ export default function Home() {
     } catch {
       return false;
     }
-  }, [format]);
+  }, [format, originalUrl]);
 
   const handleDownload = async () => {
     if (!track) return;
