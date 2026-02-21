@@ -12,19 +12,29 @@ export interface AudioResult {
 
 async function tryDeezer(track: TrackInfo): Promise<AudioResult | null> {
   try {
+    console.log("[audio] trying deezer for:", track.name);
     const links = await resolveSonglink(track.spotifyUrl);
-    if (!links?.deezerId) return null;
+    if (!links?.deezerId) {
+      console.log("[audio] songlink returned no deezer id", links);
+      return null;
+    }
 
+    console.log("[audio] got deezer id:", links.deezerId);
     const result = await fetchDeezerAudio(links.deezerId, track);
-    if (!result) return null;
+    if (!result) {
+      console.log("[audio] deezer fetch returned null");
+      return null;
+    }
 
+    console.log("[audio] deezer success:", result.format, result.bitrate + "kbps");
     return {
       buffer: result.buffer,
       source: "deezer",
       format: result.format,
       bitrate: result.bitrate,
     };
-  } catch {
+  } catch (e) {
+    console.error("[audio] deezer error:", e);
     return null;
   }
 }

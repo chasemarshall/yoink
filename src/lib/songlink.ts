@@ -14,7 +14,10 @@ let lastRequestTime = 0;
 export async function resolveSonglink(
   spotifyUrl: string
 ): Promise<SonglinkResult | null> {
-  if (process.env.SONGLINK_ENABLED !== "true") return null;
+  if (process.env.SONGLINK_ENABLED !== "true") {
+    console.log("[songlink] disabled — SONGLINK_ENABLED:", process.env.SONGLINK_ENABLED);
+    return null;
+  }
 
   // Check cache
   const cached = cache.get(spotifyUrl);
@@ -41,7 +44,10 @@ export async function resolveSonglink(
       { signal: AbortSignal.timeout(10000) }
     );
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.log("[songlink] API error:", res.status);
+      return null;
+    }
 
     const data = await res.json();
 
