@@ -22,7 +22,7 @@ export default function Icon() {
           letterSpacing: "-1px",
         }}
       >
-        <span style={{ color: "#cdd6f4" }}>y</span>
+        <span style={{ color: "#b4befe" }}>y</span>
         <span style={{ color: "#b4befe" }}>k</span>
       </div>
     ),

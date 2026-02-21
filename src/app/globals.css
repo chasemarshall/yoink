@@ -166,6 +166,29 @@ body {
   animation: pulse-glow 3s ease-in-out infinite;
 }
 
+/* Logo expand animation: yk → yoink */
+@keyframes expand-letter {
+  0% {
+    max-width: 0;
+    opacity: 0;
+  }
+  50% {
+    opacity: 0;
+  }
+  100% {
+    max-width: 1.2ch;
+    opacity: 1;
+  }
+}
+
+.logo-expand {
+  display: inline-block;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  animation: expand-letter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
