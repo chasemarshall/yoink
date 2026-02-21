@@ -14,6 +14,15 @@ interface Player {
 
 const mac: Player[] = [
   {
+    name: "Apple Music",
+    desc: "already on your mac. import FLAC files directly, it plays them lossless without converting. shows embedded lyrics automatically. no subscription needed for local files.",
+    url: "https://www.apple.com/apple-music/",
+    flac: true,
+    lyrics: true,
+    free: true,
+    note: "already installed",
+  },
+  {
     name: "foobar2000",
     desc: "the gold standard. lightweight, no bloat, bit-perfect playback. plugin ecosystem is smaller on mac but it reads embedded lyrics in the properties view.",
     url: "https://www.foobar2000.org/mac",
@@ -89,6 +98,15 @@ const windows: Player[] = [
 ];
 
 const ios: Player[] = [
+  {
+    name: "Apple Music",
+    desc: "already on your iPhone. sync FLAC files from your mac or import via files app. plays lossless natively and shows embedded lyrics. no subscription needed for local files.",
+    url: "https://apps.apple.com/app/apple-music/id1108187390",
+    flac: true,
+    lyrics: true,
+    free: true,
+    note: "already installed",
+  },
   {
     name: "foobar2000",
     desc: "yes, it's on iOS too. plays FLAC files you transfer over, gapless playback, simple and clean interface.",
