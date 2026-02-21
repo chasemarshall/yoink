@@ -188,9 +188,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "URL is required" }, { status: 400 });
     }
 
+    const MAX_TRACKS = 100;
+
     const playlist = await getPlaylistInfo(url);
     if (!playlist.tracks.length) {
       return NextResponse.json({ error: "Playlist has no tracks" }, { status: 400 });
+    }
+    if (playlist.tracks.length > MAX_TRACKS) {
+      return NextResponse.json(
+        { error: `playlist too large — max ${MAX_TRACKS} tracks on free tier` },
+        { status: 400 }
+      );
     }
 
     // Stream progress events, then the zip binary

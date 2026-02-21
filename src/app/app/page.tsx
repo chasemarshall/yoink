@@ -167,75 +167,89 @@ export default function Home() {
       }
 
       const reader = res.body!.getReader();
-      const chunks: Uint8Array[] = [];
-      let textBuffer = "";
+      const zipChunks: Uint8Array[] = [];
+      let byteBuffer = new Uint8Array(0);
       let zipFilename = `${playlist.name}.zip`;
       let zipStarted = false;
+
+      const handleEvent = (event: { type: string; indices?: number[]; index?: number; error?: string; filename?: string }) => {
+        if (event.type === "batch") {
+          setTrackStatuses((prev) => {
+            const next = [...prev];
+            for (const idx of event.indices!) next[idx] = "downloading";
+            return next;
+          });
+        } else if (event.type === "done") {
+          setTrackStatuses((prev) => {
+            const next = [...prev];
+            next[event.index!] = "done";
+            return next;
+          });
+        } else if (event.type === "error") {
+          setTrackStatuses((prev) => {
+            const next = [...prev];
+            next[event.index!] = "error";
+            return next;
+          });
+        } else if (event.type === "fatal") {
+          throw new Error(event.error);
+        } else if (event.type === "zip") {
+          zipFilename = event.filename || zipFilename;
+          zipStarted = true;
+        }
+      };
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         if (zipStarted) {
-          // After zip marker, all data is binary zip
-          chunks.push(value);
+          zipChunks.push(value);
           continue;
         }
 
-        // Try to parse as text (progress events are newline-delimited JSON)
-        const text = new TextDecoder().decode(value);
-        textBuffer += text;
+        // Process at byte level to avoid TextDecoder corrupting binary data
+        const combined = new Uint8Array(byteBuffer.length + value.length);
+        combined.set(byteBuffer);
+        combined.set(value, byteBuffer.length);
+        byteBuffer = combined;
 
-        const lines = textBuffer.split("\n");
-        // Keep the last incomplete line in the buffer
-        textBuffer = lines.pop() || "";
+        // Parse complete lines (newline = 0x0A)
+        while (true) {
+          const newlineIdx = byteBuffer.indexOf(0x0A);
+          if (newlineIdx === -1) break;
 
-        for (const line of lines) {
-          if (!line.trim()) continue;
+          const lineBytes = byteBuffer.slice(0, newlineIdx);
+          byteBuffer = byteBuffer.slice(newlineIdx + 1);
+
+          const line = new TextDecoder().decode(lineBytes).trim();
+          if (!line) continue;
+
           try {
             const event = JSON.parse(line);
+            handleEvent(event);
 
-            if (event.type === "batch") {
-              // Mark batch tracks as downloading
-              setTrackStatuses((prev) => {
-                const next = [...prev];
-                for (const idx of event.indices) next[idx] = "downloading";
-                return next;
-              });
-            } else if (event.type === "done") {
-              setTrackStatuses((prev) => {
-                const next = [...prev];
-                next[event.index] = "done";
-                return next;
-              });
-            } else if (event.type === "error") {
-              setTrackStatuses((prev) => {
-                const next = [...prev];
-                next[event.index] = "error";
-                return next;
-              });
-            } else if (event.type === "fatal") {
-              throw new Error(event.error);
-            } else if (event.type === "zip") {
-              zipFilename = event.filename;
-              zipStarted = true;
-              // Any remaining data in textBuffer is binary zip data
-              if (textBuffer.length > 0) {
-                chunks.push(new TextEncoder().encode(textBuffer));
-                textBuffer = "";
-              }
+            // After zip event, remaining buffer is binary zip data
+            if (zipStarted && byteBuffer.length > 0) {
+              zipChunks.push(byteBuffer);
+              byteBuffer = new Uint8Array(0);
+              break;
             }
-          } catch (e) {
-            // If JSON parse fails and zip has started, it's binary data
-            if (zipStarted) {
-              chunks.push(new TextEncoder().encode(line + "\n"));
-            }
+          } catch {
+            // Skip malformed lines
           }
         }
       }
 
       // Assemble zip and trigger download
-      const zipBlob = new Blob(chunks.map((c) => c.buffer as ArrayBuffer), { type: "application/zip" });
+      const totalSize = zipChunks.reduce((sum, c) => sum + c.length, 0);
+      const zipArray = new Uint8Array(totalSize);
+      let offset = 0;
+      for (const chunk of zipChunks) {
+        zipArray.set(chunk, offset);
+        offset += chunk.length;
+      }
+      const zipBlob = new Blob([zipArray], { type: "application/zip" });
       const downloadUrl = URL.createObjectURL(zipBlob);
       const a = document.createElement("a");
       a.href = downloadUrl;
