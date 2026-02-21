@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import DotPulse from "@/components/DotPulse";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -91,6 +92,7 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased min-h-screen">
+        <DotPulse />
         {children}
         <Script
           defer
