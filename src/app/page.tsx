@@ -167,10 +167,17 @@ export default function LandingPage() {
               server-side and stream directly to your browser. nothing is logged
               or saved after the request completes.
             </p>
-            <p className="text-overlay0/80 text-xs">
-              yoink is intended for personal use only — downloading music you
-              already own or have the right to access. we don&apos;t host or
-              store any copyrighted content. use responsibly.
+            <p className="text-overlay0/70 text-xs leading-relaxed">
+              yoink is not affiliated with, endorsed by, or connected to
+              spotify AB in any way. &quot;spotify&quot; is a trademark of
+              spotify AB — we use the name for context only, not to claim
+              ownership. yoink does not host any copyrighted material. audio
+              is fetched through third-party services at the time of your
+              request and is never stored on our servers. this tool is
+              intended for personal use — downloading music you already own
+              or have the right to access. please respect the rights of
+              artists and copyright holders. by using yoink, you agree to
+              take responsibility for how you use it.
             </p>
           </div>
         </div>
