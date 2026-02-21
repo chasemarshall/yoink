@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -27,7 +28,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased min-h-screen">{children}</body>
+      <body className="antialiased min-h-screen">
+        {children}
+        <Script
+          defer
+          src="https://umami-production-95b1.up.railway.app/script.js"
+          data-website-id="eea5d900-bc1a-456f-a5c7-463d9afccb09"
+        />
+      </body>
     </html>
   );
 }
