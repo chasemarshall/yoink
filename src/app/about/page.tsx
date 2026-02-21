@@ -51,7 +51,10 @@ export default function AboutPage() {
           </p>
           <h1 className="text-5xl sm:text-7xl font-bold leading-[0.95] tracking-tight">
             <span className="text-lavender">y</span>
-            <span className="text-text">oink</span>
+            <span className="logo-expand" style={{ animationDelay: "0.3s" }}>o</span>
+            <span className="logo-expand" style={{ animationDelay: "0.4s" }}>i</span>
+            <span className="logo-expand" style={{ animationDelay: "0.5s" }}>n</span>
+            <span className="text-lavender">k</span>
           </h1>
           <p className="text-lg text-subtext0/80 leading-relaxed max-w-md">
             grab any spotify track or playlist as a high-quality mp3.
