@@ -1,4 +1,4 @@
-import { createHash, createDecipheriv } from "crypto";
+import { createHash, createDecipheriv, createCipheriv } from "crypto";
 import type { TrackInfo } from "./spotify";
 
 const DEEZER_MASTER_KEY = "g4el58wc0zvf9na1";
@@ -12,6 +12,13 @@ interface DeezerTrackData {
   FILESIZE_FLAC: string;
   ISRC: string;
   DURATION: string;
+  TRACK_TOKEN: string;
+}
+
+interface DeezerSession {
+  trackData: DeezerTrackData;
+  licenseToken: string;
+  cookieHeader: string;
 }
 
 interface DeezerAudioResult {
@@ -73,22 +80,53 @@ function buildCdnUrl(
   // Pad to multiple of 16
   const padded = step2 + "\x00".repeat((16 - (step2.length % 16)) % 16);
   const aesKey = Buffer.from("jo6aey6haid2Teih", "ascii");
-  const { createCipheriv } = require("crypto");
-  const cipher = createCipheriv("aes-128-ecb", aesKey, null);
+  const cipher = createCipheriv("aes-128-ecb", aesKey, null as unknown as Buffer);
   cipher.setAutoPadding(false);
   const encrypted = Buffer.concat([
     cipher.update(padded, "ascii"),
     cipher.final(),
   ]);
-  return `https://e-cdns-proxy-${md5Origin[0]}.dzcdn.net/mobile/1/${encrypted.toString("hex")}`;
+  return `https://cdns-proxy-${md5Origin[0]}.dzcdn.net/mobile/1/${encrypted.toString("hex")}`;
 }
 
-async function getDeezerTrackData(
+// Alternative: use Deezer's media API to get a direct streaming URL
+async function getMediaUrl(
+  trackToken: string,
+  format: "MP3_128" | "MP3_320" | "FLAC",
+  licenseToken: string
+): Promise<string | null> {
+  try {
+    const res = await fetch("https://media.deezer.com/v1/get_url", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        license_token: licenseToken,
+        media: [
+          {
+            type: "FULL",
+            formats: [{ cipher: "BF_CBC_STRIPE", format }],
+          },
+        ],
+        track_tokens: [trackToken],
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const url = data.data?.[0]?.media?.[0]?.sources?.[0]?.url;
+    return url || null;
+  } catch {
+    return null;
+  }
+}
+
+async function getDeezerSession(
   deezerId: string,
   arl: string
-): Promise<DeezerTrackData | null> {
+): Promise<DeezerSession | null> {
   try {
-    // Get API token first
+    // Get API token + license token first
     const tokenRes = await fetch(
       "https://www.deezer.com/ajax/gw-light.php?method=deezer.getUserData&input=3&api_version=1.0&api_token=",
       {
@@ -114,7 +152,8 @@ async function getDeezerTrackData(
     const tokenData = await tokenRes.json();
     const apiToken = tokenData.results?.checkForm;
     const userId = tokenData.results?.USER?.USER_ID;
-    console.log("[deezer] API token:", apiToken ? "present" : "missing", "USER_ID:", userId);
+    const licenseToken = tokenData.results?.USER?.OPTIONS?.license_token || "";
+    console.log("[deezer] API token:", apiToken ? "present" : "missing", "USER_ID:", userId, "license_token:", licenseToken ? "present" : "missing");
     if (!apiToken) {
       console.warn("[deezer] ARL token may be expired — no API token returned");
       return null;
@@ -148,17 +187,22 @@ async function getDeezerTrackData(
     }
 
     return {
-      SNG_ID: r.SNG_ID,
-      MD5_ORIGIN: r.MD5_ORIGIN,
-      MEDIA_VERSION: r.MEDIA_VERSION,
-      FILESIZE_MP3_320: r.FILESIZE_MP3_320 || "0",
-      FILESIZE_MP3_128: r.FILESIZE_MP3_128 || "0",
-      FILESIZE_FLAC: r.FILESIZE_FLAC || "0",
-      ISRC: r.ISRC || "",
-      DURATION: r.DURATION || "0",
+      trackData: {
+        SNG_ID: r.SNG_ID,
+        MD5_ORIGIN: r.MD5_ORIGIN,
+        MEDIA_VERSION: r.MEDIA_VERSION,
+        FILESIZE_MP3_320: r.FILESIZE_MP3_320 || "0",
+        FILESIZE_MP3_128: r.FILESIZE_MP3_128 || "0",
+        FILESIZE_FLAC: r.FILESIZE_FLAC || "0",
+        ISRC: r.ISRC || "",
+        DURATION: r.DURATION || "0",
+        TRACK_TOKEN: r.TRACK_TOKEN || "",
+      },
+      licenseToken,
+      cookieHeader,
     };
   } catch (e) {
-    console.error("[deezer] getDeezerTrackData error:", e);
+    console.error("[deezer] getDeezerSession error:", e);
     return null;
   }
 }
@@ -197,17 +241,19 @@ export async function fetchDeezerAudio(
   console.log("[deezer] ARL token present, length:", arl.length);
 
   try {
-    const trackData = await getDeezerTrackData(deezerId, arl);
-    if (!trackData) {
-      console.log("[deezer] getDeezerTrackData returned null — ARL may be expired");
+    const session = await getDeezerSession(deezerId, arl);
+    if (!session) {
+      console.log("[deezer] getDeezerSession returned null — ARL may be expired");
       return null;
     }
+    const { trackData, licenseToken } = session;
     console.log("[deezer] got track data:", {
       SNG_ID: trackData.SNG_ID,
       ISRC: trackData.ISRC,
       DURATION: trackData.DURATION,
       MP3_320: trackData.FILESIZE_MP3_320,
       MP3_128: trackData.FILESIZE_MP3_128,
+      TRACK_TOKEN: trackData.TRACK_TOKEN ? "present" : "missing",
     });
 
     // Verify this is the right track
@@ -217,35 +263,52 @@ export async function fetchDeezerAudio(
     }
 
     // Pick best available format: prefer 320kbps MP3, then 128kbps
-    let format: 1 | 3 | 9 = 3;
+    let mediaFormat: "MP3_320" | "MP3_128" = "MP3_320";
+    let cdnFormat: 1 | 3 | 9 = 3;
     let bitrate = 320;
-    let outputFormat: "mp3" | "flac" = "mp3";
 
     if (parseInt(trackData.FILESIZE_MP3_320) > 0) {
-      format = 3;
+      mediaFormat = "MP3_320";
+      cdnFormat = 3;
       bitrate = 320;
     } else if (parseInt(trackData.FILESIZE_MP3_128) > 0) {
-      format = 1;
+      mediaFormat = "MP3_128";
+      cdnFormat = 1;
       bitrate = 128;
     } else {
       console.log("[deezer] no MP3 format available");
       return null;
     }
-    console.log("[deezer] using format:", format, "bitrate:", bitrate);
+    console.log("[deezer] using format:", mediaFormat, "bitrate:", bitrate);
 
-    const cdnUrl = buildCdnUrl(
-      trackData.MD5_ORIGIN,
-      trackData.MEDIA_VERSION,
-      trackData.SNG_ID,
-      format
-    );
-    console.log("[deezer] CDN URL:", cdnUrl.substring(0, 80) + "...");
+    // Try media API first (returns direct streaming URL, better compatibility)
+    let audioUrl: string | null = null;
+    if (trackData.TRACK_TOKEN && licenseToken) {
+      console.log("[deezer] trying media API...");
+      audioUrl = await getMediaUrl(trackData.TRACK_TOKEN, mediaFormat, licenseToken);
+      if (audioUrl) {
+        console.log("[deezer] media API URL:", audioUrl.substring(0, 80) + "...");
+      } else {
+        console.log("[deezer] media API returned no URL");
+      }
+    }
 
-    const audioRes = await fetch(cdnUrl, {
+    // Fall back to constructed CDN URL
+    if (!audioUrl) {
+      audioUrl = buildCdnUrl(
+        trackData.MD5_ORIGIN,
+        trackData.MEDIA_VERSION,
+        trackData.SNG_ID,
+        cdnFormat
+      );
+      console.log("[deezer] using CDN URL:", audioUrl.substring(0, 80) + "...");
+    }
+
+    const audioRes = await fetch(audioUrl, {
       signal: AbortSignal.timeout(30000),
     });
     if (!audioRes.ok) {
-      console.log("[deezer] CDN fetch failed:", audioRes.status);
+      console.log("[deezer] audio fetch failed:", audioRes.status);
       return null;
     }
 
@@ -255,7 +318,7 @@ export async function fetchDeezerAudio(
 
     const decrypted = decryptAudio(encrypted, trackData.SNG_ID);
 
-    return { buffer: decrypted, format: outputFormat, bitrate };
+    return { buffer: decrypted, format: "mp3", bitrate };
   } catch (e) {
     console.error("[deezer] Fetch failed:", e);
     return null;
