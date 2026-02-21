@@ -88,21 +88,16 @@ export default function AboutPage() {
           >
             what you get
           </p>
-          <div className="space-y-12">
+          <div className="space-y-6">
             {features.map((f, i) => (
               <div
                 key={f.label}
-                className="group animate-fade-in-up"
-                style={{ opacity: 0, animationDelay: `${i * 100}ms` }}
+                className="animate-fade-in-up flex items-baseline gap-3"
+                style={{ opacity: 0, animationDelay: `${i * 80}ms` }}
               >
-                <div className="flex items-start gap-6">
-                  <span className="text-xs text-lavender/60 font-bold uppercase tracking-wider pt-1.5 flex-shrink-0 w-20">
-                    {f.label}
-                  </span>
-                  <p className="text-base text-subtext0 leading-relaxed">
-                    {f.desc}
-                  </p>
-                </div>
+                <span className="text-sm text-surface2 flex-shrink-0">[*]</span>
+                <span className="text-sm font-bold text-text">{f.label}</span>
+                <span className="text-sm text-subtext0">{f.desc}</span>
               </div>
             ))}
           </div>
