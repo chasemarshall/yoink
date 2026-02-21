@@ -43,9 +43,21 @@ export function extractPlaylistId(url: string): string | null {
   return match ? match[1] : null;
 }
 
-export function detectUrlType(url: string): "track" | "playlist" | null {
+export function extractAlbumId(url: string): string | null {
+  const match = url.match(/album[/:]([a-zA-Z0-9]+)/);
+  return match ? match[1] : null;
+}
+
+export function extractArtistId(url: string): string | null {
+  const match = url.match(/artist[/:]([a-zA-Z0-9]+)/);
+  return match ? match[1] : null;
+}
+
+export function detectUrlType(url: string): "track" | "playlist" | "album" | "artist" | null {
   if (extractTrackId(url)) return "track";
   if (extractPlaylistId(url)) return "playlist";
+  if (extractAlbumId(url)) return "album";
+  if (extractArtistId(url)) return "artist";
   return null;
 }
 
@@ -190,6 +202,117 @@ export async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
   return {
     name: data.name,
     image: data.images?.[0]?.url || "",
+    tracks,
+  };
+}
+
+export async function getAlbumInfo(url: string): Promise<PlaylistInfo> {
+  const albumId = extractAlbumId(url);
+  if (!albumId) throw new Error("Invalid Spotify album URL");
+
+  const token = await getAccessToken();
+  const res = await fetch(
+    `https://api.spotify.com/v1/albums/${albumId}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+
+  if (!res.ok) throw new Error("Album not found");
+
+  const data = await res.json();
+
+  // Album track items are track objects directly (not wrapped in {track})
+  const validItems = data.tracks.items.filter((item: { id: string }) => item.id);
+
+  // Batch fetch artist genres
+  const genreMap = new Map<string, string>();
+  try {
+    const artistIds = [...new Set(
+      validItems.map((item: { artists: { id: string }[] }) => item.artists[0]?.id).filter(Boolean)
+    )] as string[];
+    for (let i = 0; i < artistIds.length; i += 50) {
+      const batch = artistIds.slice(i, i + 50);
+      const artistRes = await fetch(`https://api.spotify.com/v1/artists?ids=${batch.join(",")}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (artistRes.ok) {
+        const artistData = await artistRes.json();
+        for (const artist of artistData.artists) {
+          if (artist?.genres?.length > 0) {
+            genreMap.set(artist.id, artist.genres[0]);
+          }
+        }
+      }
+    }
+  } catch {
+    // Skip genres on failure
+  }
+
+  const albumName = data.name;
+  const albumArt = data.images?.[0]?.url || "";
+  const releaseDate = data.release_date || null;
+
+  const tracks: TrackInfo[] = validItems
+    .map((item: { name: string; artists: { id: string; name: string }[]; duration_ms: number; external_ids?: { isrc?: string }; external_urls: { spotify: string } }) => ({
+      name: item.name,
+      artist: item.artists.map((a) => a.name).join(", "),
+      album: albumName,
+      albumArt,
+      duration: formatDuration(item.duration_ms),
+      durationMs: item.duration_ms,
+      isrc: item.external_ids?.isrc || null,
+      genre: genreMap.get(item.artists[0]?.id) || null,
+      releaseDate,
+      spotifyUrl: item.external_urls.spotify,
+    }));
+
+  return {
+    name: albumName,
+    image: albumArt,
+    tracks,
+  };
+}
+
+export async function getArtistTopTracks(url: string): Promise<PlaylistInfo> {
+  const artistId = extractArtistId(url);
+  if (!artistId) throw new Error("Invalid Spotify artist URL");
+
+  const token = await getAccessToken();
+
+  const [artistRes, topTracksRes] = await Promise.all([
+    fetch(`https://api.spotify.com/v1/artists/${artistId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+    fetch(`https://api.spotify.com/v1/artists/${artistId}/top-tracks`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+  ]);
+
+  if (!artistRes.ok) throw new Error("Artist not found");
+  if (!topTracksRes.ok) throw new Error("Could not fetch artist's top tracks");
+
+  const artistData = await artistRes.json();
+  const topTracksData = await topTracksRes.json();
+
+  const artistGenre = artistData.genres?.[0] || null;
+
+  const tracks: TrackInfo[] = topTracksData.tracks.map(
+    (track: { name: string; artists: { name: string }[]; album: { name: string; images: { url: string }[]; release_date?: string }; duration_ms: number; external_ids?: { isrc?: string }; external_urls: { spotify: string } }) => ({
+      name: track.name,
+      artist: track.artists.map((a) => a.name).join(", "),
+      album: track.album.name,
+      albumArt: track.album.images[0]?.url || "",
+      duration: formatDuration(track.duration_ms),
+      durationMs: track.duration_ms,
+      isrc: track.external_ids?.isrc || null,
+      genre: artistGenre,
+      releaseDate: track.album.release_date || null,
+      spotifyUrl: track.external_urls.spotify,
+    })
+  );
+
+  return {
+    name: `${artistData.name} — Top Tracks`,
+    image: artistData.images?.[0]?.url || "",
     tracks,
   };
 }

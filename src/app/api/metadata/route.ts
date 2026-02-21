@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTrackInfo, getPlaylistInfo, detectUrlType, detectPlatform, extractYouTubeId } from "@/lib/spotify";
+import { getTrackInfo, getPlaylistInfo, getAlbumInfo, getArtistTopTracks, detectUrlType, detectPlatform, extractYouTubeId } from "@/lib/spotify";
 import { getYouTubeTrackInfo } from "@/lib/youtube";
 import { resolveToSpotify } from "@/lib/songlink";
 import { rateLimit } from "@/lib/ratelimit";
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       const resolved = await resolveToSpotify(url);
       if (!resolved?.spotifyUrl) {
         return NextResponse.json(
-          { error: "couldn't find this track on spotify — try pasting the spotify link directly" },
+          { error: "this track isn't available outside apple music — apple music exclusives can't be downloaded yet" },
           { status: 404 }
         );
       }
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
 
     if (!urlType) {
       return NextResponse.json(
-        { error: "paste a track or playlist link — artist and album pages aren't supported yet" },
+        { error: "paste a track, playlist, album, or artist link" },
         { status: 400 }
       );
     }
@@ -96,6 +96,16 @@ export async function POST(request: NextRequest) {
     if (urlType === "playlist") {
       const playlist = await getPlaylistInfo(url);
       return NextResponse.json({ type: "playlist", ...playlist });
+    }
+
+    if (urlType === "album") {
+      const album = await getAlbumInfo(url);
+      return NextResponse.json({ type: "playlist", ...album });
+    }
+
+    if (urlType === "artist") {
+      const artist = await getArtistTopTracks(url);
+      return NextResponse.json({ type: "playlist", ...artist });
     }
 
     const track = await getTrackInfo(url);

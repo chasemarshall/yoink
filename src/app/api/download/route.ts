@@ -75,7 +75,10 @@ export async function POST(request: NextRequest) {
     if (platform === "apple-music") {
       const resolved = await resolveToSpotify(url);
       if (!resolved?.spotifyUrl) {
-        return NextResponse.json({ error: "couldn't match this to spotify" }, { status: 404 });
+        return NextResponse.json(
+          { error: "this track isn't available outside apple music — apple music exclusives can't be downloaded yet" },
+          { status: 404 }
+        );
       }
       track = await getTrackInfo(resolved.spotifyUrl);
     } else if (platform === "youtube") {

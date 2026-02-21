@@ -5,7 +5,7 @@ import { readFile, writeFile, unlink, mkdtemp, rmdir, readdir } from "fs/promise
 import { join } from "path";
 import { tmpdir } from "os";
 import { zipSync } from "fflate";
-import { getPlaylistInfo, type TrackInfo } from "@/lib/spotify";
+import { getPlaylistInfo, getAlbumInfo, getArtistTopTracks, detectUrlType, type TrackInfo, type PlaylistInfo } from "@/lib/spotify";
 import { fetchBestAudio } from "@/lib/audio-sources";
 import { fetchLyrics } from "@/lib/lyrics";
 import { rateLimit } from "@/lib/ratelimit";
@@ -190,7 +190,15 @@ export async function POST(request: NextRequest) {
 
     const MAX_TRACKS = 100;
 
-    const playlist = await getPlaylistInfo(url);
+    const urlType = detectUrlType(url);
+    let playlist: PlaylistInfo;
+    if (urlType === "album") {
+      playlist = await getAlbumInfo(url);
+    } else if (urlType === "artist") {
+      playlist = await getArtistTopTracks(url);
+    } else {
+      playlist = await getPlaylistInfo(url);
+    }
     if (!playlist.tracks.length) {
       return NextResponse.json({ error: "Playlist has no tracks" }, { status: 400 });
     }
