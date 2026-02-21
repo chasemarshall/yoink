@@ -14,6 +14,7 @@ import { tmpdir } from "os";
 import { getTrackInfo } from "@/lib/spotify";
 import { searchYouTube, getAudioStreamUrl } from "@/lib/youtube";
 import { fetchLyrics } from "@/lib/lyrics";
+import { rateLimit } from "@/lib/ratelimit";
 
 const execFileAsync = promisify(execFile);
 
@@ -47,6 +48,15 @@ export async function POST(request: NextRequest) {
   let tempDir: string | null = null;
 
   try {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const { allowed, retryAfter } = rateLimit(`dl:${ip}`, 3, 60_000);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: `slow down — try again in ${retryAfter}s` },
+        { status: 429, headers: { "Retry-After": String(retryAfter) } }
+      );
+    }
+
     const { url } = await request.json();
 
     if (!url || typeof url !== "string") {

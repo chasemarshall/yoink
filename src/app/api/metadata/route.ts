@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTrackInfo, getPlaylistInfo, detectUrlType } from "@/lib/spotify";
+import { rateLimit } from "@/lib/ratelimit";
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const { allowed, retryAfter } = rateLimit(`meta:${ip}`, 10, 60_000);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: `slow down — try again in ${retryAfter}s` },
+        { status: 429, headers: { "Retry-After": String(retryAfter) } }
+      );
+    }
+
     const { url } = await request.json();
 
     if (!url || typeof url !== "string") {
