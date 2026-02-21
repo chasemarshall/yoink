@@ -113,19 +113,40 @@ body {
 .loading-dot:nth-child(2) { animation-delay: 0.15s; }
 .loading-dot:nth-child(3) { animation-delay: 0.3s; }
 
-/* Shimmer progress bar */
-.shimmer-bar {
+/* Progress bar — fake fill for single tracks */
+@keyframes progress-fill {
+  0% { width: 0%; }
+  15% { width: 25%; }
+  40% { width: 50%; }
+  70% { width: 75%; }
+  100% { width: 92%; }
+}
+
+.progress-bar {
   position: relative;
   overflow: hidden;
 }
-.shimmer-bar::after {
+.progress-bar-fill {
+  height: 100%;
+  background: var(--color-lavender);
+  animation: progress-fill 45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.progress-bar-fill.done {
+  animation: none;
+  width: 100%;
+  background: var(--color-green);
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+/* Shimmer overlay on progress bar */
+.progress-bar::after {
   content: "";
   position: absolute;
   top: 0;
   left: 0;
   width: 50%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(180, 190, 254, 0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
   animation: shimmer 1.5s ease-in-out infinite;
 }
 
