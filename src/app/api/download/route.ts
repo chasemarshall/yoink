@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
     if (hasArt) {
       ffmpegArgs.push("-i", artPath, "-map", "0:a", "-map", "1:0");
     }
-    ffmpegArgs.push("-c:a", "libmp3lame", "-b:a", "192k");
+    ffmpegArgs.push("-c:a", "libmp3lame", "-b:a", "320k");
     if (hasArt) {
       ffmpegArgs.push(
         "-c:v", "copy",
@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
       try {
         await execFileAsync(
           "ffmpeg",
-          ["-y", "-i", inputPath, "-c:a", "libmp3lame", "-b:a", "192k", outputPath],
+          ["-y", "-i", inputPath, "-c:a", "libmp3lame", "-b:a", "320k", outputPath],
           { timeout: 60000, maxBuffer: 10 * 1024 * 1024 }
         );
       } catch {

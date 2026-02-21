@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     template: "%s — yoink",
   },
   description:
-    "download spotify tracks and playlists as high-quality 192kbps mp3 files with full metadata, album art, and lyrics. no account required.",
+    "download spotify tracks and playlists as high-quality 320kbps mp3 files with full metadata, album art, and lyrics. no account required.",
   keywords: [
     "spotify downloader",
     "spotify to mp3",
@@ -70,7 +70,7 @@ export default function RootLayout({
               name: "yoink",
               url: "https://yoink.chasefrazier.dev",
               description:
-                "Download Spotify tracks and playlists as high-quality 192kbps MP3 files with full metadata, album art, and lyrics.",
+                "Download Spotify tracks and playlists as high-quality 320kbps MP3 files with full metadata, album art, and lyrics.",
               applicationCategory: "MultimediaApplication",
               operatingSystem: "Any",
               offers: {
@@ -84,7 +84,7 @@ export default function RootLayout({
                 "ID3v2 metadata embedding",
                 "Album art embedding",
                 "Lyrics embedding",
-                "192kbps MP3 conversion",
+                "320kbps MP3 conversion",
               ],
             }),
           }}
