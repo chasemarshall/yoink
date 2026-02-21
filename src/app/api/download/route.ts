@@ -144,6 +144,9 @@ export async function POST(request: NextRequest) {
       "-metadata", `artist=${track.artist}`,
       "-metadata", `album=${track.album}`,
     );
+    if (track.genre) {
+      ffmpegArgs.push("-metadata", `genre=${track.genre}`);
+    }
     if (lyrics) {
       ffmpegArgs.push("-metadata", `lyrics=${lyrics}`);
     }
