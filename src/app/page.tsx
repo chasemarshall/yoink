@@ -94,8 +94,12 @@ export default function Home() {
         <div className="w-full max-w-xl space-y-8">
           {/* Title */}
           <div className="space-y-3 animate-fade-in-up" style={{ opacity: 0, animationDelay: "0ms" }}>
-            <h1 className="text-4xl sm:text-5xl font-bold text-text leading-tight">
-              yoi<span className="text-lavender">nk</span>
+            <h1 className="text-4xl sm:text-5xl font-bold leading-tight">
+              <span className="text-lavender">y</span>
+              <span className="logo-expand" style={{ animationDelay: "0.3s" }}>o</span>
+              <span className="logo-expand" style={{ animationDelay: "0.4s" }}>i</span>
+              <span className="logo-expand" style={{ animationDelay: "0.5s" }}>n</span>
+              <span className="text-lavender">k</span>
             </h1>
             <p className="text-sm text-subtext0/80 leading-relaxed max-w-sm">
               paste a spotify link. get the mp3.<br />

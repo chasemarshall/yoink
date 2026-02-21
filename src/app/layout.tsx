@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "yoink — spotify downloader",
   description: "paste a spotify link. get the mp3. metadata included.",
-  metadataBase: new URL("https://spotdl.chasefrazier.dev"),
+  metadataBase: new URL("https://yoink.chasefrazier.dev"),
   openGraph: {
     title: "yoink",
     description: "paste a spotify link. get the mp3. metadata included.",
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "yoink",
     description: "paste a spotify link. get the mp3. metadata included.",
   },
