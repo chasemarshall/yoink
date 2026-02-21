@@ -5,10 +5,20 @@ import { useState } from "react";
 interface SpotifyInputProps {
   onSubmit: (url: string) => void;
   disabled?: boolean;
+  clear?: boolean;
 }
 
-export default function SpotifyInput({ onSubmit, disabled }: SpotifyInputProps) {
+export default function SpotifyInput({ onSubmit, disabled, clear }: SpotifyInputProps) {
   const [url, setUrl] = useState("");
+
+  // Clear input when parent signals
+  const [lastClear, setLastClear] = useState(false);
+  if (clear && !lastClear) {
+    setUrl("");
+    setLastClear(true);
+  } else if (!clear && lastClear) {
+    setLastClear(false);
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
