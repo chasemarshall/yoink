@@ -488,7 +488,8 @@ export async function lookupDeezerByIsrc(isrc: string): Promise<string | null> {
 
 export async function fetchDeezerAudio(
   deezerId: string,
-  track: TrackInfo
+  track: TrackInfo,
+  preferFlac = false
 ): Promise<DeezerAudioResult | null> {
   const arl = getArlToken();
   if (!arl) {
@@ -510,6 +511,7 @@ export async function fetchDeezerAudio(
       DURATION: trackData.DURATION,
       MP3_320: trackData.FILESIZE_MP3_320,
       MP3_128: trackData.FILESIZE_MP3_128,
+      FLAC: trackData.FILESIZE_FLAC,
       TRACK_TOKEN: trackData.TRACK_TOKEN ? "present" : "missing",
     });
 
@@ -519,12 +521,18 @@ export async function fetchDeezerAudio(
       return null;
     }
 
-    // Pick best available format: prefer 320kbps MP3, then 128kbps
-    let mediaFormat: "MP3_320" | "MP3_128" = "MP3_320";
+    // Pick format based on preference and availability
+    let mediaFormat: "MP3_320" | "MP3_128" | "FLAC" = "MP3_320";
     let cdnFormat: 1 | 3 | 9 = 3;
     let bitrate = 320;
+    let outputFormat: "mp3" | "flac" = "mp3";
 
-    if (parseInt(trackData.FILESIZE_MP3_320) > 0) {
+    if (preferFlac && parseInt(trackData.FILESIZE_FLAC) > 0) {
+      mediaFormat = "FLAC";
+      cdnFormat = 9;
+      bitrate = 0; // lossless
+      outputFormat = "flac";
+    } else if (parseInt(trackData.FILESIZE_MP3_320) > 0) {
       mediaFormat = "MP3_320";
       cdnFormat = 3;
       bitrate = 320;
@@ -533,10 +541,10 @@ export async function fetchDeezerAudio(
       cdnFormat = 1;
       bitrate = 128;
     } else {
-      console.log("[deezer] no MP3 format available");
+      console.log("[deezer] no suitable format available");
       return null;
     }
-    console.log("[deezer] using format:", mediaFormat, "bitrate:", bitrate);
+    console.log("[deezer] using format:", mediaFormat, bitrate === 0 ? "lossless" : `${bitrate}kbps`);
 
     // Try media API first (returns direct streaming URL, better compatibility)
     let audioUrl: string | null = null;
@@ -562,7 +570,7 @@ export async function fetchDeezerAudio(
     }
 
     const audioRes = await fetch(audioUrl, {
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(60000), // FLAC files are larger, need more time
     });
     if (!audioRes.ok) {
       console.log("[deezer] audio fetch failed:", audioRes.status);
@@ -575,7 +583,7 @@ export async function fetchDeezerAudio(
 
     const decrypted = decryptAudio(encrypted, trackData.SNG_ID);
 
-    return { buffer: decrypted, format: "mp3", bitrate };
+    return { buffer: decrypted, format: outputFormat, bitrate };
   } catch (e) {
     console.error("[deezer] Fetch failed:", e);
     return null;

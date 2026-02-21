@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import Header from "@/components/Header";
 import SpotifyInput from "@/components/SpotifyInput";
+import FormatToggle from "@/components/FormatToggle";
 
 interface TrackInfo {
   name: string;
@@ -35,6 +36,7 @@ export default function Home() {
   const [trackStatuses, setTrackStatuses] = useState<TrackStatus[]>([]);
   const [error, setError] = useState("");
   const [quality, setQuality] = useState<QualityInfo | null>(null);
+  const [format, setFormat] = useState<"mp3" | "flac">("mp3");
   const abortRef = useRef(false);
   const downloadTriggeredRef = useRef(false);
 
@@ -96,7 +98,7 @@ export default function Home() {
       const res = await fetch("/api/download", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: trackInfo.spotifyUrl }),
+        body: JSON.stringify({ url: trackInfo.spotifyUrl, format }),
       });
 
       if (!res.ok) {
@@ -106,12 +108,14 @@ export default function Home() {
 
       const audioSource = res.headers.get("X-Audio-Source") || "youtube";
       const audioBitrate = res.headers.get("X-Audio-Quality") || "~160";
+      const audioFormat = res.headers.get("X-Audio-Format") || "mp3";
 
+      const ext = audioFormat === "flac" ? "flac" : "mp3";
       const blob = await res.blob();
       const downloadUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = downloadUrl;
-      a.download = `${trackInfo.artist} - ${trackInfo.name}.mp3`;
+      a.download = `${trackInfo.artist} - ${trackInfo.name}.${ext}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -120,7 +124,7 @@ export default function Home() {
     } catch {
       return false;
     }
-  }, []);
+  }, [format]);
 
   const handleDownload = async () => {
     if (!track) return;
@@ -205,17 +209,29 @@ export default function Home() {
               <span className="text-lavender">k</span>
             </h1>
             <p className="text-sm text-subtext0/80 leading-relaxed max-w-sm">
-              paste a spotify link. get the mp3.<br />
+              paste a spotify link. get the {format === "flac" ? "flac" : "mp3"}.<br />
               tracks and playlists. metadata included.
             </p>
           </div>
 
-          {/* Input */}
-          <SpotifyInput
-            onSubmit={handleSubmit}
-            disabled={state === "fetching" || state === "downloading"}
-            clear={state === "done"}
-          />
+          {/* Input + Format Toggle */}
+          <div className="space-y-3">
+            <SpotifyInput
+              onSubmit={handleSubmit}
+              disabled={state === "fetching" || state === "downloading"}
+              clear={state === "done"}
+            />
+            <div className="flex items-center justify-between animate-fade-in-up" style={{ animationDelay: "150ms", opacity: 0 }}>
+              <FormatToggle
+                value={format}
+                onChange={setFormat}
+                disabled={state === "downloading"}
+              />
+              <span className="text-[10px] text-overlay0/30 tracking-wider">
+                {format === "flac" ? "~40mb per track" : "~8mb per track"}
+              </span>
+            </div>
+          </div>
 
           {/* Loading */}
           {state === "fetching" && (
@@ -283,7 +299,7 @@ export default function Home() {
                   </div>
                   {quality && state === "done" && (
                     <p className="text-[10px] text-overlay0/60 animate-fade-in" style={{ opacity: 0 }}>
-                      {quality.source === "youtube" ? "~" : ""}{quality.bitrate}kbps via {quality.source}
+                      {quality.bitrate === "lossless" ? "lossless" : `${quality.source === "youtube" ? "~" : ""}${quality.bitrate}kbps`} via {quality.source}
                     </p>
                   )}
                 </div>
@@ -312,7 +328,7 @@ export default function Home() {
                     </span>
                   )}
                   {state === "done" && "downloaded"}
-                  {state === "ready" && "download mp3"}
+                  {state === "ready" && `download ${format}`}
                 </button>
                 <button
                   onClick={handleReset}

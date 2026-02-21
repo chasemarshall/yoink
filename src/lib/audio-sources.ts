@@ -24,9 +24,9 @@ async function getDeezerIdForTrack(track: TrackInfo): Promise<string | null> {
   return links?.deezerId || null;
 }
 
-async function tryDeezer(track: TrackInfo): Promise<AudioResult | null> {
+async function tryDeezer(track: TrackInfo, preferFlac: boolean): Promise<AudioResult | null> {
   try {
-    console.log("[audio] trying deezer for:", track.name);
+    console.log("[audio] trying deezer for:", track.name, preferFlac ? "(flac)" : "(mp3)");
     const deezerId = await getDeezerIdForTrack(track);
     if (!deezerId) {
       console.log("[audio] no deezer id found");
@@ -34,13 +34,13 @@ async function tryDeezer(track: TrackInfo): Promise<AudioResult | null> {
     }
 
     console.log("[audio] got deezer id:", deezerId);
-    const result = await fetchDeezerAudio(deezerId, track);
+    const result = await fetchDeezerAudio(deezerId, track, preferFlac);
     if (!result) {
       console.log("[audio] deezer fetch returned null");
       return null;
     }
 
-    console.log("[audio] deezer success:", result.format, result.bitrate + "kbps");
+    console.log("[audio] deezer success:", result.format, result.bitrate === 0 ? "lossless" : result.bitrate + "kbps");
     return {
       buffer: result.buffer,
       source: "deezer",
@@ -102,11 +102,11 @@ async function tryYouTube(track: TrackInfo): Promise<AudioResult> {
   };
 }
 
-export async function fetchBestAudio(track: TrackInfo): Promise<AudioResult> {
+export async function fetchBestAudio(track: TrackInfo, preferFlac = false): Promise<AudioResult> {
   // Try Deezer first (ISRC lookup, no rate limit)
-  const deezerResult = await tryDeezer(track);
+  const deezerResult = await tryDeezer(track, preferFlac);
   if (deezerResult) return deezerResult;
 
-  // Fall back to YouTube
+  // Fall back to YouTube (always WebM/Opus, no FLAC available)
   return tryYouTube(track);
 }

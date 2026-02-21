@@ -49,7 +49,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { url } = await request.json();
+    const body = await request.json();
+    const url = body.url;
+    const preferFlac = body.format === "flac";
 
     if (!url || typeof url !== "string") {
       return NextResponse.json({ error: "URL is required" }, { status: 400 });
@@ -67,15 +69,17 @@ export async function POST(request: NextRequest) {
 
     // Step 2: Fetch best audio + lyrics in parallel
     const [audio, lyrics] = await Promise.all([
-      fetchBestAudio(track),
+      fetchBestAudio(track, preferFlac),
       fetchLyrics(track.artist, track.name),
     ]);
 
     // Step 3: Embed metadata using ffmpeg
+    const wantFlac = preferFlac && audio.source === "deezer";
     tempDir = await mkdtemp(join(tmpdir(), "dl-"));
     const inputExt = audio.format === "webm" ? "webm" : audio.format === "flac" ? "flac" : "mp3";
     const inputPath = join(tempDir, `input.${inputExt}`);
-    const outputPath = join(tempDir, "output.mp3");
+    const outputExt = wantFlac ? "flac" : "mp3";
+    const outputPath = join(tempDir, `output.${outputExt}`);
     const artPath = join(tempDir, "cover.jpg");
 
     await writeFile(inputPath, audio.buffer);
@@ -95,34 +99,46 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Build ffmpeg args based on source format
+    // Build ffmpeg args based on source + desired output format
     const ffmpegArgs: string[] = [];
     ffmpegArgs.push("-i", inputPath);
-    if (hasArt) {
-      ffmpegArgs.push("-i", artPath, "-map", "0:a", "-map", "1:0");
+
+    if (wantFlac) {
+      // FLAC output
+      if (hasArt) {
+        ffmpegArgs.push("-i", artPath, "-map", "0:a", "-map", "1:0");
+      }
+      if (audio.format === "flac") {
+        ffmpegArgs.push("-c:a", "copy"); // Already FLAC, just add metadata
+      } else {
+        ffmpegArgs.push("-c:a", "flac"); // Transcode to FLAC
+      }
+      if (hasArt) {
+        ffmpegArgs.push("-c:v", "copy", "-disposition:v", "attached_pic");
+      }
+    } else {
+      // MP3 output
+      if (hasArt) {
+        ffmpegArgs.push("-i", artPath, "-map", "0:a", "-map", "1:0");
+      }
+      if (audio.source === "deezer" && audio.format === "mp3") {
+        ffmpegArgs.push("-c:a", "copy"); // Already MP3, just add metadata
+      } else {
+        ffmpegArgs.push("-c:a", "libmp3lame", "-b:a", "320k");
+      }
+      if (hasArt) {
+        ffmpegArgs.push(
+          "-c:v", "copy",
+          "-id3v2_version", "3",
+          "-metadata:s:v", "title=Album cover",
+          "-metadata:s:v", "comment=Cover (front)",
+          "-disposition:v", "attached_pic"
+        );
+      } else {
+        ffmpegArgs.push("-id3v2_version", "3");
+      }
     }
 
-    // Format-aware encoding:
-    // - Deezer 320kbps MP3: copy audio (no re-encode), just add metadata
-    // - Deezer FLAC: transcode to 320k MP3
-    // - YouTube WebM/Opus: transcode to 320k MP3 (existing behavior)
-    if (audio.source === "deezer" && audio.format === "mp3") {
-      ffmpegArgs.push("-c:a", "copy");
-    } else {
-      ffmpegArgs.push("-c:a", "libmp3lame", "-b:a", "320k");
-    }
-
-    if (hasArt) {
-      ffmpegArgs.push(
-        "-c:v", "copy",
-        "-id3v2_version", "3",
-        "-metadata:s:v", "title=Album cover",
-        "-metadata:s:v", "comment=Cover (front)",
-        "-disposition:v", "attached_pic"
-      );
-    } else {
-      ffmpegArgs.push("-id3v2_version", "3");
-    }
     ffmpegArgs.push(
       "-metadata", `title=${track.name}`,
       "-metadata", `artist=${track.artist}`,
@@ -135,44 +151,50 @@ export async function POST(request: NextRequest) {
 
     try {
       await execFileAsync("ffmpeg", ffmpegArgs, {
-        timeout: 60000,
-        maxBuffer: 10 * 1024 * 1024,
+        timeout: 120000,
+        maxBuffer: 50 * 1024 * 1024,
       });
     } catch {
       // Fallback: try converting without metadata/art
       try {
-        await execFileAsync(
-          "ffmpeg",
-          ["-y", "-i", inputPath, "-c:a", "libmp3lame", "-b:a", "320k", outputPath],
-          { timeout: 60000, maxBuffer: 10 * 1024 * 1024 }
-        );
+        const fallbackArgs = wantFlac
+          ? ["-y", "-i", inputPath, "-c:a", "flac", outputPath]
+          : ["-y", "-i", inputPath, "-c:a", "libmp3lame", "-b:a", "320k", outputPath];
+        await execFileAsync("ffmpeg", fallbackArgs, {
+          timeout: 120000,
+          maxBuffer: 50 * 1024 * 1024,
+        });
       } catch {
         // ffmpeg completely unavailable — serve raw audio
-        const ext = audio.format === "webm" ? "webm" : "mp3";
-        const mimeType = audio.format === "webm" ? "audio/webm" : "audio/mpeg";
+        const ext = audio.format;
+        const mimeMap: Record<string, string> = { webm: "audio/webm", mp3: "audio/mpeg", flac: "audio/flac" };
         const filename = `${track.artist} - ${track.name}.${ext}`;
         return new NextResponse(new Uint8Array(audio.buffer), {
           headers: {
-            "Content-Type": mimeType,
+            "Content-Type": mimeMap[ext] || "application/octet-stream",
             "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
             "Content-Length": audio.buffer.length.toString(),
             "X-Audio-Source": audio.source,
             "X-Audio-Quality": `${audio.bitrate}`,
+            "X-Audio-Format": ext,
           },
         });
       }
     }
 
     const outputBuffer = await readFile(outputPath);
-    const filename = `${track.artist} - ${track.name}.mp3`;
+    const filename = `${track.artist} - ${track.name}.${outputExt}`;
+    const contentType = wantFlac ? "audio/flac" : "audio/mpeg";
+    const qualityLabel = wantFlac && audio.format === "flac" ? "lossless" : `${audio.bitrate}`;
 
     return new NextResponse(new Uint8Array(outputBuffer), {
       headers: {
-        "Content-Type": "audio/mpeg",
+        "Content-Type": contentType,
         "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
         "Content-Length": outputBuffer.length.toString(),
         "X-Audio-Source": audio.source,
-        "X-Audio-Quality": `${audio.bitrate}`,
+        "X-Audio-Quality": qualityLabel,
+        "X-Audio-Format": outputExt,
       },
     });
   } catch (error) {
