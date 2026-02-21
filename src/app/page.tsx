@@ -19,7 +19,6 @@ export default function Home() {
   const [state, setState] = useState<AppState>("idle");
   const [track, setTrack] = useState<TrackInfo | null>(null);
   const [error, setError] = useState("");
-  const [progress, setProgress] = useState(0);
 
   const handleSubmit = async (url: string) => {
     setState("fetching");
@@ -50,7 +49,6 @@ export default function Home() {
   const handleDownload = async () => {
     if (!track) return;
     setState("downloading");
-    setProgress(0);
 
     try {
       const res = await fetch("/api/download", {
@@ -86,22 +84,22 @@ export default function Home() {
     setState("idle");
     setTrack(null);
     setError("");
-    setProgress(0);
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-grid">
       <Header />
 
-      <main className="flex-1 flex flex-col items-center justify-center px-6">
+      <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
         <div className="w-full max-w-xl space-y-8">
           {/* Title */}
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-text">
+          <div className="space-y-3 animate-fade-in-up" style={{ opacity: 0, animationDelay: "0ms" }}>
+            <h1 className="text-4xl sm:text-5xl font-bold text-text leading-tight">
               spotify<span className="text-lavender">dl</span>
             </h1>
-            <p className="text-sm text-subtext0">
-              paste a spotify link. get the mp3. metadata included.
+            <p className="text-sm text-subtext0/80 leading-relaxed max-w-sm">
+              paste a spotify link. get the mp3.<br />
+              metadata included.
             </p>
           </div>
 
@@ -113,19 +111,26 @@ export default function Home() {
 
           {/* Loading */}
           {state === "fetching" && (
-            <div className="border border-surface0 rounded-lg p-6 flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-lavender animate-pulse" />
-              <span className="text-sm text-subtext0">fetching track info...</span>
+            <div className="animate-fade-in-up border border-surface0/60 rounded-lg p-6 flex items-center gap-4 bg-mantle/30" style={{ opacity: 0 }}>
+              <div className="flex items-center gap-1.5">
+                <div className="loading-dot w-1.5 h-1.5 rounded-full bg-lavender" />
+                <div className="loading-dot w-1.5 h-1.5 rounded-full bg-lavender" />
+                <div className="loading-dot w-1.5 h-1.5 rounded-full bg-lavender" />
+              </div>
+              <span className="text-sm text-subtext0">fetching track info</span>
             </div>
           )}
 
           {/* Error */}
           {state === "error" && (
-            <div className="border border-red/30 rounded-lg p-6 space-y-3">
-              <p className="text-sm text-red">{error}</p>
+            <div className="animate-fade-in-up border border-red/20 rounded-lg p-6 space-y-4 bg-red/5" style={{ opacity: 0 }}>
+              <div className="flex items-start gap-3">
+                <span className="text-red text-xs mt-0.5">!</span>
+                <p className="text-sm text-red/90 leading-relaxed">{error}</p>
+              </div>
               <button
                 onClick={handleReset}
-                className="text-xs text-subtext0 hover:text-text transition-colors uppercase tracking-wider"
+                className="btn-press text-xs text-subtext0 hover:text-text transition-colors uppercase tracking-wider"
               >
                 try again
               </button>
@@ -134,69 +139,92 @@ export default function Home() {
 
           {/* Track Card */}
           {track && (state === "ready" || state === "downloading" || state === "done") && (
-            <div className="border border-surface0 rounded-lg overflow-hidden">
-              {/* Downloading progress bar */}
+            <div className="animate-fade-in-up border border-surface0/60 rounded-lg overflow-hidden bg-mantle/40" style={{ opacity: 0 }}>
+              {/* Progress indicators */}
               {state === "downloading" && (
-                <div className="h-0.5 bg-surface0">
-                  <div className="h-full bg-lavender animate-pulse w-full" />
+                <div className="shimmer-bar h-0.5 bg-lavender/30">
+                  <div className="h-full bg-lavender w-full" />
                 </div>
               )}
-
-              {/* Done bar */}
               {state === "done" && (
-                <div className="h-0.5 bg-green" />
+                <div className="h-0.5 bg-green animate-fade-in" />
               )}
+              {state === "ready" && <div className="h-0.5" />}
 
-              <div className="p-6 flex gap-5">
+              <div className="p-6 flex gap-5 stagger">
                 {/* Album Art */}
                 <img
                   src={track.albumArt}
                   alt={track.album}
-                  className="w-24 h-24 rounded-md object-cover flex-shrink-0"
+                  className="art-glow w-[100px] h-[100px] rounded-lg object-cover flex-shrink-0 animate-fade-in"
+                  style={{ opacity: 0 }}
                 />
 
                 {/* Track Info */}
-                <div className="flex-1 min-w-0 space-y-1">
-                  <p className="text-base font-bold text-text truncate">
+                <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5">
+                  <p className="text-base font-bold text-text truncate animate-slide-in" style={{ opacity: 0 }}>
                     {track.name}
                   </p>
-                  <p className="text-sm text-subtext0 truncate">{track.artist}</p>
-                  <p className="text-xs text-overlay0 truncate">{track.album}</p>
-                  <p className="text-xs text-overlay0">{track.duration}</p>
+                  <p className="text-sm text-subtext0 truncate animate-slide-in" style={{ opacity: 0, animationDelay: "60ms" }}>
+                    {track.artist}
+                  </p>
+                  <div className="flex items-center gap-3 animate-slide-in" style={{ opacity: 0, animationDelay: "120ms" }}>
+                    <p className="text-xs text-overlay0 truncate">{track.album}</p>
+                    <span className="text-overlay0/40">·</span>
+                    <p className="text-xs text-overlay0 flex-shrink-0">{track.duration}</p>
+                  </div>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="border-t border-surface0 flex">
+              <div className="border-t border-surface0/60 flex">
                 <button
                   onClick={handleDownload}
                   disabled={state === "downloading"}
-                  className="flex-1 px-4 py-3 text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 hover:bg-surface0"
-                  style={{
-                    color: state === "done" ? "var(--color-green)" : "var(--color-lavender)",
-                  }}
+                  className={`btn-press flex-1 px-4 py-3.5 text-xs font-bold uppercase tracking-wider transition-all duration-200 disabled:opacity-50 hover:bg-surface0/20 ${
+                    state === "done"
+                      ? "text-green"
+                      : state === "downloading"
+                        ? "text-lavender/70"
+                        : "text-lavender"
+                  }`}
                 >
-                  {state === "downloading"
-                    ? "downloading..."
-                    : state === "done"
-                      ? "downloaded ✓"
-                      : "download mp3"}
+                  {state === "downloading" && (
+                    <span className="inline-flex items-center gap-2">
+                      <span className="flex gap-1">
+                        <span className="loading-dot w-1 h-1 rounded-full bg-lavender/70" />
+                        <span className="loading-dot w-1 h-1 rounded-full bg-lavender/70" />
+                        <span className="loading-dot w-1 h-1 rounded-full bg-lavender/70" />
+                      </span>
+                      downloading
+                    </span>
+                  )}
+                  {state === "done" && "downloaded"}
+                  {state === "ready" && "download mp3"}
                 </button>
                 <button
                   onClick={handleReset}
-                  className="px-4 py-3 text-xs text-overlay0 hover:text-text border-l border-surface0 transition-colors uppercase tracking-wider"
+                  className="btn-press px-5 py-3.5 text-xs text-overlay0 hover:text-text hover:bg-surface0/20 border-l border-surface0/60 transition-all duration-200 uppercase tracking-wider"
                 >
                   new
                 </button>
               </div>
             </div>
           )}
+
+          {/* Keyboard hint */}
+          {state === "idle" && (
+            <div className="animate-fade-in-up flex items-center gap-2 text-xs text-overlay0/40" style={{ opacity: 0, animationDelay: "300ms" }}>
+              <kbd className="px-1.5 py-0.5 rounded border border-surface0/60 text-overlay0/50 text-[10px]">Enter</kbd>
+              <span>to download</span>
+            </div>
+          )}
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-surface0 px-6 py-4 flex items-center justify-between text-xs text-overlay0">
-        <span>spotdl — spotify downloader</span>
+      <footer className="border-t border-surface0/40 px-6 py-4 flex items-center justify-between text-xs text-overlay0/50">
+        <span>spotdl</span>
         <span>metadata included</span>
       </footer>
     </div>
