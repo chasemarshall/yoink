@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Header from "@/components/Header";
 import SpotifyInput from "@/components/SpotifyInput";
 
@@ -11,6 +11,7 @@ interface TrackInfo {
   albumArt: string;
   duration: string;
   spotifyUrl: string;
+  previewUrl: string | null;
 }
 
 interface PlaylistInfo {
@@ -23,6 +24,110 @@ type TrackStatus = "pending" | "downloading" | "done" | "error";
 
 type AppState = "idle" | "fetching" | "ready" | "downloading" | "done" | "error";
 
+function PreviewButton({ previewUrl }: { previewUrl: string | null }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  const toggle = () => {
+    if (!previewUrl) return;
+
+    if (!audioRef.current) {
+      audioRef.current = new Audio(previewUrl);
+      audioRef.current.volume = 0.5;
+      audioRef.current.addEventListener("timeupdate", () => {
+        if (audioRef.current) {
+          setProgress(audioRef.current.currentTime / audioRef.current.duration);
+        }
+      });
+      audioRef.current.addEventListener("ended", () => {
+        setPlaying(false);
+        setProgress(0);
+      });
+    }
+
+    if (playing) {
+      audioRef.current.pause();
+      setPlaying(false);
+    } else {
+      audioRef.current.play();
+      setPlaying(true);
+    }
+  };
+
+  if (!previewUrl) return null;
+
+  return (
+    <button
+      onClick={toggle}
+      className="absolute inset-0 flex items-center justify-center bg-crust/0 hover:bg-crust/60 transition-all duration-200 rounded-lg group"
+      title="preview 30s"
+    >
+      {/* Progress ring */}
+      {playing && (
+        <svg className="absolute inset-0 w-full h-full p-1" viewBox="0 0 100 100">
+          <circle
+            cx="50" cy="50" r="46"
+            fill="none"
+            stroke="var(--color-lavender)"
+            strokeWidth="2"
+            strokeDasharray={`${progress * 289} 289`}
+            strokeLinecap="round"
+            className="transition-[stroke-dasharray] duration-200"
+            transform="rotate(-90 50 50)"
+            opacity="0.6"
+          />
+        </svg>
+      )}
+      {/* Play/pause icon */}
+      <span className={`text-lg transition-opacity duration-200 ${playing ? "opacity-80" : "opacity-0 group-hover:opacity-80"}`}>
+        {playing ? (
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--color-lavender)">
+            <rect x="3" y="2" width="4" height="12" rx="1" />
+            <rect x="9" y="2" width="4" height="12" rx="1" />
+          </svg>
+        ) : (
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--color-lavender)">
+            <path d="M4 2.5v11l9-5.5z" />
+          </svg>
+        )}
+      </span>
+    </button>
+  );
+}
+
+function PlaylistPreviewButton({ previewUrl, playing: isPlaying, onToggle }: { previewUrl: string | null; playing: boolean; onToggle: () => void }) {
+  if (!previewUrl) return null;
+
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onToggle(); }}
+      className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full hover:bg-surface0/40 transition-colors duration-150"
+      title="preview"
+    >
+      {isPlaying ? (
+        <svg width="10" height="10" viewBox="0 0 16 16" fill="var(--color-lavender)">
+          <rect x="3" y="2" width="4" height="12" rx="1" />
+          <rect x="9" y="2" width="4" height="12" rx="1" />
+        </svg>
+      ) : (
+        <svg width="10" height="10" viewBox="0 0 16 16" fill="var(--color-overlay1)">
+          <path d="M4 2.5v11l9-5.5z" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
 export default function Home() {
   const [state, setState] = useState<AppState>("idle");
   const [track, setTrack] = useState<TrackInfo | null>(null);
@@ -30,6 +135,37 @@ export default function Home() {
   const [trackStatuses, setTrackStatuses] = useState<TrackStatus[]>([]);
   const [error, setError] = useState("");
   const abortRef = useRef(false);
+  const playlistAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [playingIndex, setPlayingIndex] = useState<number | null>(null);
+
+  const stopPlaylistPreview = useCallback(() => {
+    if (playlistAudioRef.current) {
+      playlistAudioRef.current.pause();
+      playlistAudioRef.current = null;
+    }
+    setPlayingIndex(null);
+  }, []);
+
+  const togglePlaylistPreview = useCallback((index: number, previewUrl: string) => {
+    if (playingIndex === index) {
+      stopPlaylistPreview();
+      return;
+    }
+
+    if (playlistAudioRef.current) {
+      playlistAudioRef.current.pause();
+    }
+
+    const audio = new Audio(previewUrl);
+    audio.volume = 0.5;
+    audio.addEventListener("ended", () => {
+      setPlayingIndex(null);
+      playlistAudioRef.current = null;
+    });
+    audio.play();
+    playlistAudioRef.current = audio;
+    setPlayingIndex(index);
+  }, [playingIndex, stopPlaylistPreview]);
 
   const handleSubmit = async (url: string) => {
     setState("fetching");
@@ -38,6 +174,7 @@ export default function Home() {
     setPlaylist(null);
     setTrackStatuses([]);
     abortRef.current = false;
+    stopPlaylistPreview();
 
     try {
       const res = await fetch("/api/metadata", {
@@ -112,6 +249,7 @@ export default function Home() {
     if (!playlist) return;
     setState("downloading");
     abortRef.current = false;
+    stopPlaylistPreview();
 
     for (let i = 0; i < playlist.tracks.length; i++) {
       if (abortRef.current) break;
@@ -142,6 +280,7 @@ export default function Home() {
     setTrackStatuses([]);
     setError("");
     abortRef.current = true;
+    stopPlaylistPreview();
   };
 
   const doneCount = trackStatuses.filter((s) => s === "done").length;
@@ -214,12 +353,15 @@ export default function Home() {
               {state === "ready" && <div className="h-0.5" />}
 
               <div className="p-6 flex gap-5 stagger">
-                <img
-                  src={track.albumArt}
-                  alt={track.album}
-                  className="art-glow w-[100px] h-[100px] rounded-lg object-cover flex-shrink-0 animate-fade-in"
-                  style={{ opacity: 0 }}
-                />
+                <div className="relative w-[100px] h-[100px] flex-shrink-0">
+                  <img
+                    src={track.albumArt}
+                    alt={track.album}
+                    className="art-glow w-full h-full rounded-lg object-cover animate-fade-in"
+                    style={{ opacity: 0 }}
+                  />
+                  <PreviewButton previewUrl={track.previewUrl} />
+                </div>
                 <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5">
                   <p className="text-base font-bold text-text truncate animate-slide-in" style={{ opacity: 0 }}>
                     {track.name}
@@ -317,7 +459,7 @@ export default function Home() {
                   <div
                     key={i}
                     className={`flex items-center gap-3 px-6 py-3 border-b border-surface0/20 last:border-b-0 transition-colors duration-200 ${
-                      trackStatuses[i] === "downloading" ? "bg-lavender/5" : ""
+                      trackStatuses[i] === "downloading" ? "bg-lavender/5" : playingIndex === i ? "bg-lavender/5" : ""
                     }`}
                   >
                     {/* Status indicator */}
@@ -348,6 +490,15 @@ export default function Home() {
                       </p>
                       <p className="text-xs text-overlay0 truncate">{t.artist}</p>
                     </div>
+
+                    {/* Preview button */}
+                    {t.previewUrl && (
+                      <PlaylistPreviewButton
+                        previewUrl={t.previewUrl}
+                        playing={playingIndex === i}
+                        onToggle={() => togglePlaylistPreview(i, t.previewUrl!)}
+                      />
+                    )}
 
                     {/* Duration */}
                     <span className="text-xs text-overlay0/50 flex-shrink-0">{t.duration}</span>
