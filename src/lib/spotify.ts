@@ -62,6 +62,7 @@ export interface TrackInfo {
   albumArt: string;
   duration: string;
   spotifyUrl: string;
+  previewUrl: string | null;
 }
 
 export async function getTrackInfo(url: string): Promise<TrackInfo> {
@@ -84,6 +85,7 @@ export async function getTrackInfo(url: string): Promise<TrackInfo> {
     albumArt: data.album.images[0]?.url || "",
     duration: formatDuration(data.duration_ms),
     spotifyUrl: data.external_urls.spotify,
+    previewUrl: data.preview_url || null,
   };
 }
 
@@ -109,13 +111,14 @@ export async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
 
   const tracks: TrackInfo[] = data.tracks.items
     .filter((item: { track: unknown }) => item.track)
-    .map((item: { track: { name: string; artists: { name: string }[]; album: { name: string; images: { url: string }[] }; duration_ms: number; external_urls: { spotify: string } } }) => ({
+    .map((item: { track: { name: string; artists: { name: string }[]; album: { name: string; images: { url: string }[] }; duration_ms: number; external_urls: { spotify: string }; preview_url: string | null } }) => ({
       name: item.track.name,
       artist: item.track.artists.map((a) => a.name).join(", "),
       album: item.track.album.name,
       albumArt: item.track.album.images[0]?.url || "",
       duration: formatDuration(item.track.duration_ms),
       spotifyUrl: item.track.external_urls.spotify,
+      previewUrl: item.track.preview_url || null,
     }));
 
   return {
