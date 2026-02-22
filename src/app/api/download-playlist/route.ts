@@ -20,6 +20,8 @@ const ALLOWED_ART_HOSTS = [
   "mosaic.scdn.co",
   "image-cdn-ak.spotifycdn.com",
   "image-cdn-fa.spotifycdn.com",
+  "mzstatic.com",
+  "resources.tidal.com",
 ];
 
 function isAllowedUrl(url: string, allowedHosts: string[]): boolean {
@@ -42,7 +44,8 @@ async function processTrack(
     fetchLyrics(track.artist, track.name),
   ]);
 
-  const canLossless = preferLossless && audio.source === "deezer";
+  // Only allow lossless output if source audio is actually lossless (FLAC from Deezer or Tidal)
+  const canLossless = preferLossless && (audio.source === "deezer" || audio.source === "tidal") && audio.format === "flac";
   const wantAlac = canLossless && requestedFormat === "alac";
   const wantFlac = canLossless && requestedFormat === "flac";
 
@@ -126,8 +129,27 @@ async function processTrack(
     if (track.releaseDate) {
       ffmpegArgs.push("-metadata", `date=${track.releaseDate}`);
     }
+    if (track.trackNumber != null) {
+      const trackTag = track.totalTracks ? `${track.trackNumber}/${track.totalTracks}` : `${track.trackNumber}`;
+      ffmpegArgs.push("-metadata", `track=${trackTag}`);
+    }
+    if (track.discNumber != null) {
+      ffmpegArgs.push("-metadata", `disc=${track.discNumber}`);
+    }
+    if (track.label) {
+      ffmpegArgs.push("-metadata", `label=${track.label}`);
+    }
+    if (track.copyright) {
+      ffmpegArgs.push("-metadata", `copyright=${track.copyright}`);
+    }
     if (lyrics) {
       ffmpegArgs.push("-metadata", `lyrics=${lyrics}`);
+    }
+    if (wantAlac || wantFlac) {
+      const bitDepth = audio.qualityInfo?.bitDepth ?? 16;
+      const sampleRate = audio.qualityInfo?.sampleRate ?? 44100;
+      const codec = wantAlac ? "ALAC" : "FLAC";
+      ffmpegArgs.push("-metadata", `comment=Lossless (${codec} ${bitDepth}-bit/${(sampleRate / 1000).toFixed(1)}kHz)`);
     }
     ffmpegArgs.push("-y", outputPath);
 

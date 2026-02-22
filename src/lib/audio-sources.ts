@@ -1,13 +1,18 @@
 import type { TrackInfo } from "./spotify";
 import { resolveSonglink } from "./songlink";
 import { fetchDeezerAudio, lookupDeezerByIsrc } from "./deezer";
+import { lookupTidalByIsrc, fetchTidalAudio } from "./tidal";
 import { searchYouTube, getAudioStreamUrl } from "./youtube";
+import { analyzeAudio, type AudioQualityInfo } from "./ffprobe";
+import { verifyTrack, type AcoustIdResult } from "./acoustid";
 
 export interface AudioResult {
   buffer: Buffer;
-  source: "deezer" | "youtube";
+  source: "deezer" | "tidal" | "youtube";
   format: "mp3" | "flac" | "webm";
   bitrate: number;
+  qualityInfo?: AudioQualityInfo;
+  verification?: AcoustIdResult;
 }
 
 async function getDeezerIdForTrack(track: TrackInfo): Promise<string | null> {
@@ -49,6 +54,49 @@ async function tryDeezer(track: TrackInfo, preferFlac: boolean): Promise<AudioRe
     };
   } catch (e) {
     console.error("[audio] deezer error:", e);
+    return null;
+  }
+}
+
+async function getTidalIdForTrack(track: TrackInfo): Promise<string | null> {
+  // Fast path: ISRC lookup via Tidal API
+  if (track.isrc) {
+    console.log("[audio] looking up tidal by ISRC:", track.isrc);
+    const id = await lookupTidalByIsrc(track.isrc);
+    if (id) return id;
+    console.log("[audio] Tidal ISRC lookup returned nothing");
+  }
+
+  // Slow path: Song.link fallback
+  const links = await resolveSonglink(track.spotifyUrl);
+  return links?.tidalId || null;
+}
+
+async function tryTidal(track: TrackInfo, preferHiRes: boolean): Promise<AudioResult | null> {
+  try {
+    console.log("[audio] trying tidal for:", track.name, preferHiRes ? "(hi-res)" : "(lossless)");
+    const tidalId = await getTidalIdForTrack(track);
+    if (!tidalId) {
+      console.log("[audio] no tidal id found");
+      return null;
+    }
+
+    console.log("[audio] got tidal id:", tidalId);
+    const result = await fetchTidalAudio(tidalId, track, preferHiRes);
+    if (!result) {
+      console.log("[audio] tidal fetch returned null");
+      return null;
+    }
+
+    console.log("[audio] tidal success:", result.format, result.bitrate === 0 ? "lossless" : result.bitrate + "kbps", `(${result.quality})`);
+    return {
+      buffer: result.buffer,
+      source: "tidal",
+      format: result.format,
+      bitrate: result.bitrate,
+    };
+  } catch (e) {
+    console.error("[audio] tidal error:", e);
     return null;
   }
 }
@@ -103,10 +151,42 @@ async function tryYouTube(track: TrackInfo): Promise<AudioResult> {
 }
 
 export async function fetchBestAudio(track: TrackInfo, preferFlac = false): Promise<AudioResult> {
-  // Try Deezer first (ISRC lookup, no rate limit)
+  // Try Tidal first (hi-res capable, best quality)
+  const tidalResult = await tryTidal(track, preferFlac);
+  if (tidalResult) {
+    try {
+      tidalResult.qualityInfo = await analyzeAudio(tidalResult.buffer, tidalResult.format) ?? undefined;
+    } catch {
+      // never block download
+    }
+    return tidalResult;
+  }
+
+  // Try Deezer second (CD lossless, no subscription cost)
   const deezerResult = await tryDeezer(track, preferFlac);
-  if (deezerResult) return deezerResult;
+  if (deezerResult) {
+    try {
+      deezerResult.qualityInfo = await analyzeAudio(deezerResult.buffer, deezerResult.format) ?? undefined;
+    } catch {
+      // never block download
+    }
+    return deezerResult;
+  }
 
   // Fall back to YouTube (always WebM/Opus, no FLAC available)
-  return tryYouTube(track);
+  const ytResult = await tryYouTube(track);
+
+  // Quality scan + AcoustID verification for YouTube audio (non-blocking)
+  try {
+    const [quality, verification] = await Promise.all([
+      analyzeAudio(ytResult.buffer, ytResult.format).catch(() => null),
+      verifyTrack(ytResult.buffer, ytResult.format, track).catch(() => ({ verified: false, confidence: 0 })),
+    ]);
+    ytResult.qualityInfo = quality ?? undefined;
+    ytResult.verification = verification;
+  } catch {
+    // never block download
+  }
+
+  return ytResult;
 }

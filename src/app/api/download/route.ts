@@ -15,6 +15,7 @@ import { getTrackInfo, detectPlatform, extractYouTubeId } from "@/lib/spotify";
 import { setExplicitTag } from "@/lib/mp4-advisory";
 import { getYouTubeTrackInfo } from "@/lib/youtube";
 import { resolveToSpotify } from "@/lib/songlink";
+import { extractAppleMusicTrackId, lookupByItunesId } from "@/lib/itunes";
 import { fetchBestAudio } from "@/lib/audio-sources";
 import { fetchLyrics } from "@/lib/lyrics";
 import { rateLimit } from "@/lib/ratelimit";
@@ -37,6 +38,8 @@ const ALLOWED_ART_HOSTS = [
   "mosaic.scdn.co",
   "image-cdn-ak.spotifycdn.com",
   "image-cdn-fa.spotifycdn.com",
+  "mzstatic.com",
+  "resources.tidal.com",
 ];
 
 export async function POST(request: NextRequest) {
@@ -75,13 +78,24 @@ export async function POST(request: NextRequest) {
 
     if (platform === "apple-music") {
       const resolved = await resolveToSpotify(url);
-      if (!resolved?.spotifyUrl) {
-        return NextResponse.json(
-          { error: "this track isn't available outside apple music — apple music exclusives can't be downloaded yet" },
-          { status: 404 }
-        );
+      if (resolved?.spotifyUrl) {
+        track = await getTrackInfo(resolved.spotifyUrl);
+      } else {
+        // Song.link failed — try iTunes Search API directly
+        const itunesId = extractAppleMusicTrackId(url);
+        if (itunesId) {
+          const itunesTrack = await lookupByItunesId(itunesId);
+          if (itunesTrack) {
+            track = itunesTrack;
+          }
+        }
+        if (!track) {
+          return NextResponse.json(
+            { error: "couldn't find this track — try a different link" },
+            { status: 404 }
+          );
+        }
       }
-      track = await getTrackInfo(resolved.spotifyUrl);
     } else if (platform === "youtube") {
       youtubeVideoId = extractYouTubeId(url);
       if (!youtubeVideoId) {
@@ -110,7 +124,8 @@ export async function POST(request: NextRequest) {
     ]);
 
     // Step 3: Embed metadata using ffmpeg
-    const canLossless = preferLossless && audio.source === "deezer";
+    // Only allow lossless output if source audio is actually lossless (FLAC from Deezer or Tidal)
+    const canLossless = preferLossless && (audio.source === "deezer" || audio.source === "tidal") && audio.format === "flac";
     const wantAlac = canLossless && requestedFormat === "alac";
     const wantFlac = canLossless && requestedFormat === "flac";
     tempDir = await mkdtemp(join(tmpdir(), "dl-"));
@@ -197,8 +212,27 @@ export async function POST(request: NextRequest) {
     if (track.releaseDate) {
       ffmpegArgs.push("-metadata", `date=${track.releaseDate}`);
     }
+    if (track.trackNumber != null) {
+      const trackTag = track.totalTracks ? `${track.trackNumber}/${track.totalTracks}` : `${track.trackNumber}`;
+      ffmpegArgs.push("-metadata", `track=${trackTag}`);
+    }
+    if (track.discNumber != null) {
+      ffmpegArgs.push("-metadata", `disc=${track.discNumber}`);
+    }
+    if (track.label) {
+      ffmpegArgs.push("-metadata", `label=${track.label}`);
+    }
+    if (track.copyright) {
+      ffmpegArgs.push("-metadata", `copyright=${track.copyright}`);
+    }
     if (lyrics) {
       ffmpegArgs.push("-metadata", `lyrics=${lyrics}`);
+    }
+    if (wantAlac || wantFlac) {
+      const bitDepth = audio.qualityInfo?.bitDepth ?? 16;
+      const sampleRate = audio.qualityInfo?.sampleRate ?? 44100;
+      const codec = wantAlac ? "ALAC" : "FLAC";
+      ffmpegArgs.push("-metadata", `comment=Lossless (${codec} ${bitDepth}-bit/${(sampleRate / 1000).toFixed(1)}kHz)`);
     }
     ffmpegArgs.push("-y", outputPath);
 
@@ -224,16 +258,27 @@ export async function POST(request: NextRequest) {
         const ext = audio.format;
         const mimeMap: Record<string, string> = { webm: "audio/webm", mp3: "audio/mpeg", flac: "audio/flac" };
         const filename = `${track.artist} - ${track.name}.${ext}`;
-        return new NextResponse(new Uint8Array(audio.buffer), {
-          headers: {
-            "Content-Type": mimeMap[ext] || "application/octet-stream",
-            "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
-            "Content-Length": audio.buffer.length.toString(),
-            "X-Audio-Source": audio.source,
-            "X-Audio-Quality": `${audio.bitrate}`,
-            "X-Audio-Format": ext,
-          },
-        });
+        const rawHeaders: Record<string, string> = {
+          "Content-Type": mimeMap[ext] || "application/octet-stream",
+          "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
+          "Content-Length": audio.buffer.length.toString(),
+          "X-Audio-Source": audio.source,
+          "X-Audio-Quality": `${audio.bitrate}`,
+          "X-Audio-Format": ext,
+        };
+        if (audio.qualityInfo) {
+          rawHeaders["X-Audio-Codec"] = audio.qualityInfo.codec;
+          rawHeaders["X-Audio-Actual-Bitrate"] = String(audio.qualityInfo.bitrate);
+          rawHeaders["X-Audio-Sample-Rate"] = String(audio.qualityInfo.sampleRate);
+          rawHeaders["X-Audio-Channels"] = String(audio.qualityInfo.channels);
+          if (audio.qualityInfo.bitDepth) rawHeaders["X-Audio-Bit-Depth"] = String(audio.qualityInfo.bitDepth);
+          rawHeaders["X-Audio-Upscaled"] = String(audio.qualityInfo.isUpscaled);
+        }
+        if (audio.verification) {
+          rawHeaders["X-Audio-Verified"] = String(audio.verification.verified);
+          rawHeaders["X-Audio-Verify-Confidence"] = String(audio.verification.confidence);
+        }
+        return new NextResponse(new Uint8Array(audio.buffer), { headers: rawHeaders });
       }
     }
 
@@ -245,16 +290,28 @@ export async function POST(request: NextRequest) {
     const contentType = wantAlac ? "audio/mp4" : wantFlac ? "audio/flac" : "audio/mpeg";
     const qualityLabel = (wantFlac || wantAlac) && audio.format === "flac" ? "lossless" : `${audio.bitrate}`;
 
-    return new NextResponse(new Uint8Array(finalBuffer), {
-      headers: {
-        "Content-Type": contentType,
-        "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
-        "Content-Length": finalBuffer.length.toString(),
-        "X-Audio-Source": audio.source,
-        "X-Audio-Quality": qualityLabel,
-        "X-Audio-Format": outputExt,
-      },
-    });
+    const responseHeaders: Record<string, string> = {
+      "Content-Type": contentType,
+      "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
+      "Content-Length": finalBuffer.length.toString(),
+      "X-Audio-Source": audio.source,
+      "X-Audio-Quality": qualityLabel,
+      "X-Audio-Format": outputExt,
+    };
+    if (audio.qualityInfo) {
+      responseHeaders["X-Audio-Codec"] = audio.qualityInfo.codec;
+      responseHeaders["X-Audio-Actual-Bitrate"] = String(audio.qualityInfo.bitrate);
+      responseHeaders["X-Audio-Sample-Rate"] = String(audio.qualityInfo.sampleRate);
+      responseHeaders["X-Audio-Channels"] = String(audio.qualityInfo.channels);
+      if (audio.qualityInfo.bitDepth) responseHeaders["X-Audio-Bit-Depth"] = String(audio.qualityInfo.bitDepth);
+      responseHeaders["X-Audio-Upscaled"] = String(audio.qualityInfo.isUpscaled);
+    }
+    if (audio.verification) {
+      responseHeaders["X-Audio-Verified"] = String(audio.verification.verified);
+      responseHeaders["X-Audio-Verify-Confidence"] = String(audio.verification.confidence);
+    }
+
+    return new NextResponse(new Uint8Array(finalBuffer), { headers: responseHeaders });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Download failed";
     return NextResponse.json({ error: message }, { status: 500 });
