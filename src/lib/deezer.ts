@@ -462,22 +462,53 @@ function verifyMatch(
   return false;
 }
 
+function cleanTitle(title: string): string {
+  return title
+    .replace(/\s*[\(\[](feat\.|ft\.|featuring)[^\)\]]*[\)\]]/gi, "")
+    .replace(/\s*-\s*(remastered?|radio edit|single version|album version|original mix)(\s+\d+)?$/gi, "")
+    .replace(/\s*[\(\[](remastered?|\d{4}\s+remaster|radio edit|single version|album version)[\)\]]/gi, "")
+    .trim();
+}
+
+function normalizeStr(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function artistMatches(resultArtist: string, queryArtist: string): boolean {
+  const a = normalizeStr(resultArtist);
+  const b = normalizeStr(queryArtist);
+  return a.includes(b) || b.includes(a);
+}
+
+type DeezerSearchItem = { id: number; duration: number; artist: { name: string } };
+
+async function deezerSearch(query: string, strict: boolean): Promise<DeezerSearchItem[]> {
+  const url = `https://api.deezer.com/2.0/search/track?q=${encodeURIComponent(query)}${strict ? "&strict=on" : ""}&limit=10`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.data || [];
+}
+
 // Search Deezer by title + artist (public API, no auth needed)
 export async function searchDeezerByTitleArtist(track: { artist: string; name: string; durationMs: number }): Promise<string | null> {
   try {
-    const query = `${track.artist} ${track.name}`;
-    const res = await fetch(
-      `https://api.deezer.com/2.0/search/track?q=${encodeURIComponent(query)}&limit=10`,
-      { signal: AbortSignal.timeout(8000) }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    const items: Array<{ id: number; duration: number }> = data.data || [];
-    for (const item of items) {
-      if (Math.abs(item.duration * 1000 - track.durationMs) <= 5000) {
-        return String(item.id);
-      }
+    const fieldQuery = `artist:"${track.artist}" track:"${cleanTitle(track.name)}"`;
+
+    const matchItem = (item: DeezerSearchItem) =>
+      Math.abs(item.duration * 1000 - track.durationMs) <= 5000 &&
+      artistMatches(item.artist.name, track.artist);
+
+    // Try strict field search first (most precise)
+    for (const item of await deezerSearch(fieldQuery, true)) {
+      if (matchItem(item)) return String(item.id);
     }
+
+    // Relax strict mode — same field query, looser matching
+    for (const item of await deezerSearch(fieldQuery, false)) {
+      if (matchItem(item)) return String(item.id);
+    }
+
     return null;
   } catch {
     return null;

@@ -59,12 +59,30 @@ async function getTidalSession(): Promise<string | null> {
   }
 }
 
+function cleanTitle(title: string): string {
+  return title
+    .replace(/\s*[\(\[](feat\.|ft\.|featuring)[^\)\]]*[\)\]]/gi, "")
+    .replace(/\s*-\s*(remastered?|radio edit|single version|album version|original mix)(\s+\d+)?$/gi, "")
+    .replace(/\s*[\(\[](remastered?|\d{4}\s+remaster|radio edit|single version|album version)[\)\]]/gi, "")
+    .trim();
+}
+
+function normalizeStr(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function artistMatches(resultArtist: string, queryArtist: string): boolean {
+  const a = normalizeStr(resultArtist);
+  const b = normalizeStr(queryArtist);
+  return a.includes(b) || b.includes(a);
+}
+
 export async function searchTidalByTitleArtist(track: TrackInfo): Promise<string | null> {
   const token = await getTidalSession();
   if (!token) return null;
 
   try {
-    const query = `${track.artist} ${track.name}`;
+    const query = `${track.artist} ${cleanTitle(track.name)}`;
     const res = await fetch(
       `https://api.tidal.com/v1/search/tracks?query=${encodeURIComponent(query)}&countryCode=US&limit=10`,
       {
@@ -79,10 +97,11 @@ export async function searchTidalByTitleArtist(track: TrackInfo): Promise<string
     }
 
     const data = await res.json();
-    const items: Array<{ id: number; duration: number }> = data.items || [];
+    const items: Array<{ id: number; duration: number; artist?: { name: string }; artists?: Array<{ name: string }> }> = data.items || [];
 
     for (const item of items) {
-      if (verifyMatch(item.duration, track)) {
+      const artistName = item.artist?.name || item.artists?.[0]?.name || "";
+      if (verifyMatch(item.duration, track) && artistMatches(artistName, track.artist)) {
         return String(item.id);
       }
     }
@@ -130,128 +149,10 @@ export interface TidalAudioResult {
   quality: TidalQuality;
 }
 
-// Map our quality tiers to v2 API format params
-const QUALITY_FORMATS: Record<TidalQuality, string[]> = {
-  HI_RES_LOSSLESS: ["FLAC_HIRES", "FLAC", "AACLC"],
-  LOSSLESS: ["FLAC", "AACLC"],
-  HIGH: ["AACLC"],
-};
-
+// v1 API — returns direct unencrypted stream URLs for LOSSLESS/HIGH tiers.
+// v2 (openapi.tidal.com/v2/trackManifests) always returns FairPlay-encrypted HLS
+// which requires an Apple FairPlay license server to decrypt; unusable here.
 async function getManifest(
-  tidalId: string,
-  preferHiRes: boolean,
-  token: string
-): Promise<{ url: string; quality: TidalQuality } | null> {
-  // Use the v2 trackManifests endpoint (same as Tidal web player)
-  const formats = preferHiRes
-    ? ["FLAC_HIRES", "FLAC", "AACLC"]
-    : ["FLAC", "AACLC"];
-
-  const params = new URLSearchParams({
-    adaptive: "false",
-    manifestType: "HLS",
-    uriScheme: "DATA",
-    usage: "PLAYBACK",
-  });
-  for (const f of formats) {
-    params.append("formats", f);
-  }
-
-  try {
-    const res = await fetch(
-      `https://openapi.tidal.com/v2/trackManifests/${tidalId}?${params}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        signal: AbortSignal.timeout(15000),
-      }
-    );
-
-    if (!res.ok) {
-      console.log("[tidal] v2 manifest failed:", res.status);
-      // Fall back to v1 API
-      return getManifestV1(tidalId, preferHiRes, token);
-    }
-
-    const data = await res.json();
-    console.log("[tidal] v2 manifest response keys:", JSON.stringify(Object.keys(data)));
-    const attrs = data.data?.attributes;
-    console.log("[tidal] v2 manifest attributes:", attrs ? JSON.stringify(Object.keys(attrs)) : "null");
-    if (attrs) {
-      // Log first 200 chars of each string field to understand structure
-      for (const [k, v] of Object.entries(attrs)) {
-        const val = typeof v === "string" ? v.substring(0, 200) : v;
-        console.log(`[tidal] v2 attr ${k}:`, val);
-      }
-    }
-
-    if (!attrs) {
-      console.log("[tidal] v2 manifest: no attributes");
-      // Fall back to v1 API
-      return getManifestV1(tidalId, preferHiRes, token);
-    }
-
-    // Parse HLS manifest to extract audio URL
-    const hlsUrl = extractAudioUrlFromHls(attrs.manifest || attrs.urls?.[0]);
-    if (!hlsUrl) {
-      console.log("[tidal] v2 manifest: could not extract audio URL, falling back to v1");
-      // Fall back to v1 API instead of giving up
-      return getManifestV1(tidalId, preferHiRes, token);
-    }
-
-    // Determine quality from the codec info
-    const codec = attrs.audioCodec || attrs.codecs || "";
-    let quality: TidalQuality = "HIGH";
-    if (codec === "flac" || codec.includes("flac")) {
-      const sampleRate = attrs.audioSamplingRate || attrs.sampleRate || 44100;
-      quality = sampleRate > 44100 ? "HI_RES_LOSSLESS" : "LOSSLESS";
-    }
-
-    return { url: hlsUrl, quality };
-  } catch (e) {
-    console.error("[tidal] v2 manifest error:", e);
-    return null;
-  }
-}
-
-function extractAudioUrlFromHls(manifest: string): string | null {
-  if (!manifest) return null;
-
-  // If it's a data URI with base64 HLS playlist
-  if (manifest.startsWith("data:")) {
-    const base64Part = manifest.split(",")[1];
-    if (!base64Part) return null;
-    const hlsContent = Buffer.from(base64Part, "base64").toString();
-    return extractUrlFromM3u8(hlsContent);
-  }
-
-  // If it's a direct URL
-  if (manifest.startsWith("http")) return manifest;
-
-  // Try parsing as M3U8 content
-  return extractUrlFromM3u8(manifest);
-}
-
-function extractUrlFromM3u8(content: string): string | null {
-  const lines = content.split("\n").map((l) => l.trim());
-
-  // Look for segment URLs or nested playlists
-  for (const line of lines) {
-    if (line.startsWith("http") && !line.startsWith("#")) {
-      return line;
-    }
-  }
-
-  // For HLS with EXT-X-MAP, extract the URI
-  for (const line of lines) {
-    const mapMatch = line.match(/EXT-X-MAP:URI="([^"]+)"/);
-    if (mapMatch) return mapMatch[1];
-  }
-
-  return null;
-}
-
-// Fallback: v1 API (works with device-code tokens)
-async function getManifestV1(
   tidalId: string,
   preferHiRes: boolean,
   token: string
