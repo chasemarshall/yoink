@@ -300,7 +300,7 @@ export default function Home() {
             </h1>
             <p className="text-sm text-subtext0/80 leading-relaxed max-w-sm">
               paste a spotify link. get the {format}.<br />
-              tracks and playlists. metadata included.
+              tracks, playlists, albums. metadata included.
             </p>
           </div>
 

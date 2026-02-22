@@ -7,9 +7,9 @@ const formats = ["flac", "alac", "mp3"];
 
 const steps = [
   { num: "01", text: "paste a spotify link" },
-  { num: "02", text: "we fetch the metadata" },
-  { num: "03", text: "find the best audio source" },
-  { num: "04", text: "convert, tag, deliver" },
+  { num: "02", text: "metadata pulled from spotify" },
+  { num: "03", text: "audio sourced from the web" },
+  { num: "04", text: "tagged, converted, delivered" },
 ];
 
 export default function LandingPage() {
@@ -49,7 +49,7 @@ export default function LandingPage() {
       <section className="px-6 pt-32 pb-24 max-w-2xl mx-auto">
         <div className="space-y-6 animate-fade-in-up" style={{ opacity: 0 }}>
           <p className="text-xs text-lavender uppercase tracking-[0.3em] font-bold">
-            spotify downloader
+            music downloader
           </p>
           <h1 className="text-5xl sm:text-7xl font-bold leading-[0.95] tracking-tight">
             <span className="text-lavender">y</span>
@@ -59,7 +59,7 @@ export default function LandingPage() {
             <span className="text-lavender">k</span>
           </h1>
           <p className="text-lg text-subtext0/80 leading-relaxed max-w-md">
-            grab any spotify track or playlist in{" "}
+            paste a spotify link, get the audio in{" "}
             <span
               className={`text-lavender font-bold transition-all duration-300 ease-out origin-center ${
                 isAnimating
@@ -144,16 +144,16 @@ export default function LandingPage() {
             >
               <p className="text-sm font-bold text-text">tracks</p>
               <p className="text-xs text-subtext0 leading-relaxed">
-                paste a track link. get the file with full id3 metadata — title, artist, album, cover art, lyrics.
+                paste a link. we match the song, find the audio, and tag it with full metadata — title, artist, album, cover art, lyrics.
               </p>
             </div>
             <div
               className="animate-fade-in-up space-y-3 border border-surface0/40 rounded-lg p-5 bg-mantle/30"
               style={{ opacity: 0, animationDelay: "80ms" }}
             >
-              <p className="text-sm font-bold text-text">playlists</p>
+              <p className="text-sm font-bold text-text">playlists & albums</p>
               <p className="text-xs text-subtext0 leading-relaxed">
-                paste a playlist link. see every track. download them all as a single zip file.
+                paste a playlist or album link. preview every track. download them all as a tagged zip.
               </p>
             </div>
             <div
