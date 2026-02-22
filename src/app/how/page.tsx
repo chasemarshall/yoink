@@ -244,6 +244,7 @@ export default function HowPage() {
       <footer className="border-t border-surface0/40 px-6 py-4 flex items-center justify-between text-xs text-overlay0/50">
         <span>yoink</span>
         <div className="flex items-center gap-4">
+          <Link href="/roadmap" className="hover:text-text transition-colors duration-200">roadmap</Link>
           <a
             href="https://chasefrazier.dev/tip"
             target="_blank"
@@ -252,7 +253,6 @@ export default function HowPage() {
           >
             tip jar
           </a>
-          <span>metadata included</span>
         </div>
       </footer>
     </div>

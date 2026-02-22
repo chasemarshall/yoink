@@ -231,6 +231,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-4">
             <Link href="/how" className="hover:text-text transition-colors duration-200">local files</Link>
             <Link href="/players" className="hover:text-text transition-colors duration-200">players</Link>
+            <Link href="/roadmap" className="hover:text-text transition-colors duration-200">roadmap</Link>
             <span>metadata included</span>
           </div>
         </div>
