@@ -1,5 +1,50 @@
 import type { TrackInfo } from "./spotify";
 
+export interface ItunesCatalogIds {
+  trackId: number;
+  collectionId: number;
+  artistId: number;
+  genreId: number;
+}
+
+/**
+ * Look up iTunes catalog IDs for a track by artist + title.
+ * These IDs are used to write cnID/plID/atID/geID atoms into m4a files
+ * so Apple Music recognizes them as catalog matches.
+ */
+export async function lookupItunesCatalogIds(track: TrackInfo): Promise<ItunesCatalogIds | null> {
+  try {
+    const query = encodeURIComponent(`${track.artist} ${track.name}`);
+    const res = await fetch(
+      `https://itunes.apple.com/search?term=${query}&entity=song&limit=5`,
+      { signal: AbortSignal.timeout(10000) }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const results = data.results;
+    if (!results?.length) return null;
+
+    // Try to find an exact match by name + artist
+    const normalName = track.name.toLowerCase().trim();
+    const normalArtist = track.artist.toLowerCase().split(",")[0].trim();
+    const match = results.find((r: { trackName?: string; artistName?: string }) =>
+      r.trackName?.toLowerCase().trim() === normalName &&
+      r.artistName?.toLowerCase().trim().includes(normalArtist)
+    ) || results[0];
+
+    if (!match.trackId) return null;
+
+    return {
+      trackId: match.trackId,
+      collectionId: match.collectionId || 0,
+      artistId: match.artistId || 0,
+      genreId: match.primaryGenreId || 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Look up the iTunes genre for a track by searching artist + track name.
  * Returns the primaryGenreName (track-level genre) or null if not found.

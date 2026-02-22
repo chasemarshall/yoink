@@ -15,7 +15,8 @@ import { getTrackInfo, detectPlatform, extractYouTubeId } from "@/lib/spotify";
 import { setExplicitTag } from "@/lib/mp4-advisory";
 import { getYouTubeTrackInfo } from "@/lib/youtube";
 import { resolveToSpotify } from "@/lib/songlink";
-import { extractAppleMusicTrackId, lookupByItunesId, lookupItunesGenre } from "@/lib/itunes";
+import { extractAppleMusicTrackId, lookupByItunesId, lookupItunesGenre, lookupItunesCatalogIds } from "@/lib/itunes";
+import { setCatalogIds } from "@/lib/mp4-catalog";
 import { fetchBestAudio } from "@/lib/audio-sources";
 import { fetchLyrics } from "@/lib/lyrics";
 import { rateLimit } from "@/lib/ratelimit";
@@ -124,12 +125,14 @@ export async function POST(request: NextRequest) {
       if (itunesGenre) track.genre = itunesGenre;
     }
 
-    // Step 2: Fetch best audio + lyrics in parallel
-    const [audio, lyrics] = await Promise.all([
+    // Step 2: Fetch best audio + lyrics + iTunes catalog IDs in parallel
+    const [audio, lyrics, catalogIds] = await Promise.all([
       fetchBestAudio(track, preferLossless),
       fetchLyrics(track.artist, track.name),
+      lookupItunesCatalogIds(track),
     ]);
     console.log(`[lyrics] ${track.artist} - ${track.name}: ${lyrics ? `found (${lyrics.length} chars)` : "not found"}`);
+    if (catalogIds) console.log(`[itunes] matched: cnID=${catalogIds.trackId} plID=${catalogIds.collectionId}`);
 
     // Step 3: Embed metadata using ffmpeg
     // Only allow lossless output if source audio is actually lossless (FLAC from Deezer or Tidal)
@@ -316,9 +319,11 @@ export async function POST(request: NextRequest) {
     }
 
     const outputBuffer = await readFile(outputPath);
-    const finalBuffer = track.explicit && outputExt === "m4a"
-      ? setExplicitTag(outputBuffer)
-      : outputBuffer;
+    let finalBuffer: Buffer = outputBuffer;
+    if (outputExt === "m4a") {
+      if (track.explicit) finalBuffer = setExplicitTag(finalBuffer);
+      if (catalogIds) finalBuffer = setCatalogIds(finalBuffer, catalogIds);
+    }
     const filename = `${track.artist} - ${track.name}.${outputExt}`;
     const contentType = wantAlac ? "audio/mp4" : wantFlac ? "audio/flac" : "audio/mpeg";
     const qualityLabel = (wantFlac || wantAlac) && audio.format === "flac" ? "lossless" : `${audio.bitrate}`;

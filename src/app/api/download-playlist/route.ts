@@ -6,11 +6,12 @@ import { join } from "path";
 import { tmpdir } from "os";
 import { zipSync } from "fflate";
 import { getPlaylistInfo, getAlbumInfo, getArtistTopTracks, detectUrlType, type TrackInfo, type PlaylistInfo } from "@/lib/spotify";
-import { lookupItunesGenre } from "@/lib/itunes";
+import { lookupItunesGenre, lookupItunesCatalogIds } from "@/lib/itunes";
 import { fetchBestAudio } from "@/lib/audio-sources";
 import { fetchLyrics } from "@/lib/lyrics";
 import { rateLimit } from "@/lib/ratelimit";
 import { setExplicitTag } from "@/lib/mp4-advisory";
+import { setCatalogIds } from "@/lib/mp4-catalog";
 
 const execFileAsync = promisify(execFile);
 
@@ -47,9 +48,10 @@ async function processTrack(
     if (itunesGenre) track.genre = itunesGenre;
   }
 
-  const [audio, lyrics] = await Promise.all([
+  const [audio, lyrics, catalogIds] = await Promise.all([
     fetchBestAudio(track, preferLossless),
     fetchLyrics(track.artist, track.name),
+    lookupItunesCatalogIds(track),
   ]);
 
   // Only allow lossless output if source audio is actually lossless (FLAC from Deezer or Tidal)
@@ -196,9 +198,11 @@ async function processTrack(
     }
 
     const outputBuffer = await readFile(outputPath);
-    const finalBuffer = track.explicit && outputExt === "m4a"
-      ? setExplicitTag(outputBuffer)
-      : outputBuffer;
+    let finalBuffer: Buffer = outputBuffer;
+    if (outputExt === "m4a") {
+      if (track.explicit) finalBuffer = setExplicitTag(finalBuffer);
+      if (catalogIds) finalBuffer = setCatalogIds(finalBuffer, catalogIds);
+    }
     const filename = `${track.artist} - ${track.name}.${outputExt}`;
     return { filename, buffer: finalBuffer as Buffer };
   } finally {
