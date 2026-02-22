@@ -128,6 +128,9 @@ async function processTrack(
     if (lyrics) {
       ffmpegArgs.push("-metadata", `lyrics=${lyrics}`);
     }
+    if (track.explicit) {
+      ffmpegArgs.push("-metadata", "itunesadvisory=1");
+    }
     ffmpegArgs.push("-y", outputPath);
 
     try {
