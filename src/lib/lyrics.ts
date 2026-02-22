@@ -1,22 +1,36 @@
-import { request } from "https";
+import { execFile } from "child_process";
+import { promisify } from "util";
+import { request as httpsRequest } from "https";
 import { fetchMusixmatchLyrics } from "./musixmatch";
 
-// lrclib blocks Node's fetch/undici TLS fingerprint, so we use the https module
-function httpsGet(url: string): Promise<string> {
+const execFileAsync = promisify(execFile);
+
+// Try multiple methods to reach lrclib — Railway blocks Node's TLS entirely
+async function lrclibGet(url: string): Promise<string> {
+  // Method 1: curl (works on Railway if installed, works on self-hosted)
+  try {
+    const { stdout } = await execFileAsync(
+      "curl",
+      ["-s", "--max-time", "5", "-H", "User-Agent: yoink/1.0", url],
+      { timeout: 6000 }
+    );
+    if (stdout.trim()) return stdout;
+  } catch {
+    // curl not available or failed
+  }
+
+  // Method 2: Node https module (works locally, blocked on Railway)
   return new Promise((resolve, reject) => {
     const parsed = new URL(url);
     const timer = setTimeout(() => {
       req.destroy();
       reject(new Error("timeout"));
     }, 5000);
-    const req = request(
+    const req = httpsRequest(
       {
         hostname: parsed.hostname,
         path: parsed.pathname + parsed.search,
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        },
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
       },
       (res) => {
         let data = "";
@@ -45,7 +59,7 @@ async function fetchFromLrclib(
 ): Promise<string | null> {
   // Try exact match first
   try {
-    const raw = await httpsGet(
+    const raw = await lrclibGet(
       `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`
     );
     const data = JSON.parse(raw);
@@ -57,7 +71,7 @@ async function fetchFromLrclib(
 
   // Fall back to search endpoint (more forgiving matching)
   try {
-    const raw = await httpsGet(
+    const raw = await lrclibGet(
       `https://lrclib.net/api/search?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`
     );
     const results = JSON.parse(raw);
