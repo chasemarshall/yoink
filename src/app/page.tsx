@@ -230,7 +230,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-4">
             <Link href="/how" className="text-mauve/60 hover:text-mauve transition-colors duration-200">local files</Link>
             <Link href="/players" className="text-green/60 hover:text-green transition-colors duration-200">players</Link>
-            <Link href="/roadmap" className="text-peach/60 hover:text-peach transition-colors duration-200">roadmap</Link>
+            <Link href="/roadmap" className="hover:text-text transition-colors duration-200">roadmap</Link>
           </div>
         </div>
         <div className="space-y-3 text-[10px] text-overlay0/40 leading-relaxed">

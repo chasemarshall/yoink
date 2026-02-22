@@ -591,7 +591,7 @@ export default function Home() {
         <span>yoink</span>
         <div className="flex items-center gap-4">
           <Link href="/how" className="text-mauve/60 hover:text-mauve transition-colors duration-200">local files setup</Link>
-          <Link href="/roadmap" className="text-peach/60 hover:text-peach transition-colors duration-200">roadmap</Link>
+          <Link href="/roadmap" className="hover:text-text transition-colors duration-200">roadmap</Link>
           <a
             href="https://chasefrazier.dev/tip"
             target="_blank"
