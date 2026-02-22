@@ -269,17 +269,20 @@ export default function HowPage() {
               <p className="text-sm text-subtext0 leading-relaxed">
                 open the spotify app. tap your <span className="text-text font-bold">profile picture</span> in the top-left corner.
               </p>
-              <div className="border border-surface0/60 rounded-lg p-4 bg-mantle/40 max-w-xs">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-lavender/30 flex items-center justify-center flex-shrink-0">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-lavender">
-                      <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2"/>
-                      <path d="M4 20c0-4 4-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-text">your name</p>
-                    <p className="text-[10px] text-overlay0">view profile</p>
+              {/* Spotify mobile top bar mockup */}
+              <div className="border border-surface0/60 rounded-xl overflow-hidden bg-mantle/40 max-w-xs">
+                <div className="px-4 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-lavender/40 ring-2 ring-lavender/60 flex items-center justify-center flex-shrink-0">
+                      <span className="text-[10px] font-bold text-lavender">Y</span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-text">All</p>
+                      <div className="flex gap-1.5 mt-0.5">
+                        <span className="text-[9px] text-overlay0 bg-surface0/60 rounded-full px-2 py-0.5">Music</span>
+                        <span className="text-[9px] text-overlay0 bg-surface0/60 rounded-full px-2 py-0.5">Podcasts</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -299,21 +302,36 @@ export default function HowPage() {
               <p className="text-sm text-subtext0 leading-relaxed">
                 tap <span className="text-text font-bold">Settings and privacy</span> from the menu.
               </p>
-              <div className="border border-surface0/60 rounded-lg p-4 bg-mantle/40 space-y-3 max-w-xs">
-                <div className="flex items-center gap-3 py-1.5 opacity-40">
-                  <span className="text-xs text-subtext0">Add account</span>
+              {/* Profile menu mockup */}
+              <div className="border border-surface0/60 rounded-xl overflow-hidden bg-mantle/40 max-w-xs">
+                {/* Header with profile */}
+                <div className="px-4 py-3 border-b border-surface0/30 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-lavender/30 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-bold text-lavender">Y</span>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-text">Your Name</p>
+                    <p className="text-[10px] text-overlay0">View profile</p>
+                  </div>
                 </div>
-                <div className="border-t border-surface0/30" />
-                <div className="flex items-center gap-3 py-1.5">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-lavender flex-shrink-0">
-                    <path d="M12 15.5A3.5 3.5 0 1012 8.5a3.5 3.5 0 000 7z" stroke="currentColor" strokeWidth="2"/>
-                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" strokeWidth="2"/>
-                  </svg>
-                  <span className="text-xs font-bold text-lavender">Settings and privacy</span>
-                </div>
-                <div className="border-t border-surface0/30" />
-                <div className="flex items-center gap-3 py-1.5 opacity-40">
-                  <span className="text-xs text-subtext0">What&apos;s new</span>
+                {/* Menu items */}
+                <div className="px-4 py-2">
+                  <div className="py-2.5 opacity-40">
+                    <span className="text-xs text-subtext0">Add account</span>
+                  </div>
+                  <div className="py-2.5 opacity-40">
+                    <span className="text-xs text-subtext0">What&apos;s new</span>
+                  </div>
+                  <div className="py-2.5 opacity-40">
+                    <span className="text-xs text-subtext0">Recents</span>
+                  </div>
+                  <div className="py-2.5 flex items-center gap-2.5 bg-lavender/8 -mx-4 px-4 rounded">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-lavender flex-shrink-0">
+                      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M12 1v2m0 18v2m11-11h-2M3 12H1m17.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m14.14 0l-1.41-1.41M6.34 6.34L4.93 4.93" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                    <span className="text-xs font-bold text-lavender">Settings and privacy</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -332,25 +350,28 @@ export default function HowPage() {
               <p className="text-sm text-subtext0 leading-relaxed">
                 scroll down and tap <span className="text-text font-bold">Apps and devices</span>.
               </p>
-              <div className="border border-surface0/60 rounded-lg p-4 bg-mantle/40 space-y-3 max-w-xs">
-                <div className="flex items-center gap-3 py-1.5 opacity-40">
-                  <span className="text-xs text-subtext0">Data Saver</span>
+              {/* Settings page mockup */}
+              <div className="border border-surface0/60 rounded-xl overflow-hidden bg-mantle/40 max-w-xs">
+                <div className="px-4 py-2.5 border-b border-surface0/30">
+                  <p className="text-xs font-bold text-text">Settings and privacy</p>
                 </div>
-                <div className="border-t border-surface0/30" />
-                <div className="flex items-center gap-3 py-1.5 opacity-40">
-                  <span className="text-xs text-subtext0">Playback</span>
-                </div>
-                <div className="border-t border-surface0/30" />
-                <div className="flex items-center gap-3 py-1.5">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-lavender flex-shrink-0">
-                    <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" strokeWidth="2"/>
-                    <line x1="12" y1="18" x2="12" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                  <span className="text-xs font-bold text-lavender">Apps and devices</span>
-                </div>
-                <div className="border-t border-surface0/30" />
-                <div className="flex items-center gap-3 py-1.5 opacity-40">
-                  <span className="text-xs text-subtext0">Storage</span>
+                <div className="px-4 py-2">
+                  <div className="py-2.5 flex items-center justify-between opacity-40">
+                    <span className="text-xs text-subtext0">Data Saver</span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" className="text-surface2"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </div>
+                  <div className="py-2.5 flex items-center justify-between opacity-40">
+                    <span className="text-xs text-subtext0">Playback</span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" className="text-surface2"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </div>
+                  <div className="py-2.5 flex items-center justify-between bg-lavender/8 -mx-4 px-4 rounded">
+                    <span className="text-xs font-bold text-lavender">Apps and devices</span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" className="text-lavender"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </div>
+                  <div className="py-2.5 flex items-center justify-between opacity-40">
+                    <span className="text-xs text-subtext0">Storage</span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" className="text-surface2"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </div>
                 </div>
               </div>
             </div>
@@ -369,12 +390,26 @@ export default function HowPage() {
               <p className="text-sm text-subtext0 leading-relaxed">
                 toggle <span className="text-text font-bold">Local audio files</span> to on.
               </p>
-              <div className="border border-surface0/60 rounded-lg p-4 bg-mantle/40 space-y-3 max-w-xs">
-                <p className="text-xs font-bold text-text">Apps and devices</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-subtext0">Local audio files</span>
-                  <div className="w-8 h-4 rounded-full bg-lavender/80 flex items-center justify-end px-0.5">
-                    <div className="w-3 h-3 rounded-full bg-crust" />
+              {/* Apps and devices page mockup */}
+              <div className="border border-surface0/60 rounded-xl overflow-hidden bg-mantle/40 max-w-xs">
+                <div className="px-4 py-2.5 border-b border-surface0/30">
+                  <p className="text-xs font-bold text-text">Apps and devices</p>
+                </div>
+                <div className="px-4 py-3 space-y-4">
+                  <div className="flex items-center justify-between opacity-40">
+                    <div>
+                      <span className="text-xs text-subtext0">Connect to a device</span>
+                    </div>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" className="text-surface2"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-bold text-text">Local audio files</p>
+                      <p className="text-[10px] text-overlay0 mt-0.5">Show audio files from this device</p>
+                    </div>
+                    <div className="w-9 h-5 rounded-full bg-green flex items-center justify-end px-0.5 flex-shrink-0">
+                      <div className="w-4 h-4 rounded-full bg-crust" />
+                    </div>
                   </div>
                 </div>
               </div>
