@@ -79,11 +79,12 @@ async function fetchFromLrclib(
     const raw = await lrclibGet(
       `/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`
     );
+    console.log(`[lyrics] get response length: ${raw.length}`);
     const data = JSON.parse(raw);
     const lyrics = data.syncedLyrics || data.plainLyrics || null;
     if (lyrics) return lyrics;
-  } catch {
-    // Fall through to search
+  } catch (e) {
+    console.log(`[lyrics] get failed: ${e instanceof Error ? e.message : e}`);
   }
 
   // Fall back to search endpoint (more forgiving matching)
@@ -91,6 +92,7 @@ async function fetchFromLrclib(
     const raw = await lrclibGet(
       `/api/search?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`
     );
+    console.log(`[lyrics] search response length: ${raw.length}`);
     const results = JSON.parse(raw);
     if (!Array.isArray(results) || results.length === 0) return null;
 
@@ -102,7 +104,8 @@ async function fetchFromLrclib(
     }
 
     return null;
-  } catch {
+  } catch (e) {
+    console.log(`[lyrics] search failed: ${e instanceof Error ? e.message : e}`);
     return null;
   }
 }
