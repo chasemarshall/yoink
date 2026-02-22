@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import Link from "next/link";
 import Header from "@/components/Header";
 import SpotifyInput from "@/components/SpotifyInput";
 import FormatToggle, { type Format } from "@/components/FormatToggle";
@@ -590,6 +591,8 @@ export default function Home() {
       <footer className="border-t border-surface0/40 px-6 py-4 flex items-center justify-between text-xs text-overlay0/50">
         <span>yoink</span>
         <div className="flex items-center gap-4">
+          <Link href="/how" className="hover:text-text transition-colors duration-200">local files setup</Link>
+          <Link href="/roadmap" className="hover:text-text transition-colors duration-200">roadmap</Link>
           <a
             href="https://chasefrazier.dev/tip"
             target="_blank"
@@ -598,7 +601,6 @@ export default function Home() {
           >
             tip jar
           </a>
-          <span>metadata included</span>
         </div>
       </footer>
     </div>
