@@ -12,6 +12,7 @@ interface TrackInfo {
   albumArt: string;
   duration: string;
   spotifyUrl: string;
+  explicit?: boolean;
 }
 
 interface PlaylistInfo {
@@ -376,6 +377,9 @@ export default function Home() {
                 <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5">
                   <p className="text-base font-bold text-text truncate animate-slide-in" style={{ opacity: 0 }}>
                     {track.name}
+                    {track.explicit && (
+                      <span className="inline-flex items-center justify-center ml-1.5 px-1 py-px text-[9px] font-bold leading-none uppercase tracking-wide rounded bg-overlay0/20 text-overlay0 align-middle">E</span>
+                    )}
                   </p>
                   <p className="text-sm text-subtext0 truncate animate-slide-in" style={{ opacity: 0, animationDelay: "60ms" }}>
                     {track.artist}
@@ -510,6 +514,9 @@ export default function Home() {
                         trackStatuses[i] === "done" ? "text-subtext0" : "text-text"
                       }`}>
                         {t.name}
+                        {t.explicit && (
+                          <span className="inline-flex items-center justify-center ml-1 px-0.5 py-px text-[8px] font-bold leading-none uppercase tracking-wide rounded bg-overlay0/20 text-overlay0/70 align-middle">E</span>
+                        )}
                       </p>
                       <p className="text-xs text-overlay0 truncate">{t.artist}</p>
                     </div>

@@ -91,6 +91,7 @@ export interface TrackInfo {
   genre: string | null;
   releaseDate: string | null;
   spotifyUrl: string;
+  explicit: boolean;
 }
 
 export async function getTrackInfo(url: string): Promise<TrackInfo> {
@@ -136,6 +137,7 @@ export async function getTrackInfo(url: string): Promise<TrackInfo> {
     genre,
     releaseDate: data.album.release_date || null,
     spotifyUrl: data.external_urls.spotify,
+    explicit: data.explicit ?? false,
   };
 }
 
@@ -186,7 +188,7 @@ export async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
   }
 
   const tracks: TrackInfo[] = validItems
-    .map((item: { track: { name: string; artists: { id: string; name: string }[]; album: { name: string; images: { url: string }[]; release_date?: string }; duration_ms: number; external_ids?: { isrc?: string }; external_urls: { spotify: string } } }) => ({
+    .map((item: { track: { name: string; artists: { id: string; name: string }[]; album: { name: string; images: { url: string }[]; release_date?: string }; duration_ms: number; external_ids?: { isrc?: string }; external_urls: { spotify: string }; explicit?: boolean } }) => ({
       name: item.track.name,
       artist: item.track.artists.map((a) => a.name).join(", "),
       album: item.track.album.name,
@@ -197,6 +199,7 @@ export async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
       genre: genreMap.get(item.track.artists[0]?.id) || null,
       releaseDate: item.track.album.release_date || null,
       spotifyUrl: item.track.external_urls.spotify,
+      explicit: item.track.explicit ?? false,
     }));
 
   return {
@@ -252,7 +255,7 @@ export async function getAlbumInfo(url: string): Promise<PlaylistInfo> {
   const releaseDate = data.release_date || null;
 
   const tracks: TrackInfo[] = validItems
-    .map((item: { name: string; artists: { id: string; name: string }[]; duration_ms: number; external_ids?: { isrc?: string }; external_urls: { spotify: string } }) => ({
+    .map((item: { name: string; artists: { id: string; name: string }[]; duration_ms: number; external_ids?: { isrc?: string }; external_urls: { spotify: string }; explicit?: boolean }) => ({
       name: item.name,
       artist: item.artists.map((a) => a.name).join(", "),
       album: albumName,
@@ -263,6 +266,7 @@ export async function getAlbumInfo(url: string): Promise<PlaylistInfo> {
       genre: genreMap.get(item.artists[0]?.id) || null,
       releaseDate,
       spotifyUrl: item.external_urls.spotify,
+      explicit: item.explicit ?? false,
     }));
 
   return {
@@ -296,7 +300,7 @@ export async function getArtistTopTracks(url: string): Promise<PlaylistInfo> {
   const artistGenre = artistData.genres?.[0] || null;
 
   const tracks: TrackInfo[] = topTracksData.tracks.map(
-    (track: { name: string; artists: { name: string }[]; album: { name: string; images: { url: string }[]; release_date?: string }; duration_ms: number; external_ids?: { isrc?: string }; external_urls: { spotify: string } }) => ({
+    (track: { name: string; artists: { name: string }[]; album: { name: string; images: { url: string }[]; release_date?: string }; duration_ms: number; external_ids?: { isrc?: string }; external_urls: { spotify: string }; explicit?: boolean }) => ({
       name: track.name,
       artist: track.artists.map((a) => a.name).join(", "),
       album: track.album.name,
@@ -307,6 +311,7 @@ export async function getArtistTopTracks(url: string): Promise<PlaylistInfo> {
       genre: artistGenre,
       releaseDate: track.album.release_date || null,
       spotifyUrl: track.external_urls.spotify,
+      explicit: track.explicit ?? false,
     })
   );
 

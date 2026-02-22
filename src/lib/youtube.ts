@@ -85,5 +85,6 @@ export async function getYouTubeTrackInfo(videoId: string): Promise<TrackInfo> {
     genre: null,
     releaseDate: data.uploadDate || null,
     spotifyUrl: "", // Will be filled if we find a Spotify match
+    explicit: false,
   };
 }
