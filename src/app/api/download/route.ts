@@ -247,10 +247,7 @@ export async function POST(request: NextRequest) {
       ffmpegArgs.push("-metadata", `copyright=${track.copyright}`);
     }
     if (lyrics) {
-      // Strip LRC timestamps ([MM:SS.ms]) — Apple Music embeds ©lyr as plain text
-      // and will either show raw brackets or silently discard the field entirely
-      const plainLyrics = lyrics.replace(/^\[[\d:.]+\]\s*/gm, "").trim();
-      ffmpegArgs.push("-metadata", `lyrics=${plainLyrics}`);
+      ffmpegArgs.push("-metadata", `lyrics=${lyrics}`);
     }
     if (wantAlac || wantFlac) {
       const bitDepth = audio.qualityInfo?.bitDepth ?? 16;
