@@ -4,11 +4,13 @@ async function fetchFromLrclib(
   artist: string,
   title: string
 ): Promise<string | null> {
+  const headers = { "User-Agent": "yoink/1.0 (https://yoinkify.lol)" };
+
   // Try exact match first
   try {
     const res = await fetch(
       `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`,
-      { signal: AbortSignal.timeout(5000) }
+      { headers, signal: AbortSignal.timeout(5000) }
     );
 
     if (res.ok) {
@@ -24,7 +26,7 @@ async function fetchFromLrclib(
   try {
     const res = await fetch(
       `https://lrclib.net/api/search?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`,
-      { signal: AbortSignal.timeout(5000) }
+      { headers, signal: AbortSignal.timeout(5000) }
     );
 
     if (!res.ok) return null;
