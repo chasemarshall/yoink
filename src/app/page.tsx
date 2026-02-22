@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 const formats = ["flac", "alac", "mp3"];
@@ -15,8 +15,6 @@ const steps = [
 export default function LandingPage() {
   const [formatIndex, setFormatIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  const glowRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const interval = setInterval(() => {
       setIsAnimating(true);
@@ -28,39 +26,8 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (glowRef.current) {
-        glowRef.current.style.left = `${e.clientX}px`;
-        glowRef.current.style.top = `${e.clientY}px`;
-        glowRef.current.style.opacity = "1";
-      }
-    };
-    const handleMouseLeave = () => {
-      if (glowRef.current) glowRef.current.style.opacity = "0";
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseleave", handleMouseLeave);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseleave", handleMouseLeave);
-    };
-  }, []);
-
   return (
     <div className="min-h-screen bg-grid">
-      {/* Mouse glow that brightens nearby dots */}
-      <div
-        ref={glowRef}
-        className="pointer-events-none fixed z-[1] -translate-x-1/2 -translate-y-1/2 transition-opacity duration-300"
-        style={{
-          opacity: 0,
-          width: "350px",
-          height: "350px",
-          background: "radial-gradient(circle, rgba(180, 190, 254, 0.15) 0%, rgba(180, 190, 254, 0.05) 40%, transparent 70%)",
-          borderRadius: "50%",
-        }}
-      />
       {/* Nav */}
       <nav className="border-b border-surface0/60 px-6 py-4 flex items-center justify-between backdrop-blur-sm bg-base/80 sticky top-0 z-10">
         <div className="flex items-center gap-3">
