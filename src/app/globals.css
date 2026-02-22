@@ -227,6 +227,19 @@ body {
   animation: expand-letter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Mini yoink logo pulse — yk → yoink → yk loop */
+@keyframes logo-pulse {
+  0%, 100% { max-width: 0; opacity: 0; }
+  30%, 70% { max-width: 0.5em; opacity: 1; }
+}
+.logo-pulse {
+  display: inline-block;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  animation: logo-pulse 2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
