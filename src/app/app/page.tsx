@@ -43,6 +43,26 @@ export default function Home() {
   const [genreSource, setGenreSource] = useState<"spotify" | "itunes">("spotify");
   const abortRef = useRef(false);
   const downloadTriggeredRef = useRef(false);
+  const glowRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (glowRef.current) {
+        glowRef.current.style.left = `${e.clientX}px`;
+        glowRef.current.style.top = `${e.clientY}px`;
+        glowRef.current.style.opacity = "1";
+      }
+    };
+    const handleMouseLeave = () => {
+      if (glowRef.current) glowRef.current.style.opacity = "0";
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseleave", handleMouseLeave);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, []);
 
   // Enter key triggers download when track/playlist is ready
   useEffect(() => {
@@ -286,6 +306,17 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-grid">
+      <div
+        ref={glowRef}
+        className="pointer-events-none fixed z-[1] -translate-x-1/2 -translate-y-1/2 transition-opacity duration-300"
+        style={{
+          opacity: 0,
+          width: "350px",
+          height: "350px",
+          background: "radial-gradient(circle, rgba(180, 190, 254, 0.15) 0%, rgba(180, 190, 254, 0.05) 40%, transparent 70%)",
+          borderRadius: "50%",
+        }}
+      />
       <Header />
 
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
@@ -591,8 +622,8 @@ export default function Home() {
       <footer className="border-t border-surface0/40 px-6 py-4 flex items-center justify-between text-xs text-overlay0/50">
         <span>yoink</span>
         <div className="flex items-center gap-4">
-          <Link href="/how" className="hover:text-text transition-colors duration-200">local files setup</Link>
-          <Link href="/roadmap" className="hover:text-text transition-colors duration-200">roadmap</Link>
+          <Link href="/how" className="text-lavender/60 hover:text-lavender transition-colors duration-200">local files setup</Link>
+          <Link href="/roadmap" className="text-mauve/60 hover:text-mauve transition-colors duration-200">roadmap</Link>
           <a
             href="https://chasefrazier.dev/tip"
             target="_blank"
