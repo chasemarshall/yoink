@@ -49,7 +49,7 @@ export default function LandingPage() {
       <section className="px-6 pt-32 pb-24 max-w-2xl mx-auto">
         <div className="space-y-6 animate-fade-in-up" style={{ opacity: 0 }}>
           <p className="text-xs text-lavender uppercase tracking-[0.3em] font-bold">
-            music downloader
+            spotify to mp3 — and more
           </p>
           <h1 className="text-5xl sm:text-7xl font-bold leading-[0.95] tracking-tight">
             <span className="text-lavender">y</span>
@@ -59,7 +59,7 @@ export default function LandingPage() {
             <span className="text-lavender">k</span>
           </h1>
           <p className="text-lg text-subtext0/80 leading-relaxed max-w-md">
-            paste a spotify link, get the audio in{" "}
+            paste a spotify link. get the file in{" "}
             <span
               className={`text-lavender font-bold transition-all duration-300 ease-out origin-center ${
                 isAnimating
@@ -75,7 +75,7 @@ export default function LandingPage() {
             >
               {formats[formatIndex]}
             </span>
-            . metadata included. no accounts. no ads. just music.
+            . metadata, lyrics, cover art. no accounts, no ads.
           </p>
           <div className="flex items-center gap-4 pt-2">
             <Link
