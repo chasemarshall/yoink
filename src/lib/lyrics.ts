@@ -5,9 +5,24 @@ import { fetchMusixmatchLyrics } from "./musixmatch";
 
 const execFileAsync = promisify(execFile);
 
-// Try multiple methods to reach lrclib — Railway blocks Node's TLS entirely
-async function lrclibGet(url: string): Promise<string> {
-  // Method 1: curl (works on Railway if installed, works on self-hosted)
+// If set, proxy lrclib requests through this URL (e.g. a Cloudflare Worker)
+// to bypass Railway's network blocking lrclib.net
+const LRCLIB_BASE = process.env.LRCLIB_PROXY_URL || "https://lrclib.net";
+
+async function lrclibGet(path: string): Promise<string> {
+  const url = `${LRCLIB_BASE}${path}`;
+
+  // If using a proxy, regular fetch should work fine
+  if (process.env.LRCLIB_PROXY_URL) {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "yoink/1.0 (https://yoinkify.lol)" },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.text();
+  }
+
+  // Direct access: try curl first (different TLS stack)
   try {
     const { stdout } = await execFileAsync(
       "curl",
@@ -19,7 +34,7 @@ async function lrclibGet(url: string): Promise<string> {
     // curl not available or failed
   }
 
-  // Method 2: Node https module (works locally, blocked on Railway)
+  // Fallback: Node https module
   return new Promise((resolve, reject) => {
     const parsed = new URL(url);
     const timer = setTimeout(() => {
@@ -60,7 +75,7 @@ async function fetchFromLrclib(
   // Try exact match first
   try {
     const raw = await lrclibGet(
-      `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`
+      `/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`
     );
     const data = JSON.parse(raw);
     const lyrics = data.syncedLyrics || data.plainLyrics || null;
@@ -72,7 +87,7 @@ async function fetchFromLrclib(
   // Fall back to search endpoint (more forgiving matching)
   try {
     const raw = await lrclibGet(
-      `https://lrclib.net/api/search?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`
+      `/api/search?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`
     );
     const results = JSON.parse(raw);
     if (!Array.isArray(results) || results.length === 0) return null;
