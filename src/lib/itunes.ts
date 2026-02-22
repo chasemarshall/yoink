@@ -70,6 +70,7 @@ export async function lookupByItunesId(trackId: string): Promise<TrackInfo | nul
     return {
       name: result.trackName || "Unknown",
       artist: result.artistName || "Unknown",
+      albumArtist: result.collectionArtistName || result.artistName || null,
       album: result.collectionName || "Unknown",
       albumArt,
       duration: `${minutes}:${seconds.toString().padStart(2, "0")}`,
@@ -79,11 +80,11 @@ export async function lookupByItunesId(trackId: string): Promise<TrackInfo | nul
       releaseDate: result.releaseDate ? result.releaseDate.split("T")[0] : null,
       spotifyUrl: "",
       explicit: result.trackExplicitness === "explicit",
-      trackNumber: null,
-      discNumber: null,
+      trackNumber: result.trackNumber ?? null,
+      discNumber: result.discNumber ?? null,
       label: null,
-      copyright: null,
-      totalTracks: null,
+      copyright: result.copyright || null,
+      totalTracks: result.trackCount ?? null,
     };
   } catch {
     return null;

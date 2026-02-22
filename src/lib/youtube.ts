@@ -174,6 +174,7 @@ export async function getYouTubeTrackInfo(videoId: string): Promise<TrackInfo> {
   return {
     name,
     artist: data.uploaderName?.replace(" - Topic", "") || artist,
+    albumArtist: null,
     album: "",
     albumArt: data.thumbnailUrl || "",
     duration: formatDuration(data.duration || 0),

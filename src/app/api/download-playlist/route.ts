@@ -131,6 +131,9 @@ async function processTrack(
       "-metadata", `artist=${track.artist}`,
       "-metadata", `album=${track.album}`,
     );
+    if (track.albumArtist) {
+      ffmpegArgs.push("-metadata", `album_artist=${track.albumArtist}`);
+    }
     if (track.genre) {
       ffmpegArgs.push("-metadata", `genre=${track.genre}`);
     }
@@ -143,6 +146,15 @@ async function processTrack(
     }
     if (track.discNumber != null) {
       ffmpegArgs.push("-metadata", `disc=${track.discNumber}`);
+    }
+    if (track.isrc) {
+      if (wantAlac) {
+        ffmpegArgs.push("-metadata", `ISRC=${track.isrc}`);
+      } else if (wantFlac) {
+        ffmpegArgs.push("-metadata", `ISRC=${track.isrc}`);
+      } else {
+        ffmpegArgs.push("-metadata", `TSRC=${track.isrc}`);
+      }
     }
     if (track.label) {
       ffmpegArgs.push("-metadata", `label=${track.label}`);
