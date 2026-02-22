@@ -462,6 +462,28 @@ function verifyMatch(
   return false;
 }
 
+// Search Deezer by title + artist (public API, no auth needed)
+export async function searchDeezerByTitleArtist(track: { artist: string; name: string; durationMs: number }): Promise<string | null> {
+  try {
+    const query = `${track.artist} ${track.name}`;
+    const res = await fetch(
+      `https://api.deezer.com/2.0/search/track?q=${encodeURIComponent(query)}&limit=10`,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const items: Array<{ id: number; duration: number }> = data.data || [];
+    for (const item of items) {
+      if (Math.abs(item.duration * 1000 - track.durationMs) <= 5000) {
+        return String(item.id);
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 // Look up Deezer track ID by ISRC (public API, no auth needed)
 export async function lookupDeezerByIsrc(isrc: string): Promise<string | null> {
   try {

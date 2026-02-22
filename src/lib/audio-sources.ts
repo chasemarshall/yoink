@@ -1,7 +1,7 @@
 import type { TrackInfo } from "./spotify";
 import { resolveSonglink } from "./songlink";
-import { fetchDeezerAudio, lookupDeezerByIsrc } from "./deezer";
-import { lookupTidalByIsrc, fetchTidalAudio } from "./tidal";
+import { fetchDeezerAudio, lookupDeezerByIsrc, searchDeezerByTitleArtist } from "./deezer";
+import { lookupTidalByIsrc, searchTidalByTitleArtist, fetchTidalAudio } from "./tidal";
 import { searchYouTube, getAudioStreamUrl } from "./youtube";
 import { analyzeAudio, type AudioQualityInfo } from "./ffprobe";
 import { verifyTrack, type AcoustIdResult } from "./acoustid";
@@ -24,9 +24,13 @@ async function getDeezerIdForTrack(track: TrackInfo): Promise<string | null> {
     console.log("[audio] ISRC lookup returned nothing");
   }
 
-  // Slow path: Song.link (rate limited, used as fallback)
+  // Second path: Song.link fallback
   const links = await resolveSonglink(track.spotifyUrl);
-  return links?.deezerId || null;
+  if (links?.deezerId) return links.deezerId;
+
+  // Third path: title/artist search on Deezer directly
+  console.log("[audio] trying deezer title search for:", track.name);
+  return searchDeezerByTitleArtist(track);
 }
 
 async function tryDeezer(track: TrackInfo, preferFlac: boolean): Promise<AudioResult | null> {
@@ -67,9 +71,13 @@ async function getTidalIdForTrack(track: TrackInfo): Promise<string | null> {
     console.log("[audio] Tidal ISRC lookup returned nothing");
   }
 
-  // Slow path: Song.link fallback
+  // Second path: Song.link fallback
   const links = await resolveSonglink(track.spotifyUrl);
-  return links?.tidalId || null;
+  if (links?.tidalId) return links.tidalId;
+
+  // Third path: title/artist search on Tidal directly
+  console.log("[audio] trying tidal title search for:", track.name);
+  return searchTidalByTitleArtist(track);
 }
 
 async function tryTidal(track: TrackInfo, preferHiRes: boolean): Promise<AudioResult | null> {

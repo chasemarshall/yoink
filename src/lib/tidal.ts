@@ -59,6 +59,41 @@ async function getTidalSession(): Promise<string | null> {
   }
 }
 
+export async function searchTidalByTitleArtist(track: TrackInfo): Promise<string | null> {
+  const token = await getTidalSession();
+  if (!token) return null;
+
+  try {
+    const query = `${track.artist} ${track.name}`;
+    const res = await fetch(
+      `https://api.tidal.com/v1/search/tracks?query=${encodeURIComponent(query)}&countryCode=US&limit=10`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(10000),
+      }
+    );
+
+    if (!res.ok) {
+      console.log("[tidal] title search failed:", res.status);
+      return null;
+    }
+
+    const data = await res.json();
+    const items: Array<{ id: number; duration: number }> = data.items || [];
+
+    for (const item of items) {
+      if (verifyMatch(item.duration, track)) {
+        return String(item.id);
+      }
+    }
+
+    return null;
+  } catch (e) {
+    console.error("[tidal] title search error:", e);
+    return null;
+  }
+}
+
 export async function lookupTidalByIsrc(isrc: string): Promise<string | null> {
   const token = await getTidalSession();
   if (!token) return null;
