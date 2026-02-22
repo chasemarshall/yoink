@@ -85,7 +85,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/how"
-              className="text-sm text-lavender hover:text-mauve transition-colors duration-200"
+              className="text-sm text-mauve hover:text-lavender transition-colors duration-200"
             >
               local files setup
             </Link>
@@ -228,9 +228,9 @@ export default function LandingPage() {
         <div className="flex items-center justify-between text-xs text-overlay0/50">
           <span>yoink</span>
           <div className="flex items-center gap-4">
-            <Link href="/how" className="text-lavender/60 hover:text-lavender transition-colors duration-200">local files</Link>
+            <Link href="/how" className="text-mauve/60 hover:text-mauve transition-colors duration-200">local files</Link>
             <Link href="/players" className="text-green/60 hover:text-green transition-colors duration-200">players</Link>
-            <Link href="/roadmap" className="text-mauve/60 hover:text-mauve transition-colors duration-200">roadmap</Link>
+            <Link href="/roadmap" className="text-peach/60 hover:text-peach transition-colors duration-200">roadmap</Link>
           </div>
         </div>
         <div className="space-y-3 text-[10px] text-overlay0/40 leading-relaxed">

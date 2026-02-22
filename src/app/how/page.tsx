@@ -256,94 +256,262 @@ export default function HowPage() {
             setup — iphone
           </p>
 
-          {/* Enable local files */}
+          {/* Step 1 — Profile */}
           <div
             className="animate-fade-in-up space-y-4"
             style={{ opacity: 0 }}
           >
-            <p className="text-sm font-bold text-text">enable local files in spotify</p>
-            <div className="border border-surface0/60 rounded-lg overflow-hidden bg-mantle/40">
-              <div className="p-5 space-y-4">
-                <div className="flex items-start gap-3">
-                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">1.</span>
-                  <p className="text-sm text-subtext0">
-                    tap your <span className="text-text font-bold">profile picture</span> in the top-left
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">2.</span>
-                  <p className="text-sm text-subtext0">
-                    tap <span className="text-text font-bold">settings and privacy</span>
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">3.</span>
-                  <p className="text-sm text-subtext0">
-                    scroll down and tap <span className="text-text font-bold">apps and devices</span>
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">4.</span>
-                  <p className="text-sm text-subtext0">
-                    toggle <span className="text-text font-bold">local audio files</span> on
-                  </p>
+            <div className="flex items-baseline gap-4">
+              <span className="text-3xl font-bold text-surface1">01</span>
+              <p className="text-sm font-bold text-text">tap your profile picture</p>
+            </div>
+            <div className="pl-12 space-y-3">
+              <p className="text-sm text-subtext0 leading-relaxed">
+                open the spotify app. tap your <span className="text-text font-bold">profile picture</span> in the top-left corner.
+              </p>
+              <div className="border border-surface0/60 rounded-lg p-4 bg-mantle/40 max-w-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-lavender/30 flex items-center justify-center flex-shrink-0">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-lavender">
+                      <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M4 20c0-4 4-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-text">your name</p>
+                    <p className="text-[10px] text-overlay0">view profile</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Move files */}
+          {/* Step 2 — Settings and Privacy */}
           <div
             className="animate-fade-in-up space-y-4"
             style={{ opacity: 0, animationDelay: "80ms" }}
           >
-            <p className="text-sm font-bold text-text">move your songs into spotify</p>
-            <p className="text-sm text-subtext0 leading-relaxed">
-              after downloading from yoink, your files end up in your browser&apos;s downloads. you need to move them into spotify&apos;s folder using the Files app.
-            </p>
-            <div className="border border-surface0/60 rounded-lg overflow-hidden bg-mantle/40">
-              <div className="p-5 space-y-4">
-                <div className="flex items-start gap-3">
-                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">1.</span>
-                  <p className="text-sm text-subtext0">
-                    open the <span className="text-text font-bold">Files</span> app and go to the <span className="text-text font-bold">Browse</span> tab
-                  </p>
+            <div className="flex items-baseline gap-4">
+              <span className="text-3xl font-bold text-surface1">02</span>
+              <p className="text-sm font-bold text-text">settings and privacy</p>
+            </div>
+            <div className="pl-12 space-y-3">
+              <p className="text-sm text-subtext0 leading-relaxed">
+                tap <span className="text-text font-bold">Settings and privacy</span> from the menu.
+              </p>
+              <div className="border border-surface0/60 rounded-lg p-4 bg-mantle/40 space-y-3 max-w-xs">
+                <div className="flex items-center gap-3 py-1.5 opacity-40">
+                  <span className="text-xs text-subtext0">Add account</span>
                 </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">2.</span>
-                  <p className="text-sm text-subtext0">
-                    tap <span className="text-text font-bold">Downloads</span> and find your song
-                  </p>
+                <div className="border-t border-surface0/30" />
+                <div className="flex items-center gap-3 py-1.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-lavender flex-shrink-0">
+                    <path d="M12 15.5A3.5 3.5 0 1012 8.5a3.5 3.5 0 000 7z" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                  <span className="text-xs font-bold text-lavender">Settings and privacy</span>
                 </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">3.</span>
-                  <p className="text-sm text-subtext0">
-                    tap and hold the file → tap <span className="text-text font-bold">Copy</span>
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">4.</span>
-                  <p className="text-sm text-subtext0">
-                    go back to <span className="text-text font-bold">Browse</span> → <span className="text-text font-bold">On My iPhone</span>
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">5.</span>
-                  <p className="text-sm text-subtext0">
-                    find the <span className="text-text font-bold">Spotify</span> folder (has the spotify icon)
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">6.</span>
-                  <p className="text-sm text-subtext0">
-                    tap and hold a blank spot → tap <span className="text-text font-bold">Paste</span>
-                  </p>
+                <div className="border-t border-surface0/30" />
+                <div className="flex items-center gap-3 py-1.5 opacity-40">
+                  <span className="text-xs text-subtext0">What&apos;s new</span>
                 </div>
               </div>
-              <div className="border-t border-surface0/40 px-5 py-3">
-                <p className="text-xs text-overlay0">
-                  your tracks show up in spotify → your library → local files. no premium needed.
-                </p>
+            </div>
+          </div>
+
+          {/* Step 3 — Apps and Devices */}
+          <div
+            className="animate-fade-in-up space-y-4"
+            style={{ opacity: 0, animationDelay: "160ms" }}
+          >
+            <div className="flex items-baseline gap-4">
+              <span className="text-3xl font-bold text-surface1">03</span>
+              <p className="text-sm font-bold text-text">apps and devices</p>
+            </div>
+            <div className="pl-12 space-y-3">
+              <p className="text-sm text-subtext0 leading-relaxed">
+                scroll down and tap <span className="text-text font-bold">Apps and devices</span>.
+              </p>
+              <div className="border border-surface0/60 rounded-lg p-4 bg-mantle/40 space-y-3 max-w-xs">
+                <div className="flex items-center gap-3 py-1.5 opacity-40">
+                  <span className="text-xs text-subtext0">Data Saver</span>
+                </div>
+                <div className="border-t border-surface0/30" />
+                <div className="flex items-center gap-3 py-1.5 opacity-40">
+                  <span className="text-xs text-subtext0">Playback</span>
+                </div>
+                <div className="border-t border-surface0/30" />
+                <div className="flex items-center gap-3 py-1.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-lavender flex-shrink-0">
+                    <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" strokeWidth="2"/>
+                    <line x1="12" y1="18" x2="12" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <span className="text-xs font-bold text-lavender">Apps and devices</span>
+                </div>
+                <div className="border-t border-surface0/30" />
+                <div className="flex items-center gap-3 py-1.5 opacity-40">
+                  <span className="text-xs text-subtext0">Storage</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 4 — Local Audio Files toggle */}
+          <div
+            className="animate-fade-in-up space-y-4"
+            style={{ opacity: 0, animationDelay: "240ms" }}
+          >
+            <div className="flex items-baseline gap-4">
+              <span className="text-3xl font-bold text-surface1">04</span>
+              <p className="text-sm font-bold text-text">toggle on local audio files</p>
+            </div>
+            <div className="pl-12 space-y-3">
+              <p className="text-sm text-subtext0 leading-relaxed">
+                toggle <span className="text-text font-bold">Local audio files</span> to on.
+              </p>
+              <div className="border border-surface0/60 rounded-lg p-4 bg-mantle/40 space-y-3 max-w-xs">
+                <p className="text-xs font-bold text-text">Apps and devices</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-subtext0">Local audio files</span>
+                  <div className="w-8 h-4 rounded-full bg-lavender/80 flex items-center justify-end px-0.5">
+                    <div className="w-3 h-3 rounded-full bg-crust" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Divider between enable and move */}
+          <div className="border-t border-surface0/30" />
+
+          <p
+            className="text-xs text-overlay0 uppercase tracking-[0.3em] animate-fade-in-up"
+            style={{ opacity: 0 }}
+          >
+            move songs — iphone
+          </p>
+
+          {/* Step 5 — Open Files app */}
+          <div
+            className="animate-fade-in-up space-y-4"
+            style={{ opacity: 0 }}
+          >
+            <div className="flex items-baseline gap-4">
+              <span className="text-3xl font-bold text-surface1">05</span>
+              <p className="text-sm font-bold text-text">open the files app</p>
+            </div>
+            <div className="pl-12 space-y-3">
+              <p className="text-sm text-subtext0 leading-relaxed">
+                open the <span className="text-text font-bold">Files</span> app and go to the <span className="text-text font-bold">Browse</span> tab. tap <span className="text-text font-bold">Downloads</span> to find your song.
+              </p>
+              <div className="border border-surface0/60 rounded-lg p-4 bg-mantle/40 space-y-2.5 max-w-xs">
+                <p className="text-xs font-bold text-text">Browse</p>
+                <div className="flex items-center gap-3 py-1.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-blue-400 flex-shrink-0">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    <polyline points="7 10 12 15 17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <span className="text-xs font-bold text-lavender">Downloads</span>
+                </div>
+                <div className="border-t border-surface0/30" />
+                <div className="flex items-center gap-3 py-1.5 opacity-40">
+                  <span className="text-xs text-subtext0">Recently Deleted</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 6 — Copy */}
+          <div
+            className="animate-fade-in-up space-y-4"
+            style={{ opacity: 0, animationDelay: "80ms" }}
+          >
+            <div className="flex items-baseline gap-4">
+              <span className="text-3xl font-bold text-surface1">06</span>
+              <p className="text-sm font-bold text-text">copy your song</p>
+            </div>
+            <div className="pl-12 space-y-3">
+              <p className="text-sm text-subtext0 leading-relaxed">
+                tap and hold the file, then tap <span className="text-text font-bold">Copy</span> from the menu.
+              </p>
+              <div className="border border-surface0/60 rounded-lg p-4 bg-mantle/40 space-y-2.5 max-w-xs">
+                <div className="flex items-center gap-3 py-1.5 bg-lavender/10 rounded px-2 -mx-2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-lavender flex-shrink-0">
+                    <path d="M9 2H5a2 2 0 00-2 2v4m0 4v4a2 2 0 002 2h4m4 0h4a2 2 0 002-2v-4m0-4V4a2 2 0 00-2-2h-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <span className="text-xs font-bold text-lavender">Copy</span>
+                </div>
+                <div className="flex items-center gap-3 py-1.5 opacity-40">
+                  <span className="text-xs text-subtext0">Move</span>
+                </div>
+                <div className="flex items-center gap-3 py-1.5 opacity-40">
+                  <span className="text-xs text-subtext0">Delete</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 7 — Navigate to Spotify folder */}
+          <div
+            className="animate-fade-in-up space-y-4"
+            style={{ opacity: 0, animationDelay: "160ms" }}
+          >
+            <div className="flex items-baseline gap-4">
+              <span className="text-3xl font-bold text-surface1">07</span>
+              <p className="text-sm font-bold text-text">find the spotify folder</p>
+            </div>
+            <div className="pl-12 space-y-3">
+              <p className="text-sm text-subtext0 leading-relaxed">
+                go back to <span className="text-text font-bold">Browse</span> → <span className="text-text font-bold">On My iPhone</span>. scroll until you see the <span className="text-text font-bold">Spotify</span> folder.
+              </p>
+              <div className="border border-surface0/60 rounded-lg p-4 bg-mantle/40 space-y-2.5 max-w-xs">
+                <p className="text-xs font-bold text-text">On My iPhone</p>
+                <div className="flex items-center gap-3 py-1.5 opacity-40">
+                  <span className="text-xs text-subtext0">Pages</span>
+                </div>
+                <div className="border-t border-surface0/30" />
+                <div className="flex items-center gap-3 py-1.5">
+                  <div className="w-6 h-6 rounded bg-green/20 flex items-center justify-center flex-shrink-0">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-green">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                      <circle cx="12" cy="12" r="4" fill="currentColor"/>
+                    </svg>
+                  </div>
+                  <span className="text-xs font-bold text-lavender">Spotify</span>
+                </div>
+                <div className="border-t border-surface0/30" />
+                <div className="flex items-center gap-3 py-1.5 opacity-40">
+                  <span className="text-xs text-subtext0">Shortcuts</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 8 — Paste */}
+          <div
+            className="animate-fade-in-up space-y-4"
+            style={{ opacity: 0, animationDelay: "240ms" }}
+          >
+            <div className="flex items-baseline gap-4">
+              <span className="text-3xl font-bold text-surface1">08</span>
+              <p className="text-sm font-bold text-text">paste your song</p>
+            </div>
+            <div className="pl-12 space-y-3">
+              <p className="text-sm text-subtext0 leading-relaxed">
+                tap and hold a blank spot inside the Spotify folder, then tap <span className="text-text font-bold">Paste</span>. done — your tracks show up in spotify under <span className="text-text font-bold">Your Library → Local Files</span>.
+              </p>
+              <div className="border border-surface0/60 rounded-lg p-4 bg-mantle/40 space-y-2.5 max-w-xs">
+                <div className="flex items-center gap-3 py-1.5 bg-lavender/10 rounded px-2 -mx-2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-lavender flex-shrink-0">
+                    <rect x="8" y="2" width="13" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M16 8H3v12a2 2 0 002 2h11" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                  <span className="text-xs font-bold text-lavender">Paste</span>
+                </div>
+                <div className="flex items-center gap-3 py-1.5 opacity-40">
+                  <span className="text-xs text-subtext0">New Folder</span>
+                </div>
               </div>
             </div>
           </div>
@@ -380,7 +548,7 @@ export default function HowPage() {
       <footer className="border-t border-surface0/40 px-6 py-4 flex items-center justify-between text-xs text-overlay0/50">
         <span>yoink</span>
         <div className="flex items-center gap-4">
-          <Link href="/roadmap" className="hover:text-text transition-colors duration-200">roadmap</Link>
+          <Link href="/roadmap" className="text-peach/60 hover:text-peach transition-colors duration-200">roadmap</Link>
           <a
             href="https://chasefrazier.dev/tip"
             target="_blank"
