@@ -327,8 +327,8 @@ export default function HowPage() {
                   </div>
                   <div className="py-2.5 flex items-center gap-2.5 bg-lavender/8 -mx-4 px-4 rounded">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-lavender flex-shrink-0">
+                      <path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z" stroke="currentColor" strokeWidth="2"/>
                       <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
-                      <path d="M12 1v2m0 18v2m11-11h-2M3 12H1m17.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m14.14 0l-1.41-1.41M6.34 6.34L4.93 4.93" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                     </svg>
                     <span className="text-xs font-bold text-lavender">Settings and privacy</span>
                   </div>
@@ -392,23 +392,25 @@ export default function HowPage() {
               </p>
               {/* Apps and devices page mockup */}
               <div className="border border-surface0/60 rounded-xl overflow-hidden bg-mantle/40 max-w-xs">
-                <div className="px-4 py-2.5 border-b border-surface0/30">
-                  <p className="text-xs font-bold text-text">Apps and devices</p>
+                <div className="px-4 pt-4 pb-2">
+                  <p className="text-sm font-bold text-text">Other devices</p>
                 </div>
-                <div className="px-4 py-3 space-y-4">
-                  <div className="flex items-center justify-between opacity-40">
-                    <div>
-                      <span className="text-xs text-subtext0">Connect to a device</span>
-                    </div>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" className="text-surface2"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <div className="px-4 pb-4 space-y-4">
+                  <div className="opacity-40">
+                    <p className="text-xs text-text">Spotify Connect control</p>
+                    <p className="text-[10px] text-overlay0 mt-0.5 leading-relaxed">Lets you control Spotify from your phone&apos;s lock screen when listening on another device.</p>
                   </div>
-                  <div className="flex items-center justify-between">
+                  <div className="opacity-40">
+                    <p className="text-xs text-text">Local device visibility</p>
+                    <p className="text-[10px] text-overlay0 mt-0.5 leading-relaxed">Only devices connected to your local Wi-Fi or ethernet are shown in the Devices menu.</p>
+                  </div>
+                  <div className="bg-lavender/8 -mx-4 px-4 py-2 rounded flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-xs font-bold text-text">Local audio files</p>
-                      <p className="text-[10px] text-overlay0 mt-0.5">Show audio files from this device</p>
+                      <p className="text-xs font-bold text-lavender">Local audio files</p>
+                      <p className="text-[10px] text-lavender/60 mt-0.5 leading-relaxed">Lets you add tracks from this device to Your Library.</p>
                     </div>
                     <div className="w-9 h-5 rounded-full bg-green flex items-center justify-end px-0.5 flex-shrink-0">
-                      <div className="w-4 h-4 rounded-full bg-crust" />
+                      <div className="w-4 h-4 rounded-full bg-white" />
                     </div>
                   </div>
                 </div>
