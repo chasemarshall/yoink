@@ -502,15 +502,18 @@ export default function Home() {
                     }`}
                   >
                     {/* Status indicator */}
-                    <div className="flex-shrink-0 w-5 text-center">
+                    <div className={`flex-shrink-0 text-center ${trackStatuses[i] === "downloading" ? "w-8" : "w-5"}`}>
                       {trackStatuses[i] === "pending" && (
                         <span className="text-xs text-overlay0/50">{i + 1}</span>
                       )}
                       {trackStatuses[i] === "downloading" && (
-                        <div className="flex items-center justify-center gap-0.5">
-                          <div className="loading-dot w-1 h-1 rounded-full bg-lavender" />
-                          <div className="loading-dot w-1 h-1 rounded-full bg-lavender" />
-                        </div>
+                        <span className="text-[10px] font-bold text-lavender whitespace-nowrap">
+                          y
+                          <span className="logo-pulse" style={{ animationDelay: "0s" }}>o</span>
+                          <span className="logo-pulse" style={{ animationDelay: "0.1s" }}>i</span>
+                          <span className="logo-pulse" style={{ animationDelay: "0.2s" }}>n</span>
+                          k
+                        </span>
                       )}
                       {trackStatuses[i] === "done" && (
                         <span className="text-xs text-green">✓</span>
