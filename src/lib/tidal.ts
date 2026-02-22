@@ -138,25 +138,36 @@ async function getManifest(
     }
 
     const data = await res.json();
-    const manifest = data.data?.attributes;
-    if (!manifest) {
+    console.log("[tidal] v2 manifest response keys:", JSON.stringify(Object.keys(data)));
+    const attrs = data.data?.attributes;
+    console.log("[tidal] v2 manifest attributes:", attrs ? JSON.stringify(Object.keys(attrs)) : "null");
+    if (attrs) {
+      // Log first 200 chars of each string field to understand structure
+      for (const [k, v] of Object.entries(attrs)) {
+        const val = typeof v === "string" ? v.substring(0, 200) : v;
+        console.log(`[tidal] v2 attr ${k}:`, val);
+      }
+    }
+
+    if (!attrs) {
       console.log("[tidal] v2 manifest: no attributes");
-      return null;
+      // Fall back to v1 API
+      return getManifestV1(tidalId, preferHiRes, token);
     }
 
     // Parse HLS manifest to extract audio URL
-    const hlsUrl = extractAudioUrlFromHls(manifest.manifest || manifest.urls?.[0]);
+    const hlsUrl = extractAudioUrlFromHls(attrs.manifest || attrs.urls?.[0]);
     if (!hlsUrl) {
-      console.log("[tidal] v2 manifest: could not extract audio URL");
-      return null;
+      console.log("[tidal] v2 manifest: could not extract audio URL, falling back to v1");
+      // Fall back to v1 API instead of giving up
+      return getManifestV1(tidalId, preferHiRes, token);
     }
 
     // Determine quality from the codec info
-    const codec = manifest.audioCodec || manifest.codecs || "";
+    const codec = attrs.audioCodec || attrs.codecs || "";
     let quality: TidalQuality = "HIGH";
     if (codec === "flac" || codec.includes("flac")) {
-      // Check if hi-res based on sample rate
-      const sampleRate = manifest.audioSamplingRate || manifest.sampleRate || 44100;
+      const sampleRate = attrs.audioSamplingRate || attrs.sampleRate || 44100;
       quality = sampleRate > 44100 ? "HI_RES_LOSSLESS" : "LOSSLESS";
     }
 
