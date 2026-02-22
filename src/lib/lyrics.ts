@@ -18,7 +18,7 @@ async function lrclibGet(path: string): Promise<string> {
   if (process.env.LRCLIB_PROXY_URL) {
     const res = await fetch(url, {
       headers: { "User-Agent": "yoink/1.0 (https://yoinkify.lol)" },
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(20000),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.text();
@@ -28,8 +28,8 @@ async function lrclibGet(path: string): Promise<string> {
   try {
     const { stdout } = await execFileAsync(
       "curl",
-      ["-s", "--max-time", "5", "-H", "User-Agent: yoink/1.0", url],
-      { timeout: 6000 }
+      ["-s", "--max-time", "15", "-H", "User-Agent: yoink/1.0", url],
+      { timeout: 16000 }
     );
     if (stdout.trim()) return stdout;
   } catch {
@@ -42,7 +42,7 @@ async function lrclibGet(path: string): Promise<string> {
     const timer = setTimeout(() => {
       req.destroy();
       reject(new Error("timeout"));
-    }, 5000);
+    }, 15000);
     const req = httpsRequest(
       {
         hostname: parsed.hostname,
