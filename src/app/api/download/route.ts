@@ -233,7 +233,10 @@ export async function POST(request: NextRequest) {
       ffmpegArgs.push("-metadata", `copyright=${track.copyright}`);
     }
     if (lyrics) {
-      ffmpegArgs.push("-metadata", `lyrics=${lyrics}`);
+      // Strip LRC timestamps ([MM:SS.ms]) — Apple Music embeds ©lyr as plain text
+      // and will either show raw brackets or silently discard the field entirely
+      const plainLyrics = lyrics.replace(/^\[[\d:.]+\]\s*/gm, "").trim();
+      ffmpegArgs.push("-metadata", `lyrics=${plainLyrics}`);
     }
     if (wantAlac || wantFlac) {
       const bitDepth = audio.qualityInfo?.bitDepth ?? 16;
@@ -252,10 +255,22 @@ export async function POST(request: NextRequest) {
       // Fallback: try converting without metadata/art
       try {
         const fallbackArgs = wantAlac
-          ? ["-y", "-i", inputPath, "-c:a", "alac", outputPath]
+          ? ["-y", "-i", inputPath, "-c:a", "alac",
+             "-metadata", `title=${track.name}`,
+             "-metadata", `artist=${track.artist}`,
+             "-metadata", `album=${track.album}`,
+             outputPath]
           : wantFlac
-            ? ["-y", "-i", inputPath, "-c:a", "flac", outputPath]
-            : ["-y", "-i", inputPath, "-c:a", "libmp3lame", "-b:a", "320k", outputPath];
+            ? ["-y", "-i", inputPath, "-c:a", "flac",
+               "-metadata", `title=${track.name}`,
+               "-metadata", `artist=${track.artist}`,
+               "-metadata", `album=${track.album}`,
+               outputPath]
+            : ["-y", "-i", inputPath, "-c:a", "libmp3lame", "-b:a", "320k",
+               "-metadata", `title=${track.name}`,
+               "-metadata", `artist=${track.artist}`,
+               "-metadata", `album=${track.album}`,
+               outputPath];
         await execFileAsync("ffmpeg", fallbackArgs, {
           timeout: 120000,
           maxBuffer: 50 * 1024 * 1024,
