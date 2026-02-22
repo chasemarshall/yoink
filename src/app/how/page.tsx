@@ -398,11 +398,9 @@ export default function HowPage() {
                 <div className="px-4 pb-4 space-y-4">
                   <div className="opacity-40">
                     <p className="text-xs text-text">Spotify Connect control</p>
-                    <p className="text-[10px] text-overlay0 mt-0.5 leading-relaxed">Lets you control Spotify from your phone&apos;s lock screen when listening on another device.</p>
                   </div>
                   <div className="opacity-40">
                     <p className="text-xs text-text">Local device visibility</p>
-                    <p className="text-[10px] text-overlay0 mt-0.5 leading-relaxed">Only devices connected to your local Wi-Fi or ethernet are shown in the Devices menu.</p>
                   </div>
                   <div className="bg-lavender/8 -mx-4 px-4 py-2 rounded flex items-center justify-between gap-3">
                     <div>
