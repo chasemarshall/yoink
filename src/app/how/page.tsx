@@ -2,44 +2,6 @@
 
 import Link from "next/link";
 
-const benefits = [
-  {
-    label: "no ads",
-    desc: "local files play without any interruptions. no audio ads, no banners, no upsells. just your music.",
-  },
-  {
-    label: "stays in spotify",
-    desc: "your downloads live right alongside your streaming library. same playlists, same queue, same app.",
-  },
-  {
-    label: "works offline",
-    desc: "downloaded tracks don't need a connection. airplane mode? no problem.",
-  },
-];
-
-const steps = [
-  {
-    num: "01",
-    title: "open spotify settings",
-    desc: "launch the spotify desktop app. click your profile picture in the top-right corner, then click settings.",
-  },
-  {
-    num: "02",
-    title: "enable local files",
-    desc: "scroll down to \"your library\" and toggle \"show local files\" to on.",
-  },
-  {
-    num: "03",
-    title: "add your music source",
-    desc: "scroll down to \"show songs from\". you can enable the default sources (downloads, my music) or click \"add a source\" to point spotify at whatever folder yoink saves to.",
-  },
-  {
-    num: "04",
-    title: "find your tracks",
-    desc: "go to your library → local files. everything yoink downloaded — with full metadata and album art — shows up ready to play.",
-  },
-];
-
 export default function HowPage() {
   return (
     <div className="min-h-screen bg-grid">
@@ -71,7 +33,7 @@ export default function HowPage() {
             <span className="text-lavender">skip the ads.</span>
           </h1>
           <p className="text-lg text-subtext0/80 leading-relaxed max-w-md">
-            yoink grabs the mp3. spotify plays it back — no premium
+            yoink gives you the file. spotify plays it back — no premium
             required, no ads, no limits. here&apos;s how to set it up.
           </p>
         </div>
@@ -92,14 +54,14 @@ export default function HowPage() {
             the loop
           </p>
           <div
-            className="animate-fade-in-up flex items-center gap-3 text-sm"
+            className="animate-fade-in-up flex items-center gap-3 text-sm flex-wrap"
             style={{ opacity: 0, animationDelay: "80ms" }}
           >
             <span className="text-lavender font-bold">yoink it</span>
             <span className="text-surface2">→</span>
-            <span className="text-text font-bold">drop it in spotify</span>
+            <span className="text-text font-bold">save to your music folder</span>
             <span className="text-surface2">→</span>
-            <span className="text-green font-bold">listen ad-free</span>
+            <span className="text-green font-bold">plays in spotify, ad-free</span>
           </div>
         </div>
       </section>
@@ -111,7 +73,7 @@ export default function HowPage() {
 
       {/* Why */}
       <section className="px-6 py-24 max-w-2xl mx-auto">
-        <div className="space-y-16">
+        <div className="space-y-12">
           <p
             className="text-xs text-overlay0 uppercase tracking-[0.3em] animate-fade-in-up"
             style={{ opacity: 0 }}
@@ -119,17 +81,38 @@ export default function HowPage() {
             why local files
           </p>
           <div className="space-y-6">
-            {benefits.map((b, i) => (
-              <div
-                key={b.label}
-                className="animate-fade-in-up flex items-baseline gap-3"
-                style={{ opacity: 0, animationDelay: `${i * 80}ms` }}
-              >
-                <span className="text-sm text-surface2 flex-shrink-0">[*]</span>
-                <span className="text-sm font-bold text-text">{b.label}</span>
-                <span className="text-sm text-subtext0">{b.desc}</span>
-              </div>
-            ))}
+            <div
+              className="animate-fade-in-up flex items-baseline gap-3"
+              style={{ opacity: 0 }}
+            >
+              <span className="text-sm text-surface2 flex-shrink-0">[*]</span>
+              <span className="text-sm font-bold text-text">no ads</span>
+              <span className="text-sm text-subtext0">local files play without any interruptions. no audio ads, no banners, no upsells.</span>
+            </div>
+            <div
+              className="animate-fade-in-up flex items-baseline gap-3"
+              style={{ opacity: 0, animationDelay: "80ms" }}
+            >
+              <span className="text-sm text-surface2 flex-shrink-0">[*]</span>
+              <span className="text-sm font-bold text-text">stays in spotify</span>
+              <span className="text-sm text-subtext0">your downloads live alongside your streaming library. same playlists, same queue, same app.</span>
+            </div>
+            <div
+              className="animate-fade-in-up flex items-baseline gap-3"
+              style={{ opacity: 0, animationDelay: "160ms" }}
+            >
+              <span className="text-sm text-surface2 flex-shrink-0">[*]</span>
+              <span className="text-sm font-bold text-text">works offline</span>
+              <span className="text-sm text-subtext0">local files don&apos;t need a connection. airplane mode, no wifi — doesn&apos;t matter.</span>
+            </div>
+            <div
+              className="animate-fade-in-up flex items-baseline gap-3"
+              style={{ opacity: 0, animationDelay: "240ms" }}
+            >
+              <span className="text-sm text-surface2 flex-shrink-0">[*]</span>
+              <span className="text-sm font-bold text-text">no premium needed</span>
+              <span className="text-sm text-subtext0">local files work on the free tier. you don&apos;t need spotify premium for any of this.</span>
+            </div>
           </div>
         </div>
       </section>
@@ -139,31 +122,121 @@ export default function HowPage() {
         <div className="border-t border-surface0/40" />
       </div>
 
-      {/* Steps */}
+      {/* Desktop Setup */}
       <section className="px-6 py-24 max-w-2xl mx-auto">
-        <div className="space-y-16">
+        <div className="space-y-12">
           <p
             className="text-xs text-overlay0 uppercase tracking-[0.3em] animate-fade-in-up"
             style={{ opacity: 0 }}
           >
             setup — desktop
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            {steps.map((s, i) => (
-              <div
-                key={s.num}
-                className="animate-fade-in-up space-y-3"
-                style={{ opacity: 0, animationDelay: `${i * 80}ms` }}
-              >
-                <span className="text-3xl font-bold text-surface1">
-                  {s.num}
-                </span>
-                <p className="text-sm font-bold text-text">{s.title}</p>
-                <p className="text-sm text-subtext0 leading-relaxed">
-                  {s.desc}
+
+          {/* Step 1 */}
+          <div
+            className="animate-fade-in-up space-y-4"
+            style={{ opacity: 0 }}
+          >
+            <div className="flex items-baseline gap-4">
+              <span className="text-3xl font-bold text-surface1">01</span>
+              <p className="text-sm font-bold text-text">open settings</p>
+            </div>
+            <div className="pl-12 space-y-2">
+              <p className="text-sm text-subtext0 leading-relaxed">
+                open the spotify desktop app. click your <span className="text-text font-bold">profile picture</span> in the top-right corner, then click <span className="text-text font-bold">settings</span>.
+              </p>
+            </div>
+          </div>
+
+          {/* Step 2 */}
+          <div
+            className="animate-fade-in-up space-y-4"
+            style={{ opacity: 0, animationDelay: "80ms" }}
+          >
+            <div className="flex items-baseline gap-4">
+              <span className="text-3xl font-bold text-surface1">02</span>
+              <p className="text-sm font-bold text-text">enable local files</p>
+            </div>
+            <div className="pl-12 space-y-3">
+              <p className="text-sm text-subtext0 leading-relaxed">
+                scroll down to <span className="text-text font-bold">your library</span> and toggle <span className="text-text font-bold">show local files</span> to on.
+              </p>
+              <div className="border border-surface0/60 rounded-lg p-4 bg-mantle/40 space-y-3 max-w-sm">
+                <p className="text-xs font-bold text-text">Your Library</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-subtext0">Show Local Files</span>
+                  <div className="w-8 h-4 rounded-full bg-lavender/80 flex items-center justify-end px-0.5">
+                    <div className="w-3 h-3 rounded-full bg-crust" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 3 */}
+          <div
+            className="animate-fade-in-up space-y-4"
+            style={{ opacity: 0, animationDelay: "160ms" }}
+          >
+            <div className="flex items-baseline gap-4">
+              <span className="text-3xl font-bold text-surface1">03</span>
+              <p className="text-sm font-bold text-text">choose your music folder</p>
+            </div>
+            <div className="pl-12 space-y-3">
+              <p className="text-sm text-subtext0 leading-relaxed">
+                right below that, you&apos;ll see <span className="text-text font-bold">show songs from</span>. you have two options:
+              </p>
+              <div className="space-y-2 text-sm text-subtext0">
+                <p>
+                  <span className="text-lavender font-bold">option a</span> — enable <span className="text-text font-bold">Downloads</span> or <span className="text-text font-bold">My Music</span> and save your yoink files there.
+                </p>
+                <p>
+                  <span className="text-lavender font-bold">option b</span> — click <span className="text-text font-bold">add a source</span> and point it at whatever folder you save your music to.
                 </p>
               </div>
-            ))}
+              <div className="border border-surface0/60 rounded-lg p-4 bg-mantle/40 space-y-2.5 max-w-sm">
+                <p className="text-xs font-bold text-text">Show songs from</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-subtext0">Downloads</span>
+                  <div className="w-8 h-4 rounded-full bg-lavender/80 flex items-center justify-end px-0.5">
+                    <div className="w-3 h-3 rounded-full bg-crust" />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-subtext0">My Music</span>
+                  <div className="w-8 h-4 rounded-full bg-surface1 flex items-center justify-start px-0.5">
+                    <div className="w-3 h-3 rounded-full bg-overlay0" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 4 */}
+          <div
+            className="animate-fade-in-up space-y-4"
+            style={{ opacity: 0, animationDelay: "240ms" }}
+          >
+            <div className="flex items-baseline gap-4">
+              <span className="text-3xl font-bold text-surface1">04</span>
+              <p className="text-sm font-bold text-text">find your tracks</p>
+            </div>
+            <div className="pl-12 space-y-3">
+              <p className="text-sm text-subtext0 leading-relaxed">
+                go to your library. you&apos;ll see a playlist called <span className="text-text font-bold">Local Files</span> — it has a folder icon with a blue background. every file you save to your music folder shows up there with full metadata and album art, ready to play.
+              </p>
+              <div className="border border-surface0/60 rounded-lg p-3 bg-mantle/40 inline-flex items-center gap-3">
+                <div className="w-10 h-10 rounded bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-blue-400">
+                    <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-text">Local Files</p>
+                  <p className="text-[10px] text-overlay0">your library</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -173,43 +246,58 @@ export default function HowPage() {
         <div className="border-t border-surface0/40" />
       </div>
 
-      {/* Mobile note */}
+      {/* Mobile */}
       <section className="px-6 py-24 max-w-2xl mx-auto">
-        <div
-          className="animate-fade-in-up space-y-6"
-          style={{ opacity: 0 }}
-        >
-          <p className="text-xs text-overlay0 uppercase tracking-[0.3em]">
-            mobile
+        <div className="space-y-12">
+          <p
+            className="text-xs text-overlay0 uppercase tracking-[0.3em] animate-fade-in-up"
+            style={{ opacity: 0 }}
+          >
+            setup — mobile
           </p>
-          <div className="border border-surface0/60 rounded-lg p-6 bg-mantle/40 space-y-4">
-            <p className="text-sm font-bold text-text">
-              want local files on your phone?
+
+          <div
+            className="animate-fade-in-up space-y-6"
+            style={{ opacity: 0 }}
+          >
+            <p className="text-sm text-subtext0 leading-relaxed">
+              transfer your files to your phone however you like — airdrop,
+              files app, usb, google drive, whatever works. then:
             </p>
-            <p className="text-sm text-overlay1 leading-relaxed">
-              transfer your mp3s to your phone however you like — airdrop,
-              files app, usb, cloud storage. then in the spotify app:
-            </p>
-            <div className="space-y-2 text-sm text-overlay1 leading-relaxed">
-              <p>
-                <span className="text-surface2">1.</span> tap your profile
-                picture → <span className="text-text font-bold">settings
-                and privacy</span>
-              </p>
-              <p>
-                <span className="text-surface2">2.</span> go
-                to <span className="text-text font-bold">apps and
-                devices</span>
-              </p>
-              <p>
-                <span className="text-surface2">3.</span> toggle <span className="text-text font-bold">local
-                audio files</span> on
-              </p>
+
+            <div className="border border-surface0/60 rounded-lg overflow-hidden bg-mantle/40">
+              <div className="p-5 space-y-4">
+                <div className="flex items-start gap-3">
+                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">1.</span>
+                  <p className="text-sm text-subtext0">
+                    tap your <span className="text-text font-bold">profile picture</span> in the top-left
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">2.</span>
+                  <p className="text-sm text-subtext0">
+                    tap <span className="text-text font-bold">settings and privacy</span>
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">3.</span>
+                  <p className="text-sm text-subtext0">
+                    scroll down and tap <span className="text-text font-bold">apps and devices</span>
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">4.</span>
+                  <p className="text-sm text-subtext0">
+                    toggle <span className="text-text font-bold">local audio files</span> on
+                  </p>
+                </div>
+              </div>
+              <div className="border-t border-surface0/40 px-5 py-3">
+                <p className="text-xs text-overlay0">
+                  your tracks show up in your library → local files. no premium needed.
+                </p>
+              </div>
             </div>
-            <p className="text-sm text-overlay1 leading-relaxed">
-              your tracks show up in your library → local files. no premium
-              needed.
-            </p>
           </div>
         </div>
       </section>
