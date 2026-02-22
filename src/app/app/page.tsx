@@ -353,12 +353,20 @@ export default function Home() {
                 <span className="text-red text-xs mt-0.5">!</span>
                 <p className="text-sm text-red/90 leading-relaxed">{error}</p>
               </div>
-              <button
-                onClick={handleReset}
-                className="btn-press text-xs text-subtext0 hover:text-text transition-colors uppercase tracking-wider"
-              >
-                try again
-              </button>
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={handleReset}
+                  className="btn-press text-xs text-subtext0 hover:text-text transition-colors uppercase tracking-wider"
+                >
+                  try again
+                </button>
+                <a
+                  href="mailto:me@yoinkify.lol"
+                  className="text-xs text-overlay0/50 hover:text-overlay0 transition-colors"
+                >
+                  me@yoinkify.lol
+                </a>
+              </div>
             </div>
           )}
 

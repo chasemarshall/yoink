@@ -118,7 +118,7 @@ async function tryYouTube(track: TrackInfo): Promise<AudioResult> {
     durationMs: track.durationMs,
   });
   if (!videoId) {
-    throw new Error("Could not find this track on YouTube");
+    throw new Error("couldn't find this track on any source — it may not be available yet or the title may differ on streaming platforms");
   }
 
   const audioUrl = await getAudioStreamUrl(videoId);
