@@ -422,8 +422,12 @@ export default function Home() {
                   }`}
                 >
                   {state === "downloading" && (
-                    <span className="inline-flex items-baseline gap-2">
-                      <span>y<span className="logo-pulse" style={{ animationDelay: "0s" }}>o</span><span className="logo-pulse" style={{ animationDelay: "0.1s" }}>i</span><span className="logo-pulse" style={{ animationDelay: "0.2s" }}>n</span>k</span>
+                    <span className="inline-flex items-center gap-2">
+                      <span className="flex gap-1">
+                        <span className="loading-dot w-1 h-1 rounded-full bg-lavender/70" />
+                        <span className="loading-dot w-1 h-1 rounded-full bg-lavender/70" />
+                        <span className="loading-dot w-1 h-1 rounded-full bg-lavender/70" />
+                      </span>
                       downloading
                     </span>
                   )}
@@ -549,8 +553,12 @@ export default function Home() {
                   }`}
                 >
                   {state === "downloading" && (
-                    <span className="inline-flex items-baseline gap-2">
-                      <span>y<span className="logo-pulse" style={{ animationDelay: "0s" }}>o</span><span className="logo-pulse" style={{ animationDelay: "0.1s" }}>i</span><span className="logo-pulse" style={{ animationDelay: "0.2s" }}>n</span>k</span>
+                    <span className="inline-flex items-center gap-2">
+                      <span className="flex gap-1">
+                        <span className="loading-dot w-1 h-1 rounded-full bg-lavender/70" />
+                        <span className="loading-dot w-1 h-1 rounded-full bg-lavender/70" />
+                        <span className="loading-dot w-1 h-1 rounded-full bg-lavender/70" />
+                      </span>
                       {doneCount}/{totalCount}
                     </span>
                   )}
