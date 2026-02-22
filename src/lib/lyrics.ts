@@ -1,4 +1,6 @@
-export async function fetchLyrics(
+import { fetchMusixmatchLyrics } from "./musixmatch";
+
+async function fetchFromLrclib(
   artist: string,
   title: string
 ): Promise<string | null> {
@@ -17,4 +19,19 @@ export async function fetchLyrics(
   } catch {
     return null;
   }
+}
+
+export async function fetchLyrics(
+  artist: string,
+  title: string
+): Promise<string | null> {
+  // Try LRCLib first (free, no token needed)
+  const lrclib = await fetchFromLrclib(artist, title);
+  if (lrclib) return lrclib;
+
+  // Fall back to Musixmatch
+  const mxm = await fetchMusixmatchLyrics(artist, title);
+  if (mxm) return mxm;
+
+  return null;
 }

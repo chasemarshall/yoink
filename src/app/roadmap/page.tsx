@@ -61,6 +61,36 @@ const items: RoadmapItem[] = [
     tag: "platforms",
   },
   {
+    title: "search by song name",
+    description: "type a song name instead of pasting a link — search results with preview and one-click download.",
+    status: "shipped",
+    tag: "core",
+  },
+  {
+    title: "musixmatch lyrics",
+    description: "musixmatch as a fallback lyrics source when lrclib misses. better coverage for synced and plain lyrics.",
+    status: "in-progress",
+    tag: "metadata",
+  },
+  {
+    title: "additional link resolvers",
+    description: "odesli and isrc-based fallbacks for cross-platform link resolution when direct matching fails.",
+    status: "planned",
+    tag: "platforms",
+  },
+  {
+    title: "more metadata providers",
+    description: "deezer, tidal, and qobuz as additional metadata sources for richer track info and higher-res artwork.",
+    status: "planned",
+    tag: "metadata",
+  },
+  {
+    title: "qobuz audio source",
+    description: "qobuz as an additional hi-res lossless audio source alongside the existing pipeline.",
+    status: "planned",
+    tag: "audio",
+  },
+  {
     title: "track number metadata",
     description: "embed track numbers for albums and playlists so files sort correctly in any player.",
     status: "planned",
