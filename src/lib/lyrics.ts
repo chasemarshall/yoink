@@ -1,5 +1,18 @@
 import { fetchMusixmatchLyrics } from "./musixmatch";
 
+/**
+ * Strip LRC timestamp markers (e.g. [00:12.34]) from synced lyrics so that
+ * embedded metadata tags (©lyr in M4A, USLT in MP3) contain plain text that
+ * Apple Music and other players can display without showing the raw markers.
+ */
+function stripLrcTimestamps(lrc: string): string {
+  return lrc
+    .split("\n")
+    .map((line) => line.replace(/^\[[\d:.]+\]\s?/, ""))
+    .filter((line) => line.trim() !== "")
+    .join("\n");
+}
+
 async function fetchFromLrclib(
   artist: string,
   title: string
@@ -14,8 +27,10 @@ async function fetchFromLrclib(
 
     const data = await res.json();
 
-    // Prefer synced lyrics (LRC format), fall back to plain text
-    return data.syncedLyrics || data.plainLyrics || null;
+    // Prefer synced lyrics but strip timestamps so players show plain text.
+    // Fall back to already-plain plainLyrics.
+    if (data.syncedLyrics) return stripLrcTimestamps(data.syncedLyrics);
+    return data.plainLyrics || null;
   } catch {
     return null;
   }

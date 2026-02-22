@@ -159,6 +159,20 @@ export async function fetchBestAudio(track: TrackInfo, preferFlac = false): Prom
   // Try Tidal first (hi-res capable, best quality)
   const tidalResult = await tryTidal(track, preferFlac);
   if (tidalResult) {
+    // When lossless is preferred but Tidal only returned lossy audio (LOW quality tier),
+    // try Deezer for FLAC before accepting the non-lossless Tidal result.
+    if (preferFlac && tidalResult.format !== "flac") {
+      const deezerFlacResult = await tryDeezer(track, true);
+      if (deezerFlacResult && deezerFlacResult.format === "flac") {
+        try {
+          deezerFlacResult.qualityInfo = await analyzeAudio(deezerFlacResult.buffer, deezerFlacResult.format) ?? undefined;
+        } catch {
+          // never block download
+        }
+        return deezerFlacResult;
+      }
+    }
+
     try {
       tidalResult.qualityInfo = await analyzeAudio(tidalResult.buffer, tidalResult.format) ?? undefined;
     } catch {
