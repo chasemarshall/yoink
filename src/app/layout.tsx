@@ -8,15 +8,21 @@ export const metadata: Metadata = {
     template: "%s — yoink",
   },
   description:
-    "download spotify tracks and playlists as high-quality 320kbps mp3 files with full metadata, album art, and lyrics. no account required.",
+    "download spotify tracks and playlists in lossless flac, alac, or 320kbps mp3 with full metadata, album art, and lyrics. no account required.",
   keywords: [
     "spotify downloader",
     "spotify to mp3",
+    "spotify to flac",
+    "spotify lossless download",
+    "spotify flac downloader",
+    "spotify alac downloader",
     "download spotify songs",
     "spotify playlist downloader",
     "spotify mp3 converter",
     "free spotify downloader",
     "spotify music downloader",
+    "lossless spotify",
+    "spotify hifi download",
     "yoink",
   ],
   metadataBase: new URL("https://yoink.chasefrazier.dev"),
@@ -26,7 +32,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "yoink — spotify downloader",
     description:
-      "download spotify tracks and playlists as high-quality mp3 files. metadata and album art included. no account required.",
+      "download spotify tracks and playlists in lossless flac, alac, or 320kbps mp3. metadata and album art included. no account required.",
     siteName: "yoink",
     type: "website",
     locale: "en_US",
@@ -44,7 +50,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "yoink — spotify downloader",
     description:
-      "download spotify tracks and playlists as high-quality mp3 files. metadata and album art included.",
+      "download spotify tracks and playlists in lossless flac, alac, or 320kbps mp3. metadata and album art included.",
     images: ["/og.png"],
   },
   robots: {
@@ -60,7 +66,7 @@ const jsonLd = JSON.stringify({
   name: "yoink",
   url: "https://yoink.chasefrazier.dev",
   description:
-    "Download Spotify tracks and playlists as high-quality 320kbps MP3 files with full metadata, album art, and lyrics.",
+    "Download Spotify tracks and playlists in lossless FLAC, ALAC, or 320kbps MP3 with full metadata, album art, and lyrics.",
   applicationCategory: "MultimediaApplication",
   operatingSystem: "Any",
   offers: {
@@ -71,10 +77,12 @@ const jsonLd = JSON.stringify({
   featureList: [
     "Spotify track download",
     "Spotify playlist download",
+    "Lossless FLAC download",
+    "Lossless ALAC download",
+    "320kbps MP3 conversion",
     "ID3v2 metadata embedding",
     "Album art embedding",
-    "Lyrics embedding",
-    "320kbps MP3 conversion",
+    "Synced lyrics embedding",
   ],
 });
 

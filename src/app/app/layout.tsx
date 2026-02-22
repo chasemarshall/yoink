@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "download",
   description:
-    "paste a spotify track or playlist link and download high-quality mp3 files with full metadata and album art.",
+    "paste a spotify, apple music, or youtube link and download tracks or playlists in lossless flac, alac, or 320kbps mp3 with full metadata.",
   alternates: {
     canonical: "/app",
   },
