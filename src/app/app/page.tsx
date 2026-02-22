@@ -311,7 +311,7 @@ export default function Home() {
               disabled={state === "fetching" || state === "downloading"}
               clear={state === "done"}
             />
-            <div className="flex items-center justify-between animate-fade-in-up" style={{ animationDelay: "150ms", opacity: 0 }}>
+            <div className="flex items-center justify-between flex-wrap gap-2 animate-fade-in-up" style={{ animationDelay: "150ms", opacity: 0 }}>
               <FormatToggle
                 value={format}
                 onChange={setFormat}

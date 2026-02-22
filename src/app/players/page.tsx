@@ -194,7 +194,7 @@ function PlatformSection({
   delay: number;
 }) {
   return (
-    <section className="px-6 py-24 max-w-2xl mx-auto">
+    <section className="px-6 py-16 sm:py-24 max-w-2xl mx-auto">
       <div className="space-y-10">
         <p
           className="text-xs text-overlay0 uppercase tracking-[0.3em] animate-fade-in-up"
@@ -278,7 +278,7 @@ export default function PlayersPage() {
       </nav>
 
       {/* Hero */}
-      <section className="px-6 pt-32 pb-24 max-w-2xl mx-auto">
+      <section className="px-6 pt-20 sm:pt-32 pb-16 sm:pb-24 max-w-2xl mx-auto">
         <div className="space-y-6 animate-fade-in-up" style={{ opacity: 0 }}>
           <p className="text-xs text-lavender uppercase tracking-[0.3em] font-bold">
             recommended players
@@ -301,7 +301,7 @@ export default function PlayersPage() {
       </div>
 
       {/* Tip */}
-      <section className="px-6 py-16 max-w-2xl mx-auto">
+      <section className="px-6 py-12 sm:py-16 max-w-2xl mx-auto">
         <div
           className="animate-fade-in-up border border-surface0/60 rounded-lg p-5 bg-mantle/40 space-y-3"
           style={{ opacity: 0 }}
@@ -351,7 +351,7 @@ export default function PlayersPage() {
       </div>
 
       {/* CTA */}
-      <section className="px-6 py-24 pb-32 max-w-2xl mx-auto">
+      <section className="px-6 py-16 sm:py-24 pb-24 sm:pb-32 max-w-2xl mx-auto">
         <div
           className="animate-fade-in-up border border-surface0/60 rounded-lg p-8 bg-mantle/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6"
           style={{ opacity: 0 }}

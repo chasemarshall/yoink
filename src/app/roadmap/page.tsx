@@ -175,7 +175,7 @@ export default function RoadmapPage() {
       </nav>
 
       {/* Hero */}
-      <section className="px-6 pt-32 pb-24 max-w-2xl mx-auto">
+      <section className="px-6 pt-20 sm:pt-32 pb-16 sm:pb-24 max-w-2xl mx-auto">
         <div className="space-y-6 animate-fade-in-up" style={{ opacity: 0 }}>
           <p className="text-xs text-lavender uppercase tracking-[0.3em] font-bold">
             roadmap
@@ -200,7 +200,7 @@ export default function RoadmapPage() {
       {/* Stats bar */}
       <section className="px-6 py-12 max-w-2xl mx-auto">
         <div
-          className="animate-fade-in-up flex items-center gap-8"
+          className="animate-fade-in-up flex items-center gap-4 sm:gap-8 flex-wrap"
           style={{ opacity: 0, animationDelay: "80ms" }}
         >
           {sections.map((s) => {
@@ -307,12 +307,12 @@ export default function RoadmapPage() {
               reach out and tell us what to build next.
             </p>
           </div>
-          <Link
-            href="/app"
-            className="btn-press text-sm text-crust bg-lavender hover:bg-mauve px-6 py-3 rounded-lg font-bold uppercase tracking-wider transition-colors duration-200 flex-shrink-0"
+          <a
+            href="mailto:me@yoinkify.lol"
+            className="btn-press text-sm text-lavender border border-lavender/30 hover:bg-lavender/10 px-6 py-3 rounded-lg font-bold uppercase tracking-wider transition-all duration-200 flex-shrink-0"
           >
-            open yoink
-          </Link>
+            me@yoinkify.lol
+          </a>
         </div>
       </section>
 

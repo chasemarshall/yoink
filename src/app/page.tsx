@@ -45,7 +45,7 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="px-6 pt-32 pb-24 max-w-2xl mx-auto">
+      <section className="px-6 pt-20 sm:pt-32 pb-16 sm:pb-24 max-w-2xl mx-auto">
         <div className="space-y-6 animate-fade-in-up" style={{ opacity: 0 }}>
           <p className="text-xs text-lavender uppercase tracking-[0.3em] font-bold">
             spotify to mp3 — and more
@@ -74,7 +74,7 @@ export default function LandingPage() {
             >
               {formats[formatIndex]}
             </span>
-            . metadata, lyrics, cover art. no accounts, no ads.
+            . metadata, lyrics, cover art. no accounts, no signup.
           </p>
           <div className="flex items-center gap-4 pt-2">
             <Link
@@ -99,7 +99,7 @@ export default function LandingPage() {
       </div>
 
       {/* How it works */}
-      <section id="how" className="px-6 py-24 max-w-2xl mx-auto scroll-mt-20">
+      <section id="how" className="px-6 py-16 sm:py-24 max-w-2xl mx-auto scroll-mt-20">
         <div className="space-y-12">
           <p
             className="text-xs text-overlay0 uppercase tracking-[0.3em] animate-fade-in-up"
@@ -128,7 +128,7 @@ export default function LandingPage() {
       </div>
 
       {/* Features */}
-      <section className="px-6 py-24 max-w-2xl mx-auto">
+      <section className="px-6 py-16 sm:py-24 max-w-2xl mx-auto">
         <div className="space-y-12">
           <p
             className="text-xs text-overlay0 uppercase tracking-[0.3em] animate-fade-in-up"
@@ -174,7 +174,7 @@ export default function LandingPage() {
       </div>
 
       {/* Support + CTA */}
-      <section className="px-6 py-24 max-w-2xl mx-auto">
+      <section className="px-6 py-16 sm:py-24 max-w-2xl mx-auto">
         <div className="space-y-12">
           <div
             className="animate-fade-in-up space-y-6"

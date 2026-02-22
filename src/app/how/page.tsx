@@ -22,7 +22,7 @@ export default function HowPage() {
       </nav>
 
       {/* Hero */}
-      <section className="px-6 pt-32 pb-24 max-w-2xl mx-auto">
+      <section className="px-6 pt-20 sm:pt-32 pb-16 sm:pb-24 max-w-2xl mx-auto">
         <div className="space-y-6 animate-fade-in-up" style={{ opacity: 0 }}>
           <p className="text-xs text-lavender uppercase tracking-[0.3em] font-bold">
             local files guide
@@ -30,11 +30,11 @@ export default function HowPage() {
           <h1 className="text-5xl sm:text-7xl font-bold leading-[0.95] tracking-tight text-text">
             keep your music.
             <br />
-            <span className="text-lavender">skip the ads.</span>
+            <span className="text-lavender">own the files.</span>
           </h1>
           <p className="text-lg text-subtext0/80 leading-relaxed max-w-md">
-            yoink gives you the file. spotify plays it back — no premium
-            required, no ads, no limits. here&apos;s how to set it up.
+            yoink gives you the file. spotify&apos;s local files feature
+            plays it back — right in your library. here&apos;s how to set it up.
           </p>
         </div>
       </section>
@@ -45,7 +45,7 @@ export default function HowPage() {
       </div>
 
       {/* The loop */}
-      <section className="px-6 py-24 max-w-2xl mx-auto">
+      <section className="px-6 py-16 sm:py-24 max-w-2xl mx-auto">
         <div className="space-y-16">
           <p
             className="text-xs text-overlay0 uppercase tracking-[0.3em] animate-fade-in-up"
@@ -72,7 +72,7 @@ export default function HowPage() {
       </div>
 
       {/* Why */}
-      <section className="px-6 py-24 max-w-2xl mx-auto">
+      <section className="px-6 py-16 sm:py-24 max-w-2xl mx-auto">
         <div className="space-y-12">
           <p
             className="text-xs text-overlay0 uppercase tracking-[0.3em] animate-fade-in-up"
@@ -82,15 +82,15 @@ export default function HowPage() {
           </p>
           <div className="space-y-6">
             <div
-              className="animate-fade-in-up flex items-baseline gap-3"
+              className="animate-fade-in-up flex items-baseline gap-3 flex-wrap"
               style={{ opacity: 0 }}
             >
               <span className="text-sm text-surface2 flex-shrink-0">[*]</span>
-              <span className="text-sm font-bold text-text">no ads</span>
-              <span className="text-sm text-subtext0">local files play without any interruptions. no audio ads, no banners, no upsells.</span>
+              <span className="text-sm font-bold text-text">yours forever</span>
+              <span className="text-sm text-subtext0">files you download are yours. they don&apos;t disappear if a song leaves a streaming catalog.</span>
             </div>
             <div
-              className="animate-fade-in-up flex items-baseline gap-3"
+              className="animate-fade-in-up flex items-baseline gap-3 flex-wrap"
               style={{ opacity: 0, animationDelay: "80ms" }}
             >
               <span className="text-sm text-surface2 flex-shrink-0">[*]</span>
@@ -98,7 +98,7 @@ export default function HowPage() {
               <span className="text-sm text-subtext0">your downloads live alongside your streaming library. same playlists, same queue, same app.</span>
             </div>
             <div
-              className="animate-fade-in-up flex items-baseline gap-3"
+              className="animate-fade-in-up flex items-baseline gap-3 flex-wrap"
               style={{ opacity: 0, animationDelay: "160ms" }}
             >
               <span className="text-sm text-surface2 flex-shrink-0">[*]</span>
@@ -106,12 +106,12 @@ export default function HowPage() {
               <span className="text-sm text-subtext0">local files don&apos;t need a connection. airplane mode, no wifi — doesn&apos;t matter.</span>
             </div>
             <div
-              className="animate-fade-in-up flex items-baseline gap-3"
+              className="animate-fade-in-up flex items-baseline gap-3 flex-wrap"
               style={{ opacity: 0, animationDelay: "240ms" }}
             >
               <span className="text-sm text-surface2 flex-shrink-0">[*]</span>
-              <span className="text-sm font-bold text-text">no premium needed</span>
-              <span className="text-sm text-subtext0">local files work on the free tier. you don&apos;t need spotify premium for any of this.</span>
+              <span className="text-sm font-bold text-text">plays anywhere</span>
+              <span className="text-sm text-subtext0">local files work in spotify, apple music, foobar2000, or any player you like.</span>
             </div>
           </div>
         </div>
@@ -123,7 +123,7 @@ export default function HowPage() {
       </div>
 
       {/* Desktop Setup */}
-      <section className="px-6 py-24 max-w-2xl mx-auto">
+      <section className="px-6 py-16 sm:py-24 max-w-2xl mx-auto">
         <div className="space-y-12">
           <p
             className="text-xs text-overlay0 uppercase tracking-[0.3em] animate-fade-in-up"
@@ -141,7 +141,7 @@ export default function HowPage() {
               <span className="text-3xl font-bold text-surface1">01</span>
               <p className="text-sm font-bold text-text">open settings</p>
             </div>
-            <div className="pl-12 space-y-2">
+            <div className="pl-10 sm:pl-12 space-y-2">
               <p className="text-sm text-subtext0 leading-relaxed">
                 open the spotify desktop app. click your <span className="text-text font-bold">profile picture</span> in the top-right corner, then click <span className="text-text font-bold">settings</span>.
               </p>
@@ -157,7 +157,7 @@ export default function HowPage() {
               <span className="text-3xl font-bold text-surface1">02</span>
               <p className="text-sm font-bold text-text">enable local files</p>
             </div>
-            <div className="pl-12 space-y-3">
+            <div className="pl-10 sm:pl-12 space-y-3">
               <p className="text-sm text-subtext0 leading-relaxed">
                 scroll down to <span className="text-text font-bold">your library</span> and toggle <span className="text-text font-bold">show local files</span> to on.
               </p>
@@ -182,7 +182,7 @@ export default function HowPage() {
               <span className="text-3xl font-bold text-surface1">03</span>
               <p className="text-sm font-bold text-text">choose your music folder</p>
             </div>
-            <div className="pl-12 space-y-3">
+            <div className="pl-10 sm:pl-12 space-y-3">
               <p className="text-sm text-subtext0 leading-relaxed">
                 right below that, you&apos;ll see <span className="text-text font-bold">show songs from</span>. you have two options:
               </p>
@@ -221,7 +221,7 @@ export default function HowPage() {
               <span className="text-3xl font-bold text-surface1">04</span>
               <p className="text-sm font-bold text-text">find your tracks</p>
             </div>
-            <div className="pl-12 space-y-3">
+            <div className="pl-10 sm:pl-12 space-y-3">
               <p className="text-sm text-subtext0 leading-relaxed">
                 go to your library. you&apos;ll see a playlist called <span className="text-text font-bold">Local Files</span> — it has a folder icon with a blue background. every file you save to your music folder shows up there with full metadata and album art, ready to play.
               </p>
@@ -247,7 +247,7 @@ export default function HowPage() {
       </div>
 
       {/* Mobile */}
-      <section className="px-6 py-24 max-w-2xl mx-auto">
+      <section className="px-6 py-16 sm:py-24 max-w-2xl mx-auto">
         <div className="space-y-12">
           <p
             className="text-xs text-overlay0 uppercase tracking-[0.3em] animate-fade-in-up"
@@ -265,7 +265,7 @@ export default function HowPage() {
               <span className="text-3xl font-bold text-surface1">01</span>
               <p className="text-sm font-bold text-text">tap your profile picture</p>
             </div>
-            <div className="pl-12 space-y-3">
+            <div className="pl-10 sm:pl-12 space-y-3">
               <p className="text-sm text-subtext0 leading-relaxed">
                 open the spotify app. tap your <span className="text-text font-bold">profile picture</span> in the top-left corner.
               </p>
@@ -298,7 +298,7 @@ export default function HowPage() {
               <span className="text-3xl font-bold text-surface1">02</span>
               <p className="text-sm font-bold text-text">settings and privacy</p>
             </div>
-            <div className="pl-12 space-y-3">
+            <div className="pl-10 sm:pl-12 space-y-3">
               <p className="text-sm text-subtext0 leading-relaxed">
                 tap <span className="text-text font-bold">Settings and privacy</span> from the menu.
               </p>
@@ -346,7 +346,7 @@ export default function HowPage() {
               <span className="text-3xl font-bold text-surface1">03</span>
               <p className="text-sm font-bold text-text">apps and devices</p>
             </div>
-            <div className="pl-12 space-y-3">
+            <div className="pl-10 sm:pl-12 space-y-3">
               <p className="text-sm text-subtext0 leading-relaxed">
                 scroll down and tap <span className="text-text font-bold">Apps and devices</span>.
               </p>
@@ -386,7 +386,7 @@ export default function HowPage() {
               <span className="text-3xl font-bold text-surface1">04</span>
               <p className="text-sm font-bold text-text">toggle on local audio files</p>
             </div>
-            <div className="pl-12 space-y-3">
+            <div className="pl-10 sm:pl-12 space-y-3">
               <p className="text-sm text-subtext0 leading-relaxed">
                 toggle <span className="text-text font-bold">Local audio files</span> to on.
               </p>
@@ -435,7 +435,7 @@ export default function HowPage() {
               <span className="text-3xl font-bold text-surface1">05</span>
               <p className="text-sm font-bold text-text">find your download</p>
             </div>
-            <div className="pl-12">
+            <div className="pl-10 sm:pl-12">
               <p className="text-sm text-subtext0 leading-relaxed">
                 open the <span className="text-text font-bold">Files</span> app on your iphone. go to the <span className="text-text font-bold">Browse</span> tab and tap <span className="text-text font-bold">Downloads</span> — your song will be there.
               </p>
@@ -451,7 +451,7 @@ export default function HowPage() {
               <span className="text-3xl font-bold text-surface1">06</span>
               <p className="text-sm font-bold text-text">copy the file</p>
             </div>
-            <div className="pl-12">
+            <div className="pl-10 sm:pl-12">
               <p className="text-sm text-subtext0 leading-relaxed">
                 tap and hold the file, then tap <span className="text-text font-bold">Copy</span> from the context menu.
               </p>
@@ -467,7 +467,7 @@ export default function HowPage() {
               <span className="text-3xl font-bold text-surface1">07</span>
               <p className="text-sm font-bold text-text">find the spotify folder</p>
             </div>
-            <div className="pl-12">
+            <div className="pl-10 sm:pl-12">
               <p className="text-sm text-subtext0 leading-relaxed">
                 go back to <span className="text-text font-bold">Browse</span>, tap <span className="text-text font-bold">On My iPhone</span>, and scroll down until you see the <span className="text-text font-bold">Spotify</span> folder — it has the green spotify icon.
               </p>
@@ -483,7 +483,7 @@ export default function HowPage() {
               <span className="text-3xl font-bold text-surface1">08</span>
               <p className="text-sm font-bold text-text">paste and play</p>
             </div>
-            <div className="pl-12">
+            <div className="pl-10 sm:pl-12">
               <p className="text-sm text-subtext0 leading-relaxed">
                 tap and hold a blank spot inside the folder, then tap <span className="text-text font-bold">Paste</span>. open spotify — your tracks show up under <span className="text-text font-bold">Your Library → Local Files</span>. no premium needed.
               </p>
@@ -498,7 +498,7 @@ export default function HowPage() {
       </div>
 
       {/* CTA */}
-      <section className="px-6 py-24 pb-32 max-w-2xl mx-auto">
+      <section className="px-6 py-16 sm:py-24 pb-24 sm:pb-32 max-w-2xl mx-auto">
         <div
           className="animate-fade-in-up border border-surface0/60 rounded-lg p-8 bg-mantle/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6"
           style={{ opacity: 0 }}
