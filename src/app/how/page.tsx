@@ -253,18 +253,15 @@ export default function HowPage() {
             className="text-xs text-overlay0 uppercase tracking-[0.3em] animate-fade-in-up"
             style={{ opacity: 0 }}
           >
-            setup — mobile
+            setup — iphone
           </p>
 
+          {/* Enable local files */}
           <div
-            className="animate-fade-in-up space-y-6"
+            className="animate-fade-in-up space-y-4"
             style={{ opacity: 0 }}
           >
-            <p className="text-sm text-subtext0 leading-relaxed">
-              transfer your files to your phone however you like — airdrop,
-              files app, usb, google drive, whatever works. then:
-            </p>
-
+            <p className="text-sm font-bold text-text">enable local files in spotify</p>
             <div className="border border-surface0/60 rounded-lg overflow-hidden bg-mantle/40">
               <div className="p-5 space-y-4">
                 <div className="flex items-start gap-3">
@@ -292,9 +289,60 @@ export default function HowPage() {
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Move files */}
+          <div
+            className="animate-fade-in-up space-y-4"
+            style={{ opacity: 0, animationDelay: "80ms" }}
+          >
+            <p className="text-sm font-bold text-text">move your songs into spotify</p>
+            <p className="text-sm text-subtext0 leading-relaxed">
+              after downloading from yoink, your files end up in your browser&apos;s downloads. you need to move them into spotify&apos;s folder using the Files app.
+            </p>
+            <div className="border border-surface0/60 rounded-lg overflow-hidden bg-mantle/40">
+              <div className="p-5 space-y-4">
+                <div className="flex items-start gap-3">
+                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">1.</span>
+                  <p className="text-sm text-subtext0">
+                    open the <span className="text-text font-bold">Files</span> app and go to the <span className="text-text font-bold">Browse</span> tab
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">2.</span>
+                  <p className="text-sm text-subtext0">
+                    tap <span className="text-text font-bold">Downloads</span> and find your song
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">3.</span>
+                  <p className="text-sm text-subtext0">
+                    tap and hold the file → tap <span className="text-text font-bold">Copy</span>
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">4.</span>
+                  <p className="text-sm text-subtext0">
+                    go back to <span className="text-text font-bold">Browse</span> → <span className="text-text font-bold">On My iPhone</span>
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">5.</span>
+                  <p className="text-sm text-subtext0">
+                    find the <span className="text-text font-bold">Spotify</span> folder (has the spotify icon)
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-xs text-surface2 mt-0.5 font-bold flex-shrink-0">6.</span>
+                  <p className="text-sm text-subtext0">
+                    tap and hold a blank spot → tap <span className="text-text font-bold">Paste</span>
+                  </p>
+                </div>
+              </div>
               <div className="border-t border-surface0/40 px-5 py-3">
                 <p className="text-xs text-overlay0">
-                  your tracks show up in your library → local files. no premium needed.
+                  your tracks show up in spotify → your library → local files. no premium needed.
                 </p>
               </div>
             </div>
