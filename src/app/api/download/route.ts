@@ -250,7 +250,8 @@ export async function POST(request: NextRequest) {
       ffmpegArgs.push("-metadata", `copyright=${track.copyright}`);
     }
     if (lyrics) {
-      ffmpegArgs.push("-metadata", `lyrics=${lyrics}`);
+      const plainLyrics = lyrics.replace(/^\[[\d:.]+\]\s*/gm, "").trim();
+      ffmpegArgs.push("-metadata", `lyrics=${plainLyrics}`);
     }
     if (wantAlac || wantFlac) {
       const bitDepth = audio.qualityInfo?.bitDepth ?? 16;
