@@ -84,12 +84,12 @@ export default function LandingPage() {
             >
               start downloading
             </Link>
-            <a
-              href="#how"
+            <Link
+              href="/how"
               className="text-sm text-overlay1 hover:text-text transition-colors duration-200"
             >
-              how it works
-            </a>
+              local files setup
+            </Link>
           </div>
         </div>
       </section>
@@ -229,10 +229,9 @@ export default function LandingPage() {
         <div className="flex items-center justify-between text-xs text-overlay0/50">
           <span>yoink</span>
           <div className="flex items-center gap-4">
-            <Link href="/how" className="hover:text-text transition-colors duration-200">local files</Link>
-            <Link href="/players" className="hover:text-text transition-colors duration-200">players</Link>
-            <Link href="/roadmap" className="hover:text-text transition-colors duration-200">roadmap</Link>
-            <span>metadata included</span>
+            <Link href="/how" className="text-lavender/60 hover:text-lavender transition-colors duration-200">local files</Link>
+            <Link href="/players" className="text-green/60 hover:text-green transition-colors duration-200">players</Link>
+            <Link href="/roadmap" className="text-mauve/60 hover:text-mauve transition-colors duration-200">roadmap</Link>
           </div>
         </div>
         <div className="space-y-3 text-[10px] text-overlay0/40 leading-relaxed">

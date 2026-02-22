@@ -320,8 +320,8 @@ export default function RoadmapPage() {
       <footer className="border-t border-surface0/40 px-6 py-4 flex items-center justify-between text-xs text-overlay0/50">
         <span>yoink</span>
         <div className="flex items-center gap-4">
-          <Link href="/how" className="hover:text-text transition-colors duration-200">local files</Link>
-          <Link href="/players" className="hover:text-text transition-colors duration-200">players</Link>
+          <Link href="/how" className="text-lavender/60 hover:text-lavender transition-colors duration-200">local files</Link>
+          <Link href="/players" className="text-green/60 hover:text-green transition-colors duration-200">players</Link>
           <a
             href="https://chasefrazier.dev/tip"
             target="_blank"
