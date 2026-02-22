@@ -5,12 +5,14 @@ import { fetchMusixmatchLyrics } from "./musixmatch";
 
 const execFileAsync = promisify(execFile);
 
-// If set, proxy lrclib requests through this URL (e.g. a Cloudflare Worker)
-// to bypass Railway's network blocking lrclib.net
-const LRCLIB_BASE = process.env.LRCLIB_PROXY_URL || "https://lrclib.net";
+function getLrclibBase(): string {
+  return process.env.LRCLIB_PROXY_URL || "https://lrclib.net";
+}
 
 async function lrclibGet(path: string): Promise<string> {
-  const url = `${LRCLIB_BASE}${path}`;
+  const base = getLrclibBase();
+  const url = `${base}${path}`;
+  console.log(`[lyrics] fetching: ${url.slice(0, 120)}`);
 
   // If using a proxy, regular fetch should work fine
   if (process.env.LRCLIB_PROXY_URL) {
