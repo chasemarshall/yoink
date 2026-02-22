@@ -21,6 +21,19 @@ interface QualityInfo {
 
 type PageState = "idle" | "searching" | "results" | "ready" | "downloading" | "done" | "error";
 
+const trending = [
+  "Kendrick Lamar - Not Like Us",
+  "Billie Eilish - Birds of a Feather",
+  "Sabrina Carpenter - Espresso",
+  "Tyler, The Creator - Noid",
+  "SZA - Saturn",
+  "Metro Boomin - Like That",
+  "Chappell Roan - Good Luck, Babe!",
+  "Future - Like That",
+  "Tyla - Water",
+  "Doechii - Nissan Altima",
+];
+
 export default function SearchPage() {
   const [state, setState] = useState<PageState>("idle");
   const [query, setQuery] = useState("");
@@ -224,7 +237,7 @@ export default function SearchPage() {
           {/* No results */}
           {state === "results" && results.length === 0 && (
             <div className="animate-fade-in-up border border-surface0/60 rounded-lg p-6 bg-mantle/30" style={{ opacity: 0 }}>
-              <p className="text-sm text-subtext0">no results found</p>
+              <p className="text-sm text-subtext0">no results found — try one of these instead</p>
             </div>
           )}
 
@@ -311,11 +324,41 @@ export default function SearchPage() {
             </div>
           )}
 
-          {/* Keyboard hint */}
-          {state === "idle" && (
-            <div className="animate-fade-in-up flex items-center gap-2 text-xs text-overlay0/40" style={{ opacity: 0, animationDelay: "300ms" }}>
-              <kbd className="px-1.5 py-0.5 rounded border border-surface0/60 text-overlay0/50 text-[10px]">Enter</kbd>
-              <span>to search</span>
+          {/* Trending + keyboard hint */}
+          {(state === "idle" || (state === "results" && results.length === 0)) && (
+            <div className="space-y-6">
+              <div className="animate-fade-in-up" style={{ opacity: 0, animationDelay: "200ms" }}>
+                <p className="text-[10px] text-overlay0/40 uppercase tracking-[0.2em] mb-3">trending</p>
+                <div className="flex flex-wrap gap-2">
+                  {trending.map((song, i) => (
+                    <button
+                      key={song}
+                      onClick={() => {
+                        setQuery(song);
+                        setState("searching");
+                        setError("");
+                        setResults([]);
+                        setSelectedTrack(null);
+                        setQuality(null);
+                        fetch(`/api/search?q=${encodeURIComponent(song)}`)
+                          .then((res) => res.ok ? res.json() : Promise.reject())
+                          .then((data) => { setResults(data.results || []); setState("results"); })
+                          .catch(() => { setError("Search failed"); setState("error"); });
+                      }}
+                      className="animate-fade-in-up text-[11px] text-overlay1/70 hover:text-lavender border border-surface0/40 hover:border-lavender/30 rounded-full px-3 py-1.5 transition-colors duration-200"
+                      style={{ opacity: 0, animationDelay: `${250 + i * 40}ms` }}
+                    >
+                      {song}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {state === "idle" && (
+                <div className="animate-fade-in-up flex items-center gap-2 text-xs text-overlay0/40" style={{ opacity: 0, animationDelay: "650ms" }}>
+                  <kbd className="px-1.5 py-0.5 rounded border border-surface0/60 text-overlay0/50 text-[10px]">Enter</kbd>
+                  <span>to search</span>
+                </div>
+              )}
             </div>
           )}
         </div>
