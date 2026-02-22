@@ -15,7 +15,7 @@ import { getTrackInfo, detectPlatform, extractYouTubeId } from "@/lib/spotify";
 import { setExplicitTag } from "@/lib/mp4-advisory";
 import { getYouTubeTrackInfo } from "@/lib/youtube";
 import { resolveToSpotify } from "@/lib/songlink";
-import { extractAppleMusicTrackId, lookupByItunesId } from "@/lib/itunes";
+import { extractAppleMusicTrackId, lookupByItunesId, lookupItunesGenre } from "@/lib/itunes";
 import { fetchBestAudio } from "@/lib/audio-sources";
 import { fetchLyrics } from "@/lib/lyrics";
 import { rateLimit } from "@/lib/ratelimit";
@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const url = body.url;
     const requestedFormat = body.format as string | undefined; // "mp3" | "flac" | "alac"
+    const genreSource = body.genreSource as string | undefined;
     const preferLossless = requestedFormat === "flac" || requestedFormat === "alac";
 
     if (!url || typeof url !== "string") {
@@ -115,6 +116,12 @@ export async function POST(request: NextRequest) {
       }
     } else {
       track = await getTrackInfo(url);
+    }
+
+    // Override genre with iTunes if requested
+    if (genreSource === "itunes") {
+      const itunesGenre = await lookupItunesGenre(track);
+      if (itunesGenre) track.genre = itunesGenre;
     }
 
     // Step 2: Fetch best audio + lyrics in parallel

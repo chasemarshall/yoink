@@ -6,6 +6,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 import { zipSync } from "fflate";
 import { getPlaylistInfo, getAlbumInfo, getArtistTopTracks, detectUrlType, type TrackInfo, type PlaylistInfo } from "@/lib/spotify";
+import { lookupItunesGenre } from "@/lib/itunes";
 import { fetchBestAudio } from "@/lib/audio-sources";
 import { fetchLyrics } from "@/lib/lyrics";
 import { rateLimit } from "@/lib/ratelimit";
@@ -35,9 +36,16 @@ function isAllowedUrl(url: string, allowedHosts: string[]): boolean {
 
 async function processTrack(
   track: TrackInfo,
-  requestedFormat: string | undefined
+  requestedFormat: string | undefined,
+  genreSource?: string
 ): Promise<{ filename: string; buffer: Buffer }> {
   const preferLossless = requestedFormat === "flac" || requestedFormat === "alac";
+
+  // Override genre with iTunes if requested
+  if (genreSource === "itunes") {
+    const itunesGenre = await lookupItunesGenre(track);
+    if (itunesGenre) track.genre = itunesGenre;
+  }
 
   const [audio, lyrics] = await Promise.all([
     fetchBestAudio(track, preferLossless),
@@ -208,7 +216,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { url, format: requestedFormat } = body;
+    const { url, format: requestedFormat, genreSource } = body;
 
     if (!url || typeof url !== "string") {
       return NextResponse.json({ error: "URL is required" }, { status: 400 });
@@ -258,7 +266,7 @@ export async function POST(request: NextRequest) {
 
           const batchResults = await Promise.allSettled(
             batch.map((track, j) =>
-              processTrack(track, requestedFormat).then((result) => {
+              processTrack(track, requestedFormat, genreSource).then((result) => {
                 // Send progress as each individual track completes
                 send({ type: "done", index: i + j });
                 return result;

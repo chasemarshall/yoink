@@ -39,6 +39,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [quality, setQuality] = useState<QualityInfo | null>(null);
   const [format, setFormat] = useState<Format>("mp3");
+  const [genreSource, setGenreSource] = useState<"spotify" | "itunes">("spotify");
   const abortRef = useRef(false);
   const downloadTriggeredRef = useRef(false);
 
@@ -102,7 +103,7 @@ export default function Home() {
       const res = await fetch("/api/download", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: trackUrl, format }),
+        body: JSON.stringify({ url: trackUrl, format, genreSource }),
       });
 
       if (!res.ok) {
@@ -129,7 +130,7 @@ export default function Home() {
     } catch {
       return false;
     }
-  }, [format, originalUrl]);
+  }, [format, genreSource, originalUrl]);
 
   const handleDownload = async () => {
     if (!track) return;
@@ -159,7 +160,7 @@ export default function Home() {
       const res = await fetch("/api/download-playlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: originalUrl, format }),
+        body: JSON.stringify({ url: originalUrl, format, genreSource }),
       });
 
       if (!res.ok) {
@@ -316,9 +317,20 @@ export default function Home() {
                 onChange={setFormat}
                 disabled={state === "downloading"}
               />
-              <span className="text-[10px] text-overlay0/30 tracking-wider">
-                {format === "mp3" ? "~8mb per track" : "~40mb per track"}
-              </span>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setGenreSource(genreSource === "spotify" ? "itunes" : "spotify")}
+                  disabled={state === "downloading"}
+                  className={`text-[10px] tracking-wider transition-colors duration-200 disabled:opacity-50 ${
+                    genreSource === "itunes" ? "text-lavender/70" : "text-overlay0/30 hover:text-overlay0/50"
+                  }`}
+                >
+                  {genreSource === "itunes" ? "iTunes genres ✓" : "iTunes genres"}
+                </button>
+                <span className="text-[10px] text-overlay0/30 tracking-wider">
+                  {format === "mp3" ? "~8mb per track" : "~40mb per track"}
+                </span>
+              </div>
             </div>
           </div>
 

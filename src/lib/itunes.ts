@@ -1,6 +1,25 @@
 import type { TrackInfo } from "./spotify";
 
 /**
+ * Look up the iTunes genre for a track by searching artist + track name.
+ * Returns the primaryGenreName (track-level genre) or null if not found.
+ */
+export async function lookupItunesGenre(track: TrackInfo): Promise<string | null> {
+  try {
+    const query = encodeURIComponent(`${track.artist} ${track.name}`);
+    const res = await fetch(
+      `https://itunes.apple.com/search?term=${query}&entity=song&limit=1`,
+      { signal: AbortSignal.timeout(10000) }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.results?.[0]?.primaryGenreName || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Extract an Apple Music track ID from a URL.
  * Supports both `?i=TRACK_ID` query param and `/song/name/ID` path formats.
  */

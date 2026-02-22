@@ -103,7 +103,11 @@ async function tryTidal(track: TrackInfo, preferHiRes: boolean): Promise<AudioRe
 
 async function tryYouTube(track: TrackInfo): Promise<AudioResult> {
   const query = `${track.artist} - ${track.name}`;
-  const videoId = await searchYouTube(query);
+  const videoId = await searchYouTube(query, {
+    artist: track.artist,
+    title: track.name,
+    durationMs: track.durationMs,
+  });
   if (!videoId) {
     throw new Error("Could not find this track on YouTube");
   }

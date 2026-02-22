@@ -2,7 +2,17 @@ import type { TrackInfo } from "./spotify";
 
 const PIPED_API = process.env.PIPED_API_URL || "https://pipedapi.kavin.rocks";
 
-export async function searchYouTube(query: string): Promise<string | null> {
+function normalize(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+interface SearchOptions {
+  artist?: string;
+  title?: string;
+  durationMs?: number;
+}
+
+export async function searchYouTube(query: string, match?: SearchOptions): Promise<string | null> {
   try {
     const res = await fetch(
       `${PIPED_API}/search?q=${encodeURIComponent(query)}&filter=music_songs`,
@@ -13,15 +23,56 @@ export async function searchYouTube(query: string): Promise<string | null> {
 
     const data = await res.json();
     const items = data.items || [];
-    const video = items.find(
+    const streams = items.filter(
       (item: { type: string }) => item.type === "stream"
-    );
+    ) as { url: string; title: string; uploaderName: string; duration: number }[];
 
-    if (video?.url) {
-      return video.url.replace("/watch?v=", "");
+    if (streams.length === 0) return null;
+
+    // No match criteria — return first result (legacy behavior)
+    if (!match) {
+      return streams[0].url.replace("/watch?v=", "");
     }
 
-    return null;
+    const normTitle = match.title ? normalize(match.title) : null;
+    const normArtist = match.artist ? normalize(match.artist) : null;
+    const targetDurationS = match.durationMs ? match.durationMs / 1000 : null;
+
+    // Score each result
+    let bestScore = -1;
+    let bestVideo = streams[0]; // fallback to first
+
+    for (const video of streams) {
+      let score = 0;
+      const vidTitle = normalize(video.title);
+      const vidUploader = normalize(video.uploaderName || "");
+
+      // Title contains the track name
+      if (normTitle && vidTitle.includes(normTitle)) score += 3;
+
+      // Uploader or video title contains artist name
+      if (normArtist) {
+        if (vidUploader.includes(normArtist)) score += 3;
+        else if (vidTitle.includes(normArtist)) score += 2;
+      }
+
+      // Duration within 5s tolerance
+      if (targetDurationS && video.duration > 0) {
+        const diff = Math.abs(video.duration - targetDurationS);
+        if (diff <= 2) score += 4;
+        else if (diff <= 5) score += 2;
+        else if (diff > 15) score -= 3; // significant mismatch, penalize
+      }
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestVideo = video;
+      }
+    }
+
+    console.log("[youtube] best match:", bestVideo.title, "by", bestVideo.uploaderName, `(score: ${bestScore}, duration: ${bestVideo.duration}s)`);
+
+    return bestVideo.url.replace("/watch?v=", "");
   } catch {
     return null;
   }
