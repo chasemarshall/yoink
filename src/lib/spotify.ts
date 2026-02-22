@@ -312,6 +312,50 @@ export async function getAlbumInfo(url: string): Promise<PlaylistInfo> {
   };
 }
 
+export async function searchTracks(query: string, limit = 8): Promise<TrackInfo[]> {
+  const token = await getAccessToken();
+  const res = await fetch(
+    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=${limit}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+
+  if (!res.ok) throw new Error("Search failed");
+
+  const data = await res.json();
+  const items = data.tracks?.items || [];
+
+  return items.map(
+    (track: {
+      name: string;
+      artists: { name: string }[];
+      album: { name: string; images: { url: string }[]; release_date?: string; total_tracks?: number };
+      duration_ms: number;
+      external_ids?: { isrc?: string };
+      external_urls: { spotify: string };
+      explicit?: boolean;
+      track_number?: number;
+      disc_number?: number;
+    }) => ({
+      name: track.name,
+      artist: track.artists.map((a) => a.name).join(", "),
+      album: track.album.name,
+      albumArt: track.album.images[0]?.url || "",
+      duration: formatDuration(track.duration_ms),
+      durationMs: track.duration_ms,
+      isrc: track.external_ids?.isrc || null,
+      genre: null,
+      releaseDate: track.album.release_date || null,
+      spotifyUrl: track.external_urls.spotify,
+      explicit: track.explicit ?? false,
+      trackNumber: track.track_number ?? null,
+      discNumber: track.disc_number ?? null,
+      label: null,
+      copyright: null,
+      totalTracks: track.album.total_tracks ?? null,
+    })
+  );
+}
+
 export async function getArtistTopTracks(url: string): Promise<PlaylistInfo> {
   const artistId = extractArtistId(url);
   if (!artistId) throw new Error("Invalid Spotify artist URL");
