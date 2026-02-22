@@ -129,6 +129,7 @@ export async function POST(request: NextRequest) {
       fetchBestAudio(track, preferLossless),
       fetchLyrics(track.artist, track.name),
     ]);
+    console.log(`[lyrics] ${track.artist} - ${track.name}: ${lyrics ? `found (${lyrics.length} chars)` : "not found"}`);
 
     // Step 3: Embed metadata using ffmpeg
     // Only allow lossless output if source audio is actually lossless (FLAC from Deezer or Tidal)
