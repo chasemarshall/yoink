@@ -106,6 +106,7 @@ async function tryYouTube(track: TrackInfo): Promise<AudioResult> {
   const videoId = await searchYouTube(query, {
     artist: track.artist,
     title: track.name,
+    album: track.album || undefined,
     durationMs: track.durationMs,
   });
   if (!videoId) {
