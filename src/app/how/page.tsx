@@ -407,8 +407,8 @@ export default function HowPage() {
                       <p className="text-xs font-bold text-lavender">Local audio files</p>
                       <p className="text-[10px] text-lavender/60 mt-0.5 leading-relaxed">Lets you add tracks from this device to Your Library.</p>
                     </div>
-                    <div className="w-9 h-5 rounded-full bg-green flex items-center justify-end px-0.5 flex-shrink-0">
-                      <div className="w-4 h-4 rounded-full bg-white" />
+                    <div className="w-9 h-5 rounded-full bg-lavender/80 flex items-center justify-end px-0.5 flex-shrink-0">
+                      <div className="w-4 h-4 rounded-full bg-crust" />
                     </div>
                   </div>
                 </div>
