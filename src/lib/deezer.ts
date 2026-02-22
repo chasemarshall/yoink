@@ -1,4 +1,4 @@
-import { createHash, createCipheriv } from "crypto";
+import { createHash } from "crypto";
 import type { TrackInfo } from "./spotify";
 
 const DEEZER_MASTER_KEY = "g4el58wc0zvf9na1";
@@ -309,28 +309,7 @@ function decryptAudio(encrypted: Buffer, trackId: string): Buffer {
   return Buffer.concat(chunks);
 }
 
-function buildCdnUrl(
-  md5Origin: string,
-  mediaVersion: string,
-  trackId: string,
-  format: 1 | 3 | 9 // 1=MP3_128, 3=MP3_320, 9=FLAC
-): string {
-  const step1 = [md5Origin, String(format), trackId, mediaVersion].join("\xa4");
-  const step1Hash = createHash("md5").update(step1, "ascii").digest("hex");
-  const step2 = `${step1Hash}\xa4${step1}\xa4`;
-  // Pad to multiple of 16
-  const padded = step2 + "\x00".repeat((16 - (step2.length % 16)) % 16);
-  const aesKey = Buffer.from("jo6aey6haid2Teih", "ascii");
-  const cipher = createCipheriv("aes-128-ecb", aesKey, null as unknown as Buffer);
-  cipher.setAutoPadding(false);
-  const encrypted = Buffer.concat([
-    cipher.update(padded, "ascii"),
-    cipher.final(),
-  ]);
-  return `https://cdns-proxy-${md5Origin[0]}.dzcdn.net/mobile/1/${encrypted.toString("hex")}`;
-}
 
-// Alternative: use Deezer's media API to get a direct streaming URL
 async function getMediaUrl(
   trackToken: string,
   format: "MP3_128" | "MP3_320" | "FLAC",
@@ -352,12 +331,25 @@ async function getMediaUrl(
       }),
       signal: AbortSignal.timeout(10000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.log("[deezer] media API HTTP error:", res.status);
+      return null;
+    }
 
     const data = await res.json();
     const url = data.data?.[0]?.media?.[0]?.sources?.[0]?.url;
+    if (!url) {
+      // Log why it failed
+      const errors = data.data?.[0]?.errors;
+      if (errors) {
+        console.log("[deezer] media API errors:", JSON.stringify(errors));
+      } else {
+        console.log("[deezer] media API response (no URL):", JSON.stringify(data).substring(0, 300));
+      }
+    }
     return url || null;
-  } catch {
+  } catch (e) {
+    console.log("[deezer] media API exception:", e);
     return null;
   }
 }
@@ -523,22 +515,18 @@ export async function fetchDeezerAudio(
 
     // Pick format based on preference and availability
     let mediaFormat: "MP3_320" | "MP3_128" | "FLAC" = "MP3_320";
-    let cdnFormat: 1 | 3 | 9 = 3;
     let bitrate = 320;
     let outputFormat: "mp3" | "flac" = "mp3";
 
     if (preferFlac && parseInt(trackData.FILESIZE_FLAC) > 0) {
       mediaFormat = "FLAC";
-      cdnFormat = 9;
       bitrate = 0; // lossless
       outputFormat = "flac";
     } else if (parseInt(trackData.FILESIZE_MP3_320) > 0) {
       mediaFormat = "MP3_320";
-      cdnFormat = 3;
       bitrate = 320;
     } else if (parseInt(trackData.FILESIZE_MP3_128) > 0) {
       mediaFormat = "MP3_128";
-      cdnFormat = 1;
       bitrate = 128;
     } else {
       console.log("[deezer] no suitable format available");
@@ -546,27 +534,33 @@ export async function fetchDeezerAudio(
     }
     console.log("[deezer] using format:", mediaFormat, bitrate === 0 ? "lossless" : `${bitrate}kbps`);
 
-    // Try media API first (returns direct streaming URL, better compatibility)
+    // Get streaming URL via media API (the only working method — CDN proxy hostnames are retired)
     let audioUrl: string | null = null;
     if (trackData.TRACK_TOKEN && licenseToken) {
-      console.log("[deezer] trying media API...");
+      console.log("[deezer] trying media API for", mediaFormat);
       audioUrl = await getMediaUrl(trackData.TRACK_TOKEN, mediaFormat, licenseToken);
-      if (audioUrl) {
-        console.log("[deezer] media API URL:", audioUrl.substring(0, 80) + "...");
-      } else {
-        console.log("[deezer] media API returned no URL");
-      }
-    }
 
-    // Fall back to constructed CDN URL
-    if (!audioUrl) {
-      audioUrl = buildCdnUrl(
-        trackData.MD5_ORIGIN,
-        trackData.MEDIA_VERSION,
-        trackData.SNG_ID,
-        cdnFormat
-      );
-      console.log("[deezer] using CDN URL:", audioUrl.substring(0, 80) + "...");
+      // If requested format failed, try falling back to lower qualities
+      if (!audioUrl && mediaFormat === "FLAC") {
+        console.log("[deezer] FLAC unavailable via media API, trying MP3_320");
+        audioUrl = await getMediaUrl(trackData.TRACK_TOKEN, "MP3_320", licenseToken);
+        if (audioUrl) { mediaFormat = "MP3_320"; bitrate = 320; outputFormat = "mp3"; }
+      }
+      if (!audioUrl && mediaFormat !== "MP3_128") {
+        console.log("[deezer] trying MP3_128 as last resort");
+        audioUrl = await getMediaUrl(trackData.TRACK_TOKEN, "MP3_128", licenseToken);
+        if (audioUrl) { mediaFormat = "MP3_128"; bitrate = 128; outputFormat = "mp3"; }
+      }
+
+      if (audioUrl) {
+        console.log("[deezer] media API URL (", mediaFormat, "):", audioUrl.substring(0, 80) + "...");
+      } else {
+        console.log("[deezer] media API returned no URL for any format");
+        return null;
+      }
+    } else {
+      console.log("[deezer] missing track token or license token — cannot fetch audio");
+      return null;
     }
 
     const audioRes = await fetch(audioUrl, {
