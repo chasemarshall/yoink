@@ -26,6 +26,7 @@ async function getTidalSession(): Promise<string | null> {
       grant_type: "refresh_token",
       refresh_token: refreshToken,
       client_id: clientId,
+      scope: "r_usr w_usr",
     };
     if (clientSecret) {
       params.client_secret = clientSecret;
