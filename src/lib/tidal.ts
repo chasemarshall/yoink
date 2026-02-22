@@ -240,7 +240,13 @@ async function getManifestV1(
         continue;
       }
 
-      const data = await res.json();
+      const text = await res.text();
+      if (text.trimStart().startsWith("<")) {
+        console.log(`[tidal] v1 quality ${quality}: received XML response, skipping`);
+        continue;
+      }
+
+      const data = JSON.parse(text);
 
       if (data.encryptionType && data.encryptionType !== "NONE") {
         console.log(`[tidal] encrypted stream (${data.encryptionType}), skipping`);
