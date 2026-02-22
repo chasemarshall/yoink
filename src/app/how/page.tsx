@@ -391,34 +391,19 @@ export default function HowPage() {
             move songs — iphone
           </p>
 
-          {/* Step 5 — Open Files app */}
+          {/* Step 5 — Find your download */}
           <div
             className="animate-fade-in-up space-y-4"
             style={{ opacity: 0 }}
           >
             <div className="flex items-baseline gap-4">
               <span className="text-3xl font-bold text-surface1">05</span>
-              <p className="text-sm font-bold text-text">open the files app</p>
+              <p className="text-sm font-bold text-text">find your download</p>
             </div>
-            <div className="pl-12 space-y-3">
+            <div className="pl-12">
               <p className="text-sm text-subtext0 leading-relaxed">
-                open the <span className="text-text font-bold">Files</span> app and go to the <span className="text-text font-bold">Browse</span> tab. tap <span className="text-text font-bold">Downloads</span> to find your song.
+                open the <span className="text-text font-bold">Files</span> app on your iphone. go to the <span className="text-text font-bold">Browse</span> tab and tap <span className="text-text font-bold">Downloads</span> — your song will be there.
               </p>
-              <div className="border border-surface0/60 rounded-lg p-4 bg-mantle/40 space-y-2.5 max-w-xs">
-                <p className="text-xs font-bold text-text">Browse</p>
-                <div className="flex items-center gap-3 py-1.5">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-blue-400 flex-shrink-0">
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                    <polyline points="7 10 12 15 17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                  <span className="text-xs font-bold text-lavender">Downloads</span>
-                </div>
-                <div className="border-t border-surface0/30" />
-                <div className="flex items-center gap-3 py-1.5 opacity-40">
-                  <span className="text-xs text-subtext0">Recently Deleted</span>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -429,26 +414,12 @@ export default function HowPage() {
           >
             <div className="flex items-baseline gap-4">
               <span className="text-3xl font-bold text-surface1">06</span>
-              <p className="text-sm font-bold text-text">copy your song</p>
+              <p className="text-sm font-bold text-text">copy the file</p>
             </div>
-            <div className="pl-12 space-y-3">
+            <div className="pl-12">
               <p className="text-sm text-subtext0 leading-relaxed">
-                tap and hold the file, then tap <span className="text-text font-bold">Copy</span> from the menu.
+                tap and hold the file, then tap <span className="text-text font-bold">Copy</span> from the context menu.
               </p>
-              <div className="border border-surface0/60 rounded-lg p-4 bg-mantle/40 space-y-2.5 max-w-xs">
-                <div className="flex items-center gap-3 py-1.5 bg-lavender/10 rounded px-2 -mx-2">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-lavender flex-shrink-0">
-                    <path d="M9 2H5a2 2 0 00-2 2v4m0 4v4a2 2 0 002 2h4m4 0h4a2 2 0 002-2v-4m0-4V4a2 2 0 00-2-2h-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                  <span className="text-xs font-bold text-lavender">Copy</span>
-                </div>
-                <div className="flex items-center gap-3 py-1.5 opacity-40">
-                  <span className="text-xs text-subtext0">Move</span>
-                </div>
-                <div className="flex items-center gap-3 py-1.5 opacity-40">
-                  <span className="text-xs text-subtext0">Delete</span>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -461,30 +432,10 @@ export default function HowPage() {
               <span className="text-3xl font-bold text-surface1">07</span>
               <p className="text-sm font-bold text-text">find the spotify folder</p>
             </div>
-            <div className="pl-12 space-y-3">
+            <div className="pl-12">
               <p className="text-sm text-subtext0 leading-relaxed">
-                go back to <span className="text-text font-bold">Browse</span> → <span className="text-text font-bold">On My iPhone</span>. scroll until you see the <span className="text-text font-bold">Spotify</span> folder.
+                go back to <span className="text-text font-bold">Browse</span>, tap <span className="text-text font-bold">On My iPhone</span>, and scroll down until you see the <span className="text-text font-bold">Spotify</span> folder — it has the green spotify icon.
               </p>
-              <div className="border border-surface0/60 rounded-lg p-4 bg-mantle/40 space-y-2.5 max-w-xs">
-                <p className="text-xs font-bold text-text">On My iPhone</p>
-                <div className="flex items-center gap-3 py-1.5 opacity-40">
-                  <span className="text-xs text-subtext0">Pages</span>
-                </div>
-                <div className="border-t border-surface0/30" />
-                <div className="flex items-center gap-3 py-1.5">
-                  <div className="w-6 h-6 rounded bg-green/20 flex items-center justify-center flex-shrink-0">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-green">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                      <circle cx="12" cy="12" r="4" fill="currentColor"/>
-                    </svg>
-                  </div>
-                  <span className="text-xs font-bold text-lavender">Spotify</span>
-                </div>
-                <div className="border-t border-surface0/30" />
-                <div className="flex items-center gap-3 py-1.5 opacity-40">
-                  <span className="text-xs text-subtext0">Shortcuts</span>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -495,24 +446,12 @@ export default function HowPage() {
           >
             <div className="flex items-baseline gap-4">
               <span className="text-3xl font-bold text-surface1">08</span>
-              <p className="text-sm font-bold text-text">paste your song</p>
+              <p className="text-sm font-bold text-text">paste and play</p>
             </div>
-            <div className="pl-12 space-y-3">
+            <div className="pl-12">
               <p className="text-sm text-subtext0 leading-relaxed">
-                tap and hold a blank spot inside the Spotify folder, then tap <span className="text-text font-bold">Paste</span>. done — your tracks show up in spotify under <span className="text-text font-bold">Your Library → Local Files</span>.
+                tap and hold a blank spot inside the folder, then tap <span className="text-text font-bold">Paste</span>. open spotify — your tracks show up under <span className="text-text font-bold">Your Library → Local Files</span>. no premium needed.
               </p>
-              <div className="border border-surface0/60 rounded-lg p-4 bg-mantle/40 space-y-2.5 max-w-xs">
-                <div className="flex items-center gap-3 py-1.5 bg-lavender/10 rounded px-2 -mx-2">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-lavender flex-shrink-0">
-                    <rect x="8" y="2" width="13" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
-                    <path d="M16 8H3v12a2 2 0 002 2h11" stroke="currentColor" strokeWidth="2"/>
-                  </svg>
-                  <span className="text-xs font-bold text-lavender">Paste</span>
-                </div>
-                <div className="flex items-center gap-3 py-1.5 opacity-40">
-                  <span className="text-xs text-subtext0">New Folder</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
