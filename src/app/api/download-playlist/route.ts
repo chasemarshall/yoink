@@ -9,6 +9,7 @@ import { getPlaylistInfo, getAlbumInfo, getArtistTopTracks, detectUrlType, type 
 import { fetchBestAudio } from "@/lib/audio-sources";
 import { fetchLyrics } from "@/lib/lyrics";
 import { rateLimit } from "@/lib/ratelimit";
+import { setExplicitTag } from "@/lib/mp4-advisory";
 
 const execFileAsync = promisify(execFile);
 
@@ -128,9 +129,6 @@ async function processTrack(
     if (lyrics) {
       ffmpegArgs.push("-metadata", `lyrics=${lyrics}`);
     }
-    if (track.explicit) {
-      ffmpegArgs.push("-metadata", "itunesadvisory=1");
-    }
     ffmpegArgs.push("-y", outputPath);
 
     try {
@@ -156,8 +154,11 @@ async function processTrack(
     }
 
     const outputBuffer = await readFile(outputPath);
+    const finalBuffer = track.explicit && outputExt === "m4a"
+      ? setExplicitTag(outputBuffer)
+      : outputBuffer;
     const filename = `${track.artist} - ${track.name}.${outputExt}`;
-    return { filename, buffer: outputBuffer };
+    return { filename, buffer: finalBuffer as Buffer };
   } finally {
     try {
       const files = await readdir(tempDir);

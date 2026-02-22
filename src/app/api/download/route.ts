@@ -12,6 +12,7 @@ import {
 import { join } from "path";
 import { tmpdir } from "os";
 import { getTrackInfo, detectPlatform, extractYouTubeId } from "@/lib/spotify";
+import { setExplicitTag } from "@/lib/mp4-advisory";
 import { getYouTubeTrackInfo } from "@/lib/youtube";
 import { resolveToSpotify } from "@/lib/songlink";
 import { fetchBestAudio } from "@/lib/audio-sources";
@@ -199,9 +200,6 @@ export async function POST(request: NextRequest) {
     if (lyrics) {
       ffmpegArgs.push("-metadata", `lyrics=${lyrics}`);
     }
-    if (track.explicit) {
-      ffmpegArgs.push("-metadata", "itunesadvisory=1");
-    }
     ffmpegArgs.push("-y", outputPath);
 
     try {
@@ -240,15 +238,18 @@ export async function POST(request: NextRequest) {
     }
 
     const outputBuffer = await readFile(outputPath);
+    const finalBuffer = track.explicit && outputExt === "m4a"
+      ? setExplicitTag(outputBuffer)
+      : outputBuffer;
     const filename = `${track.artist} - ${track.name}.${outputExt}`;
     const contentType = wantAlac ? "audio/mp4" : wantFlac ? "audio/flac" : "audio/mpeg";
     const qualityLabel = (wantFlac || wantAlac) && audio.format === "flac" ? "lossless" : `${audio.bitrate}`;
 
-    return new NextResponse(new Uint8Array(outputBuffer), {
+    return new NextResponse(new Uint8Array(finalBuffer), {
       headers: {
         "Content-Type": contentType,
         "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
-        "Content-Length": outputBuffer.length.toString(),
+        "Content-Length": finalBuffer.length.toString(),
         "X-Audio-Source": audio.source,
         "X-Audio-Quality": qualityLabel,
         "X-Audio-Format": outputExt,
