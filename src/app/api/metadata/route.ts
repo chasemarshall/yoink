@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTrackInfo, getPlaylistInfo, getAlbumInfo, getArtistTopTracks, detectUrlType, detectPlatform, extractYouTubeId } from "@/lib/spotify";
+import { getTrackInfo, getPlaylistInfo, getAlbumInfo, getArtistTopTracks, detectUrlType, detectPlatform, extractYouTubeId, type TrackInfo } from "@/lib/spotify";
 import { getYouTubeTrackInfo } from "@/lib/youtube";
 import { resolveToSpotify } from "@/lib/songlink";
+import { lookupTidalVideoCover } from "@/lib/tidal";
 import { rateLimit } from "@/lib/ratelimit";
+
+async function enrichWithVideoCover(track: TrackInfo): Promise<TrackInfo> {
+  try {
+    const videoCover = await lookupTidalVideoCover(track);
+    if (videoCover) track.videoCover = videoCover;
+  } catch {
+    // Never block metadata response
+  }
+  return track;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,7 +56,7 @@ export async function POST(request: NextRequest) {
         const playlist = await getPlaylistInfo(resolved.spotifyUrl);
         return NextResponse.json({ type: "playlist", ...playlist });
       }
-      const track = await getTrackInfo(resolved.spotifyUrl);
+      const track = await enrichWithVideoCover(await getTrackInfo(resolved.spotifyUrl));
       return NextResponse.json({ type: "track", ...track });
     }
 
@@ -62,7 +73,7 @@ export async function POST(request: NextRequest) {
       const resolved = await resolveToSpotify(url);
       if (resolved?.spotifyUrl) {
         try {
-          const spotifyTrack = await getTrackInfo(resolved.spotifyUrl);
+          const spotifyTrack = await enrichWithVideoCover(await getTrackInfo(resolved.spotifyUrl));
           return NextResponse.json({
             type: "track",
             ...spotifyTrack,
@@ -74,9 +85,10 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      const enrichedYt = await enrichWithVideoCover(ytInfo as TrackInfo);
       return NextResponse.json({
         type: "track",
-        ...ytInfo,
+        ...enrichedYt,
         spotifyUrl: "", // No Spotify match
         _youtubeId: videoId,
         _originalPlatform: "youtube",
@@ -108,7 +120,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ type: "playlist", ...artist });
     }
 
-    const track = await getTrackInfo(url);
+    const track = await enrichWithVideoCover(await getTrackInfo(url));
     return NextResponse.json({ type: "track", ...track });
   } catch (error) {
     const message =

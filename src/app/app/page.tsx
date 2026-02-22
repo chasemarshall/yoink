@@ -14,6 +14,7 @@ interface TrackInfo {
   duration: string;
   spotifyUrl: string;
   explicit?: boolean;
+  videoCover?: string;
 }
 
 interface PlaylistInfo {
@@ -386,13 +387,26 @@ export default function Home() {
               {state === "ready" && <div className="h-1" />}
 
               <div className="p-6 flex gap-5 stagger">
-                <div className="w-[100px] h-[100px] flex-shrink-0">
-                  <img
-                    src={track.albumArt}
-                    alt={track.album}
-                    className="art-glow w-full h-full rounded-lg object-cover animate-fade-in"
-                    style={{ opacity: 0 }}
-                  />
+                <div className="w-[100px] h-[100px] flex-shrink-0 relative">
+                  {track.videoCover ? (
+                    <video
+                      src={track.videoCover}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="art-glow w-full h-full rounded-lg object-cover animate-fade-in"
+                      style={{ opacity: 0 }}
+                      poster={track.albumArt}
+                    />
+                  ) : (
+                    <img
+                      src={track.albumArt}
+                      alt={track.album}
+                      className="art-glow w-full h-full rounded-lg object-cover animate-fade-in"
+                      style={{ opacity: 0 }}
+                    />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5">
                   <p className="text-base font-bold text-text truncate animate-slide-in" style={{ opacity: 0 }}>

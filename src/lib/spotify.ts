@@ -97,6 +97,7 @@ export interface TrackInfo {
   label: string | null;
   copyright: string | null;
   totalTracks: number | null;
+  videoCover?: string;
 }
 
 export async function getTrackInfo(url: string): Promise<TrackInfo> {

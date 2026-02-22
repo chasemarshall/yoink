@@ -140,6 +140,43 @@ export async function lookupTidalByIsrc(isrc: string): Promise<string | null> {
   }
 }
 
+export async function lookupTidalVideoCover(track: TrackInfo): Promise<string | null> {
+  const token = await getTidalSession();
+  if (!token) return null;
+
+  try {
+    // Find the Tidal track first
+    let tidalId: string | null = null;
+    if (track.isrc) {
+      tidalId = await lookupTidalByIsrc(track.isrc);
+    }
+    if (!tidalId) {
+      tidalId = await searchTidalByTitleArtist(track);
+    }
+    if (!tidalId) return null;
+
+    // Fetch track details from v1 API (includes album with videoCover)
+    const res = await fetch(
+      `https://api.tidal.com/v1/tracks/${tidalId}?countryCode=US`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(8000),
+      }
+    );
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const videoCover = data.album?.videoCover;
+    if (!videoCover) return null;
+
+    return `https://resources.tidal.com/videos/${videoCover}/1280x1280.mp4`;
+  } catch (e) {
+    console.error("[tidal] video cover lookup error:", e);
+    return null;
+  }
+}
+
 type TidalQuality = "HI_RES_LOSSLESS" | "LOSSLESS" | "HIGH";
 
 export interface TidalAudioResult {
