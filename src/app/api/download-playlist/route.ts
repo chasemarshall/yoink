@@ -238,7 +238,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "URL is required" }, { status: 400 });
     }
 
-    const MAX_TRACKS = 100;
+    const MAX_TRACKS = 200;
 
     const urlType = detectUrlType(url);
     let playlist: PlaylistInfo;
