@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Link from "next/link";
 import Header from "@/components/Header";
 import FormatToggle, { type Format } from "@/components/FormatToggle";
 
@@ -40,6 +41,7 @@ export default function SearchPage() {
   const [results, setResults] = useState<TrackInfo[]>([]);
   const [selectedTrack, setSelectedTrack] = useState<TrackInfo | null>(null);
   const [error, setError] = useState("");
+  const [isRateLimited, setIsRateLimited] = useState(false);
   const [quality, setQuality] = useState<QualityInfo | null>(null);
   const [format, setFormat] = useState<Format>("mp3");
 
@@ -50,6 +52,7 @@ export default function SearchPage() {
 
     setState("searching");
     setError("");
+    setIsRateLimited(false);
     setResults([]);
     setSelectedTrack(null);
     setQuality(null);
@@ -58,6 +61,7 @@ export default function SearchPage() {
       const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
       if (!res.ok) {
         const data = await res.json();
+        if (data.rateLimit) setIsRateLimited(true);
         throw new Error(data.error || "Search failed");
       }
       const data = await res.json();
@@ -94,6 +98,7 @@ export default function SearchPage() {
 
       if (!res.ok) {
         const data = await res.json();
+        if (data.rateLimit) setIsRateLimited(true);
         throw new Error(data.error || "Download failed");
       }
 
@@ -184,10 +189,24 @@ export default function SearchPage() {
             <div className="animate-fade-in-up border border-red/20 rounded-lg p-6 space-y-4 bg-red/5" style={{ opacity: 0 }}>
               <div className="flex items-start gap-3">
                 <span className="text-red text-xs mt-0.5">!</span>
-                <p className="text-sm text-red/90 leading-relaxed">{error}</p>
+                <div className="text-sm text-red/90 leading-relaxed">
+                  <p>{error}</p>
+                  {isRateLimited && (
+                    <p className="mt-2 text-xs text-overlay0/60">
+                      see{" "}
+                      <Link href="/terms" className="text-lavender/70 hover:text-lavender underline transition-colors">
+                        rate limits
+                      </Link>
+                      {" "}for details.{" "}
+                      <Link href="/roadmap" className="text-lavender/70 hover:text-lavender underline transition-colors">
+                        higher limits coming soon
+                      </Link>
+                    </p>
+                  )}
+                </div>
               </div>
               <button
-                onClick={() => { setState("idle"); setError(""); }}
+                onClick={() => { setState("idle"); setError(""); setIsRateLimited(false); }}
                 className="btn-press text-xs text-subtext0 hover:text-text transition-colors uppercase tracking-wider"
               >
                 try again

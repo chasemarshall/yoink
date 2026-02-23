@@ -4,7 +4,7 @@ import Link from "next/link";
 
 interface Section {
   title: string;
-  content: string[];
+  content: (string | React.ReactNode)[];
 }
 
 const sections: Section[] = [
@@ -33,7 +33,7 @@ const sections: Section[] = [
     title: "rate limits",
     content: [
       "to keep the service fair for everyone, yoink enforces rate limits on all endpoints. current limits: 30 downloads per minute, 5 playlist downloads per minute (max 200 tracks per playlist), 15 searches per minute, and 10 metadata lookups per minute.",
-      "if you hit a limit, wait a bit and try again. don't try to circumvent rate limits — doing so may result in your access being restricted. higher limits may be available in the future — check the roadmap.",
+      <>if you hit a limit, wait a bit and try again. don&apos;t try to circumvent rate limits — doing so may result in your access being restricted. higher limits may be available in the future — check the <Link href="/roadmap" className="text-lavender/70 hover:text-lavender underline transition-colors">roadmap</Link>.</>,
     ],
   },
   {

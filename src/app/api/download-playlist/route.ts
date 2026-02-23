@@ -226,7 +226,7 @@ export async function POST(request: NextRequest) {
     const { allowed, retryAfter } = rateLimit(`dl-playlist:${ip}`, 5, 60_000);
     if (!allowed) {
       return NextResponse.json(
-        { error: `slow down — try again in ${retryAfter}s` },
+        { error: `slow down — try again in ${retryAfter}s`, rateLimit: true },
         { status: 429, headers: { "Retry-After": String(retryAfter) } }
       );
     }

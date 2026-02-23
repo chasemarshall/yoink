@@ -39,6 +39,7 @@ export default function Home() {
   const [originalUrl, setOriginalUrl] = useState("");
   const [trackStatuses, setTrackStatuses] = useState<TrackStatus[]>([]);
   const [error, setError] = useState("");
+  const [isRateLimited, setIsRateLimited] = useState(false);
   const [quality, setQuality] = useState<QualityInfo | null>(null);
   const [format, setFormat] = useState<Format>("mp3");
   const [genreSource, setGenreSource] = useState<"spotify" | "itunes">("spotify");
@@ -64,6 +65,7 @@ export default function Home() {
   const handleSubmit = async (url: string) => {
     setState("fetching");
     setError("");
+    setIsRateLimited(false);
     setTrack(null);
     setPlaylist(null);
     setTrackStatuses([]);
@@ -80,6 +82,7 @@ export default function Home() {
 
       if (!res.ok) {
         const data = await res.json();
+        if (data.rateLimit) setIsRateLimited(true);
         throw new Error(data.error || "Failed to fetch info");
       }
 
@@ -109,6 +112,7 @@ export default function Home() {
 
       if (!res.ok) {
         const data = await res.json();
+        if (data.rateLimit) setIsRateLimited(true);
         throw new Error(data.error || "Download failed");
       }
 
@@ -352,7 +356,21 @@ export default function Home() {
             <div className="animate-fade-in-up border border-red/20 rounded-lg p-6 space-y-4 bg-red/5" style={{ opacity: 0 }}>
               <div className="flex items-start gap-3">
                 <span className="text-red text-xs mt-0.5">!</span>
-                <p className="text-sm text-red/90 leading-relaxed">{error}</p>
+                <div className="text-sm text-red/90 leading-relaxed">
+                  <p>{error}</p>
+                  {isRateLimited && (
+                    <p className="mt-2 text-xs text-overlay0/60">
+                      see{" "}
+                      <Link href="/terms" className="text-lavender/70 hover:text-lavender underline transition-colors">
+                        rate limits
+                      </Link>
+                      {" "}for details.{" "}
+                      <Link href="/roadmap" className="text-lavender/70 hover:text-lavender underline transition-colors">
+                        higher limits coming soon
+                      </Link>
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="flex items-center justify-between">
                 <button

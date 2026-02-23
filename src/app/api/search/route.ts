@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const { allowed, retryAfter } = rateLimit(`search:${ip}`, 15, 60_000);
     if (!allowed) {
       return NextResponse.json(
-        { error: `slow down — try again in ${retryAfter}s` },
+        { error: `slow down — try again in ${retryAfter}s`, rateLimit: true },
         { status: 429, headers: { "Retry-After": String(retryAfter) } }
       );
     }
