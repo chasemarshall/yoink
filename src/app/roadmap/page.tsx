@@ -134,7 +134,7 @@ const items: RoadmapItem[] = [
   },
   {
     title: "yoink pro",
-    description: "optional paid tier with higher rate limits, larger playlist caps, and priority audio sources. free tier stays free forever.",
+    description: "maybe one day — an optional paid tier with higher rate limits and larger playlist caps. nothing concrete yet. free tier stays free forever.",
     status: "planned",
     tag: "core",
   },
