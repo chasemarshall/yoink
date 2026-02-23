@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import FormatToggle, { type Format } from "@/components/FormatToggle";
@@ -22,22 +22,30 @@ interface QualityInfo {
 
 type PageState = "idle" | "searching" | "results" | "ready" | "downloading" | "done" | "error";
 
-const trending = [
+const fallbackTrending = [
   "Kendrick Lamar - Not Like Us",
   "Billie Eilish - Birds of a Feather",
   "Sabrina Carpenter - Espresso",
   "Tyler, The Creator - Noid",
   "SZA - Saturn",
-  "Metro Boomin - Like That",
   "Chappell Roan - Good Luck, Babe!",
-  "Future - Like That",
   "Tyla - Water",
   "Doechii - Nissan Altima",
+  "Future - Like That",
+  "Metro Boomin - Like That",
 ];
 
 export default function SearchPage() {
   const [state, setState] = useState<PageState>("idle");
   const [query, setQuery] = useState("");
+  const [trending, setTrending] = useState<string[]>(fallbackTrending);
+
+  useEffect(() => {
+    fetch("/api/trending")
+      .then((res) => res.json())
+      .then((data) => { if (data.songs?.length) setTrending(data.songs); })
+      .catch(() => {});
+  }, []);
   const [results, setResults] = useState<TrackInfo[]>([]);
   const [selectedTrack, setSelectedTrack] = useState<TrackInfo | null>(null);
   const [error, setError] = useState("");

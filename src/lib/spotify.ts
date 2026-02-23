@@ -416,3 +416,35 @@ export async function getArtistTopTracks(url: string): Promise<PlaylistInfo> {
     tracks,
   };
 }
+
+// Trending cache — refreshes every hour
+let trendingCache: { songs: string[]; expiresAt: number } | null = null;
+const TRENDING_PLAYLIST = "37i9dQZF1DXcBWIGoYBM5M"; // Today's Top Hits
+
+export async function getTrending(count = 10): Promise<string[]> {
+  if (trendingCache && Date.now() < trendingCache.expiresAt) {
+    return trendingCache.songs;
+  }
+
+  try {
+    const token = await getAccessToken();
+    const res = await fetch(
+      `https://api.spotify.com/v1/playlists/${TRENDING_PLAYLIST}/tracks?limit=${count}&fields=items(track(name,artists(name)))`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (!res.ok) return trendingCache?.songs || [];
+
+    const data = await res.json();
+    const songs = data.items
+      .filter((item: { track: unknown }) => item.track)
+      .map((item: { track: { artists: { name: string }[]; name: string } }) =>
+        `${item.track.artists[0]?.name} - ${item.track.name}`
+      );
+
+    trendingCache = { songs, expiresAt: Date.now() + 60 * 60 * 1000 };
+    return songs;
+  } catch {
+    return trendingCache?.songs || [];
+  }
+}
