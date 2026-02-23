@@ -42,7 +42,6 @@ async function getTidalSession(): Promise<string | null> {
     if (!res.ok) {
       const errBody = await res.text().catch(() => "");
       console.log("[tidal] token refresh failed:", res.status, errBody);
-      console.log("[tidal] client_id length:", clientId.length, "secret length:", clientSecret?.length, "refresh length:", refreshToken.length);
       return process.env.TIDAL_ACCESS_TOKEN || null;
     }
 
