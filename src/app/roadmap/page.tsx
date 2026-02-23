@@ -132,6 +132,12 @@ const items: RoadmapItem[] = [
     status: "planned",
     tag: "platforms",
   },
+  {
+    title: "yoink pro",
+    description: "optional paid tier with higher rate limits, larger playlist caps, and priority audio sources. free tier stays free forever.",
+    status: "planned",
+    tag: "core",
+  },
 ];
 
 const statusConfig: Record<Status, { label: string; color: string; dotColor: string; bgColor: string }> = {
