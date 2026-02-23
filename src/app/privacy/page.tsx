@@ -40,6 +40,7 @@ const sections: Section[] = [
     title: "rate limiting",
     content: [
       "yoink uses in-memory rate limiting based on your IP address to prevent abuse. this data is stored only in server memory, is never written to disk, and is lost whenever the server restarts. we don't build profiles or track usage patterns.",
+      "current limits: 30 downloads per minute, 5 playlist downloads per minute (max 200 tracks per playlist), 15 searches per minute, and 10 metadata lookups per minute.",
     ],
   },
   {

@@ -32,7 +32,8 @@ const sections: Section[] = [
   {
     title: "rate limits",
     content: [
-      "to keep the service fair for everyone, yoink enforces rate limits on downloads. if you hit a limit, wait a bit and try again. don't try to circumvent rate limits — doing so may result in your access being restricted.",
+      "to keep the service fair for everyone, yoink enforces rate limits on all endpoints. current limits: 30 downloads per minute, 5 playlist downloads per minute (max 200 tracks per playlist), 15 searches per minute, and 10 metadata lookups per minute.",
+      "if you hit a limit, wait a bit and try again. don't try to circumvent rate limits — doing so may result in your access being restricted.",
     ],
   },
   {
