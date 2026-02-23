@@ -11,14 +11,15 @@ const sections: Section[] = [
   {
     title: "the short version",
     content: [
-      "yoink doesn't have accounts, doesn't track you, and doesn't store your downloads. we collect the bare minimum to keep the service running. that's it.",
+      "yoink doesn't have accounts, doesn't store your downloads, and only collects anonymous page view stats. we keep the bare minimum to keep the service running. that's it.",
     ],
   },
   {
-    title: "no accounts, no tracking",
+    title: "no accounts, minimal analytics",
     content: [
-      "yoink has no user accounts, no sign-ups, no cookies, no analytics scripts, and no ad trackers. we don't use google analytics, facebook pixel, or any third-party tracking service.",
-      "we don't know who you are, what you download, or how often you visit. we like it that way.",
+      "yoink has no user accounts, no sign-ups, no cookies, and no ad trackers. we don't use google analytics, facebook pixel, or any invasive tracking service.",
+      "we use umami for basic, anonymous usage analytics — page views and visit counts. umami is privacy-focused, doesn't use cookies, doesn't collect personal data, and is fully GDPR compliant. we use it to understand which pages get traffic, not to track individual users.",
+      "we don't know who you are or what you download.",
     ],
   },
   {
@@ -122,9 +123,10 @@ export default function PrivacyPage() {
             <p className="text-sm font-bold text-green">tldr</p>
           </div>
           <p className="text-sm text-subtext0/80 leading-relaxed">
-            no accounts. no cookies. no analytics. no download history. audio is
-            processed in memory and never saved. your IP is used for rate
-            limiting only and kept in volatile memory.
+            no accounts. no cookies. no download history. audio is
+            processed in memory and never saved. anonymous page view analytics
+            via umami (no personal data). IP used for rate limiting only, kept
+            in volatile memory.
           </p>
         </div>
       </section>
