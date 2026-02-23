@@ -198,7 +198,7 @@ export default function SearchPage() {
           {/* Search results */}
           {state === "results" && results.length > 0 && (
             <div className="animate-fade-in-up border border-surface0/60 rounded-lg overflow-hidden bg-mantle/40" style={{ opacity: 0 }}>
-              <div className="px-6 py-3 border-b border-surface0/40">
+              <div className="px-4 sm:px-6 py-3 border-b border-surface0/40">
                 <p className="text-xs text-overlay0/60 uppercase tracking-wider">
                   {results.length} result{results.length !== 1 && "s"}
                 </p>
@@ -208,7 +208,7 @@ export default function SearchPage() {
                   <button
                     key={i}
                     onClick={() => handleSelect(t)}
-                    className="w-full flex items-center gap-4 px-6 py-3 border-b border-surface0/20 last:border-b-0 hover:bg-surface0/20 transition-colors duration-150 text-left"
+                    className="w-full flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-3 border-b border-surface0/20 last:border-b-0 hover:bg-surface0/20 transition-colors duration-150 text-left"
                   >
                     <img
                       src={t.albumArt}
@@ -226,7 +226,7 @@ export default function SearchPage() {
                     </div>
                     <div className="flex-shrink-0 text-right">
                       <p className="text-xs text-overlay0/50">{t.duration}</p>
-                      <p className="text-[10px] text-overlay0/30 truncate max-w-[120px]">{t.album}</p>
+                      <p className="text-[10px] text-overlay0/30 truncate max-w-[120px] hidden sm:block">{t.album}</p>
                     </div>
                   </button>
                 ))}
@@ -256,8 +256,8 @@ export default function SearchPage() {
               )}
               {state === "ready" && <div className="h-1" />}
 
-              <div className="p-6 flex gap-5">
-                <div className="w-[100px] h-[100px] flex-shrink-0">
+              <div className="p-4 sm:p-6 flex gap-4 sm:gap-5">
+                <div className="w-[72px] h-[72px] sm:w-[100px] sm:h-[100px] flex-shrink-0">
                   <img
                     src={selectedTrack.albumArt}
                     alt={selectedTrack.album}

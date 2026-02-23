@@ -76,7 +76,7 @@ export default function LandingPage() {
             </span>
             . metadata, lyrics, cover art. no accounts, no ads.
           </p>
-          <div className="flex items-center gap-4 pt-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 pt-2">
             <Link
               href="/app"
               className="btn-press text-sm text-crust bg-lavender hover:bg-mauve px-6 py-3 rounded-lg font-bold uppercase tracking-wider transition-colors duration-200"
@@ -207,7 +207,7 @@ export default function LandingPage() {
       {/* CTA */}
       <section className="px-6 py-16 max-w-2xl mx-auto">
         <div
-          className="animate-fade-in-up border border-surface0/60 rounded-lg p-8 bg-mantle/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6"
+          className="animate-fade-in-up border border-surface0/60 rounded-lg p-6 sm:p-8 bg-mantle/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6"
           style={{ opacity: 0 }}
         >
           <div className="space-y-1">
@@ -227,10 +227,12 @@ export default function LandingPage() {
       <footer className="border-t border-surface0/40 px-6 py-8 max-w-2xl mx-auto space-y-6">
         <div className="flex items-center justify-between text-xs text-overlay0/50">
           <span>yoink</span>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <Link href="/how" className="text-mauve/60 hover:text-mauve transition-colors duration-200">local files</Link>
             <Link href="/players" className="text-green/60 hover:text-green transition-colors duration-200">players</Link>
             <Link href="/roadmap" className="hover:text-text transition-colors duration-200">roadmap</Link>
+            <Link href="/terms" className="hover:text-text transition-colors duration-200">terms</Link>
+            <Link href="/privacy" className="hover:text-text transition-colors duration-200">privacy</Link>
           </div>
         </div>
         <div className="space-y-3 text-[10px] text-overlay0/40 leading-relaxed">

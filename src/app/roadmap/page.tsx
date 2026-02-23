@@ -67,10 +67,40 @@ const items: RoadmapItem[] = [
     tag: "core",
   },
   {
+    title: "track number metadata",
+    description: "track numbers, disc numbers, and total tracks embedded so files sort correctly in any player.",
+    status: "shipped",
+    tag: "metadata",
+  },
+  {
+    title: "apple music catalog matching",
+    description: "ISRC codes, album artist, and itunes catalog ids (cnID/plID/atID/geID) embedded into m4a files. apple music recognizes your files as catalog matches — no dashed clouds, proper syncing.",
+    status: "shipped",
+    tag: "metadata",
+  },
+  {
+    title: "multi-source audio",
+    description: "waterfall audio pipeline — deezer, tidal, and youtube as sources. automatic fallback if one fails. lossless from deezer and tidal.",
+    status: "shipped",
+    tag: "audio",
+  },
+  {
+    title: "docker self-hosting",
+    description: "dockerfile and docker-compose for running yoink on your own hardware. full control, no rate limits.",
+    status: "shipped",
+    tag: "core",
+  },
+  {
     title: "musixmatch lyrics",
     description: "musixmatch as a fallback lyrics source when lrclib misses. better coverage for synced and plain lyrics.",
     status: "in-progress",
     tag: "metadata",
+  },
+  {
+    title: "open source",
+    description: "opening up the full yoink codebase. contribute features, run your own instance, or just read the code.",
+    status: "planned",
+    tag: "core",
   },
   {
     title: "additional link resolvers",
@@ -79,22 +109,10 @@ const items: RoadmapItem[] = [
     tag: "platforms",
   },
   {
-    title: "more metadata providers",
-    description: "deezer, tidal, and qobuz as additional metadata sources for richer track info and higher-res artwork.",
-    status: "planned",
-    tag: "metadata",
-  },
-  {
     title: "qobuz audio source",
     description: "qobuz as an additional hi-res lossless audio source alongside the existing pipeline.",
     status: "planned",
     tag: "audio",
-  },
-  {
-    title: "track number metadata",
-    description: "embed track numbers for albums and playlists so files sort correctly in any player.",
-    status: "planned",
-    tag: "metadata",
   },
   {
     title: "queue system",
@@ -200,7 +218,7 @@ export default function RoadmapPage() {
       {/* Stats bar */}
       <section className="px-6 py-12 max-w-2xl mx-auto">
         <div
-          className="animate-fade-in-up flex items-center gap-4 sm:gap-8 flex-wrap"
+          className="animate-fade-in-up flex items-center gap-3 sm:gap-8 flex-wrap"
           style={{ opacity: 0, animationDelay: "80ms" }}
         >
           {sections.map((s) => {
@@ -262,7 +280,7 @@ export default function RoadmapPage() {
                         />
 
                         <div className="space-y-2">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-start sm:items-center gap-2 sm:gap-3 flex-wrap">
                             <p className="text-sm font-bold text-text">
                               {item.title}
                             </p>
@@ -298,7 +316,7 @@ export default function RoadmapPage() {
       {/* CTA */}
       <section className="px-6 py-16 max-w-2xl mx-auto">
         <div
-          className="animate-fade-in-up border border-surface0/60 rounded-lg p-8 bg-mantle/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6"
+          className="animate-fade-in-up border border-surface0/60 rounded-lg p-6 sm:p-8 bg-mantle/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6"
           style={{ opacity: 0 }}
         >
           <div className="space-y-1">
@@ -319,7 +337,7 @@ export default function RoadmapPage() {
       {/* Footer */}
       <footer className="border-t border-surface0/40 px-6 py-4 flex items-center justify-between text-xs text-overlay0/50">
         <span>yoink</span>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <Link href="/how" className="text-mauve/60 hover:text-mauve transition-colors duration-200">local files</Link>
           <Link href="/players" className="text-green/60 hover:text-green transition-colors duration-200">players</Link>
           <a

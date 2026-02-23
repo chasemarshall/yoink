@@ -386,8 +386,8 @@ export default function Home() {
               )}
               {state === "ready" && <div className="h-1" />}
 
-              <div className="p-6 flex gap-5 stagger">
-                <div className="w-[100px] h-[100px] flex-shrink-0 relative">
+              <div className="p-4 sm:p-6 flex gap-4 sm:gap-5 stagger">
+                <div className="w-[72px] h-[72px] sm:w-[100px] sm:h-[100px] flex-shrink-0 relative">
                   {track.videoCover ? (
                     <video
                       src={track.videoCover}
@@ -485,12 +485,12 @@ export default function Home() {
               {state === "ready" && <div className="h-1" />}
 
               {/* Playlist header */}
-              <div className="p-6 flex gap-5">
+              <div className="p-4 sm:p-6 flex gap-4 sm:gap-5">
                 {playlist.image && (
                   <img
                     src={playlist.image}
                     alt={playlist.name}
-                    className="art-glow w-[100px] h-[100px] rounded-lg object-cover flex-shrink-0 animate-fade-in"
+                    className="art-glow w-[72px] h-[72px] sm:w-[100px] sm:h-[100px] rounded-lg object-cover flex-shrink-0 animate-fade-in"
                     style={{ opacity: 0 }}
                   />
                 )}
@@ -519,7 +519,7 @@ export default function Home() {
                 {playlist.tracks.map((t, i) => (
                   <div
                     key={i}
-                    className={`flex items-center gap-3 px-6 py-3 border-b border-surface0/20 last:border-b-0 transition-colors duration-200 ${
+                    className={`flex items-center gap-3 px-4 sm:px-6 py-3 border-b border-surface0/20 last:border-b-0 transition-colors duration-200 ${
                       trackStatuses[i] === "downloading" ? "bg-lavender/5" : ""
                     }`}
                   >
@@ -611,8 +611,9 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-surface0/40 px-6 py-4 flex items-center justify-between text-xs text-overlay0/50">
         <span>yoink</span>
-        <div className="flex items-center gap-4">
-          <Link href="/how" className="text-mauve/60 hover:text-mauve transition-colors duration-200">local files setup</Link>
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Link href="/how" className="text-mauve/60 hover:text-mauve transition-colors duration-200 hidden sm:block">local files setup</Link>
+          <Link href="/how" className="text-mauve/60 hover:text-mauve transition-colors duration-200 sm:hidden">local files</Link>
           <Link href="/roadmap" className="hover:text-text transition-colors duration-200">roadmap</Link>
           <a
             href="https://chasefrazier.dev/tip"

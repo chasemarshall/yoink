@@ -54,13 +54,13 @@ export default function HowPage() {
             the loop
           </p>
           <div
-            className="animate-fade-in-up flex items-center gap-3 text-sm flex-wrap"
+            className="animate-fade-in-up flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-sm"
             style={{ opacity: 0, animationDelay: "80ms" }}
           >
             <span className="text-lavender font-bold">yoink it</span>
-            <span className="text-surface2">→</span>
+            <span className="text-surface2 hidden sm:inline">→</span>
             <span className="text-text font-bold">save to your music folder</span>
-            <span className="text-surface2">→</span>
+            <span className="text-surface2 hidden sm:inline">→</span>
             <span className="text-green font-bold">plays in spotify, ad-free</span>
           </div>
         </div>
@@ -500,7 +500,7 @@ export default function HowPage() {
       {/* CTA */}
       <section className="px-6 py-16 sm:py-24 pb-24 sm:pb-32 max-w-2xl mx-auto">
         <div
-          className="animate-fade-in-up border border-surface0/60 rounded-lg p-8 bg-mantle/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6"
+          className="animate-fade-in-up border border-surface0/60 rounded-lg p-6 sm:p-8 bg-mantle/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6"
           style={{ opacity: 0 }}
         >
           <div className="space-y-1">

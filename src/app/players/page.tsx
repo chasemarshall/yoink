@@ -210,7 +210,7 @@ function PlatformSection({
               href={p.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="animate-fade-in-up group block border border-surface0/60 rounded-lg p-5 bg-mantle/40 hover:bg-surface0/20 hover:border-surface1/60 transition-all duration-300"
+              className="animate-fade-in-up group block border border-surface0/60 rounded-lg p-4 sm:p-5 bg-mantle/40 hover:bg-surface0/20 hover:border-surface1/60 transition-all duration-300"
               style={{ opacity: 0, animationDelay: `${delay + (i + 1) * 60}ms` }}
             >
               <div className="flex items-start justify-between gap-4">
@@ -353,7 +353,7 @@ export default function PlayersPage() {
       {/* CTA */}
       <section className="px-6 py-16 sm:py-24 pb-24 sm:pb-32 max-w-2xl mx-auto">
         <div
-          className="animate-fade-in-up border border-surface0/60 rounded-lg p-8 bg-mantle/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6"
+          className="animate-fade-in-up border border-surface0/60 rounded-lg p-6 sm:p-8 bg-mantle/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6"
           style={{ opacity: 0 }}
         >
           <div className="space-y-1">
