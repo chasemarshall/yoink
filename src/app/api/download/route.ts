@@ -13,6 +13,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 import { getTrackInfo, detectPlatform, extractYouTubeId } from "@/lib/spotify";
 import { setExplicitTag } from "@/lib/mp4-advisory";
+import { ffmpegSemaphore } from "@/lib/semaphore";
 import { getYouTubeTrackInfo } from "@/lib/youtube";
 import { resolveToSpotify } from "@/lib/songlink";
 import { extractAppleMusicTrackId, lookupByItunesId, lookupItunesGenre, lookupItunesCatalogIds } from "@/lib/itunes";
@@ -262,10 +263,12 @@ export async function POST(request: NextRequest) {
     ffmpegArgs.push("-y", outputPath);
 
     try {
-      await execFileAsync("ffmpeg", ffmpegArgs, {
-        timeout: 120000,
-        maxBuffer: 50 * 1024 * 1024,
-      });
+      await ffmpegSemaphore.run(() =>
+        execFileAsync("ffmpeg", ffmpegArgs, {
+          timeout: 120000,
+          maxBuffer: 50 * 1024 * 1024,
+        })
+      );
     } catch {
       // Fallback: try converting without metadata/art
       try {
@@ -286,10 +289,12 @@ export async function POST(request: NextRequest) {
                "-metadata", `artist=${track.artist}`,
                "-metadata", `album=${track.album}`,
                outputPath];
-        await execFileAsync("ffmpeg", fallbackArgs, {
-          timeout: 120000,
-          maxBuffer: 50 * 1024 * 1024,
-        });
+        await ffmpegSemaphore.run(() =>
+          execFileAsync("ffmpeg", fallbackArgs, {
+            timeout: 120000,
+            maxBuffer: 50 * 1024 * 1024,
+          })
+        );
       } catch {
         // ffmpeg completely unavailable — serve raw audio
         const ext = audio.format;

@@ -11,6 +11,7 @@ import { fetchBestAudio } from "@/lib/audio-sources";
 import { fetchLyrics } from "@/lib/lyrics";
 import { rateLimit } from "@/lib/ratelimit";
 import { setExplicitTag } from "@/lib/mp4-advisory";
+import { ffmpegSemaphore } from "@/lib/semaphore";
 import { setCatalogIds } from "@/lib/mp4-catalog";
 
 const execFileAsync = promisify(execFile);
@@ -176,10 +177,12 @@ async function processTrack(
     ffmpegArgs.push("-y", outputPath);
 
     try {
-      await execFileAsync("ffmpeg", ffmpegArgs, {
-        timeout: 120000,
-        maxBuffer: 50 * 1024 * 1024,
-      });
+      await ffmpegSemaphore.run(() =>
+        execFileAsync("ffmpeg", ffmpegArgs, {
+          timeout: 120000,
+          maxBuffer: 50 * 1024 * 1024,
+        })
+      );
     } catch {
       try {
         const fallbackArgs = wantAlac
@@ -187,10 +190,12 @@ async function processTrack(
           : wantFlac
             ? ["-y", "-i", inputPath, "-c:a", "flac", outputPath]
             : ["-y", "-i", inputPath, "-c:a", "libmp3lame", "-b:a", "320k", outputPath];
-        await execFileAsync("ffmpeg", fallbackArgs, {
-          timeout: 120000,
-          maxBuffer: 50 * 1024 * 1024,
-        });
+        await ffmpegSemaphore.run(() =>
+          execFileAsync("ffmpeg", fallbackArgs, {
+            timeout: 120000,
+            maxBuffer: 50 * 1024 * 1024,
+          })
+        );
       } catch {
         const filename = `${track.artist} - ${track.name}.${audio.format}`;
         return { filename, buffer: audio.buffer };
