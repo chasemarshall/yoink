@@ -13,6 +13,10 @@ paste a spotify link. get the file.
 - **search** — type a song name instead of pasting a link
 - **no accounts** — no sign-up, no data stored
 
+## audio sources
+
+yoink supports multiple audio sources and will try to find the best available quality. configure additional sources via env vars for higher quality output.
+
 ## stack
 
 - [Next.js](https://nextjs.org) 16 (app router)
@@ -21,56 +25,61 @@ paste a spotify link. get the file.
 - [Piped API](https://github.com/TeamPiped/Piped) for youtube audio
 - [ffmpeg](https://ffmpeg.org) for conversion and metadata embedding
 - [lrclib](https://lrclib.net) for lyrics
-- deployed on [Railway](https://railway.app)
 
-## setup
+## self-hosting
+
+### docker (recommended)
+
+```bash
+git clone https://github.com/chasemarshall/yoink.git
+cd yoink
+cp .env.example .env
+# fill in your env vars
+docker compose up -d
+```
+
+yoink will be running on `http://localhost:3000`.
+
+### local dev
 
 ```bash
 git clone https://github.com/chasemarshall/yoink.git
 cd yoink
 npm install
-```
-
-copy `.env.example` to `.env.local` and fill in your credentials:
-
-```
-SPOTIFY_CLIENT_ID=your_client_id
-SPOTIFY_CLIENT_SECRET=your_client_secret
-PIPED_API_URL=https://pipedapi.kavin.rocks
-```
-
-you'll also need [ffmpeg](https://ffmpeg.org/download.html) installed locally.
-
-```bash
+cp .env.example .env.local
+# fill in your env vars
 npm run dev
 ```
 
-### optional env vars
+you'll need [ffmpeg](https://ffmpeg.org/download.html) installed locally.
 
-| Variable | Description |
-|----------|-------------|
-| `SPOTIFY_CLIENT_ID` | required — spotify api credentials |
-| `SPOTIFY_CLIENT_SECRET` | required — spotify api credentials |
-| `PIPED_API_URL` | piped instance for youtube audio |
-| `SONGLINK_ENABLED` | enable odesli/songlink for cross-platform link resolution |
-| `DEEZER_ARL` | optional — deezer session cookie for lossless audio |
-| `TIDAL_CLIENT_ID` | optional — tidal api credentials |
-| `TIDAL_CLIENT_SECRET` | optional — tidal api credentials |
-| `TIDAL_ACCESS_TOKEN` | optional — tidal access token |
-| `TIDAL_REFRESH_TOKEN` | optional — tidal refresh token |
-| `ACOUSTID_API_KEY` | optional — acoustid fingerprinting |
-| `MUSIXMATCH_TOKEN` | optional — musixmatch lyrics fallback |
+### env vars
 
-## deployment (railway)
+**required:**
 
-set these environment variables in your railway service:
+| variable | description |
+|---|---|
+| `SPOTIFY_CLIENT_ID` | spotify app client id ([create one here](https://developer.spotify.com/dashboard)) |
+| `SPOTIFY_CLIENT_SECRET` | spotify app client secret |
 
-- `SPOTIFY_CLIENT_ID`
-- `SPOTIFY_CLIENT_SECRET`
-- `PIPED_API_URL`
-- `RAILPACK_DEPLOY_APT_PACKAGES=ffmpeg`
-- `HOSTNAME=0.0.0.0`
+**optional:**
+
+| variable | description |
+|---|---|
+| `PIPED_API_URL` | piped instance url (default: `pipedapi.kavin.rocks`) |
+| `DEEZER_ARL` | deezer session cookie for lossless audio |
+| `TIDAL_CLIENT_ID` | tidal app client id |
+| `TIDAL_CLIENT_SECRET` | tidal app client secret |
+| `TIDAL_ACCESS_TOKEN` | tidal access token |
+| `TIDAL_REFRESH_TOKEN` | tidal refresh token |
+| `ACOUSTID_API_KEY` | audio fingerprinting |
+| `MUSIXMATCH_TOKEN` | lyrics fallback |
+| `SONGLINK_ENABLED` | enable cross-platform link resolution (`true`/`false`) |
+
+## attribution
+
+if you fork or self-host yoink, a "powered by [yoink](https://yoinkify.lol)" mention is appreciated but not required.
 
 ## license
 
-mit
+[AGPL-3.0](LICENSE)
