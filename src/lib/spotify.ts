@@ -253,7 +253,11 @@ export async function getAlbumInfo(url: string): Promise<PlaylistInfo> {
     { headers: { Authorization: `Bearer ${token}` } }
   );
 
-  if (!res.ok) throw new Error("Album not found");
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.error(`[spotify] album fetch failed: ${res.status} ${res.statusText} — ${body}`);
+    throw new Error(res.status === 404 ? "Album not found" : `Spotify API error (${res.status})`);
+  }
 
   const data = await res.json();
 
