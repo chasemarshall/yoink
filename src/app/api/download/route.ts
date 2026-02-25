@@ -123,13 +123,56 @@ export async function POST(request: NextRequest) {
       } catch (e) {
         const msg = e instanceof Error ? e.message : "";
         if (msg.includes("rate limited")) {
-          console.log("[download] Spotify rate limited, trying Deezer metadata fallback");
+          console.log("[download] Spotify rate limited, trying fallbacks");
+          // Strategy 1: song.link -> Deezer metadata (rate limited to ~8/min)
           const resolved = await resolveToSpotify(url);
           if (resolved?.deezerId) {
             const dzMeta = await fetchDeezerTrackMetadata(resolved.deezerId);
             if (dzMeta) {
-              console.log("[download] got metadata from Deezer fallback:", dzMeta.name);
+              console.log("[download] got metadata from Deezer via song.link:", dzMeta.name);
               track = { ...dzMeta, spotifyUrl: url, label: null, copyright: null } as TrackInfo;
+            }
+          }
+          // Strategy 2: Spotify oEmbed (no auth, no rate limit) -> search Deezer/iTunes
+          if (!track) {
+            try {
+              const oembedRes = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`, {
+                signal: AbortSignal.timeout(5000),
+              });
+              if (oembedRes.ok) {
+                const oembed = await oembedRes.json();
+                const title = oembed.title;
+                if (title) {
+                  console.log("[download] got title from oEmbed:", title);
+                  // Search Deezer public API with title
+                  const dzSearchRes = await fetch(
+                    `https://api.deezer.com/2.0/search/track?q=${encodeURIComponent(title)}&limit=3`,
+                    { signal: AbortSignal.timeout(8000) }
+                  );
+                  if (dzSearchRes.ok) {
+                    const dzSearch = await dzSearchRes.json();
+                    const firstResult = dzSearch.data?.[0];
+                    if (firstResult) {
+                      const dzMeta = await fetchDeezerTrackMetadata(String(firstResult.id));
+                      if (dzMeta) {
+                        console.log("[download] got metadata from Deezer search:", dzMeta.artist, "-", dzMeta.name);
+                        track = { ...dzMeta, spotifyUrl: url, label: null, copyright: null } as TrackInfo;
+                      }
+                    }
+                  }
+                  // If Deezer search failed, try iTunes
+                  if (!track) {
+                    const { searchItunesTrack } = await import("@/lib/itunes");
+                    const itunesResult = await searchItunesTrack("", title);
+                    if (itunesResult) {
+                      console.log("[download] got metadata from iTunes search:", itunesResult.artist, "-", itunesResult.name);
+                      track = { ...itunesResult, spotifyUrl: url };
+                    }
+                  }
+                }
+              }
+            } catch (oembedErr) {
+              console.log("[download] oEmbed fallback failed:", oembedErr);
             }
           }
           if (!track) throw new Error("Spotify is temporarily rate limited — please try again in a few minutes");
