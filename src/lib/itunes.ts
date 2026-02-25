@@ -135,3 +135,32 @@ export async function lookupByItunesId(trackId: string): Promise<TrackInfo | nul
     return null;
   }
 }
+
+export async function searchItunesTrack(artist: string, title: string): Promise<TrackInfo | null> {
+  try {
+    const query = encodeURIComponent(`${artist} ${title}`.trim());
+    const res = await fetch(
+      `https://itunes.apple.com/search?term=${query}&entity=song&limit=5`,
+      { signal: AbortSignal.timeout(10000) }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const result = data.results?.[0];
+    if (!result) return null;
+    const durationMs = result.trackTimeMillis || 0;
+    const minutes = Math.floor(durationMs / 60000);
+    const seconds = Math.floor((durationMs % 60000) / 1000);
+    const albumArt = result.artworkUrl100?.replace("100x100", "600x600") || "";
+    return {
+      name: result.trackName || title, artist: result.artistName || artist,
+      albumArtist: result.collectionArtistName || result.artistName || null,
+      album: result.collectionName || "Unknown", albumArt,
+      duration: `${minutes}:${seconds.toString().padStart(2, "0")}`, durationMs,
+      isrc: null, genre: result.primaryGenreName || null,
+      releaseDate: result.releaseDate ? result.releaseDate.split("T")[0] : null,
+      spotifyUrl: "", explicit: result.trackExplicitness === "explicit",
+      trackNumber: result.trackNumber ?? null, discNumber: result.discNumber ?? null,
+      label: null, copyright: result.copyright || null, totalTracks: result.trackCount ?? null,
+    };
+  } catch { return null; }
+}

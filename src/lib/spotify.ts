@@ -5,6 +5,34 @@ interface SpotifyToken {
 
 let cachedToken: SpotifyToken | null = null;
 
+// Spotify API rate limit handling
+let rateLimitResetAt = 0;
+
+function formatRetry(secs: number): string {
+  if (secs < 60) return `${secs}s`;
+  const mins = Math.ceil(secs / 60);
+  return `~${mins} min`;
+}
+
+async function spotifyFetch(url: string, init?: RequestInit): Promise<Response> {
+  const now = Date.now();
+  if (now < rateLimitResetAt) {
+    const secsLeft = Math.ceil((rateLimitResetAt - now) / 1000);
+    throw new Error(`Spotify is rate limited — try again in ${formatRetry(secsLeft)}`);
+  }
+
+  const res = await fetch(url, { signal: AbortSignal.timeout(15000), ...init });
+
+  if (res.status === 429) {
+    const retryAfter = parseInt(res.headers.get("Retry-After") || "30", 10);
+    rateLimitResetAt = Date.now() + retryAfter * 1000;
+    console.log(`[spotify] rate limited — ${retryAfter}s retry-after`);
+    throw new Error(`Spotify is rate limited — try again in ${formatRetry(retryAfter)}`);
+  }
+
+  return res;
+}
+
 async function getAccessToken(): Promise<string> {
   if (cachedToken && Date.now() < cachedToken.expires_at) {
     return cachedToken.access_token;
@@ -13,7 +41,7 @@ async function getAccessToken(): Promise<string> {
   const clientId = process.env.SPOTIFY_CLIENT_ID!;
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET!;
 
-  const res = await fetch("https://accounts.spotify.com/api/token", {
+  const res = await spotifyFetch("https://accounts.spotify.com/api/token", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -106,7 +134,7 @@ export async function getTrackInfo(url: string): Promise<TrackInfo> {
   if (!trackId) throw new Error("Invalid Spotify track URL");
 
   const token = await getAccessToken();
-  const res = await fetch(`https://api.spotify.com/v1/tracks/${trackId}`, {
+  const res = await spotifyFetch(`https://api.spotify.com/v1/tracks/${trackId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -180,7 +208,7 @@ export async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
   if (!playlistId) throw new Error("Invalid Spotify playlist URL");
 
   const token = await getAccessToken();
-  const res = await fetch(
+  const res = await spotifyFetch(
     `https://api.spotify.com/v1/playlists/${playlistId}`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
@@ -199,7 +227,7 @@ export async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
     )] as string[];
     for (let i = 0; i < artistIds.length; i += 50) {
       const batch = artistIds.slice(i, i + 50);
-      const artistRes = await fetch(`https://api.spotify.com/v1/artists?ids=${batch.join(",")}`, {
+      const artistRes = await spotifyFetch(`https://api.spotify.com/v1/artists?ids=${batch.join(",")}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (artistRes.ok) {
@@ -248,7 +276,7 @@ export async function getAlbumInfo(url: string): Promise<PlaylistInfo> {
   if (!albumId) throw new Error("Invalid Spotify album URL");
 
   const token = await getAccessToken();
-  const res = await fetch(
+  const res = await spotifyFetch(
     `https://api.spotify.com/v1/albums/${albumId}`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
@@ -272,7 +300,7 @@ export async function getAlbumInfo(url: string): Promise<PlaylistInfo> {
     )] as string[];
     for (let i = 0; i < artistIds.length; i += 50) {
       const batch = artistIds.slice(i, i + 50);
-      const artistRes = await fetch(`https://api.spotify.com/v1/artists?ids=${batch.join(",")}`, {
+      const artistRes = await spotifyFetch(`https://api.spotify.com/v1/artists?ids=${batch.join(",")}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (artistRes.ok) {
@@ -326,7 +354,7 @@ export async function getAlbumInfo(url: string): Promise<PlaylistInfo> {
 
 export async function searchTracks(query: string, limit = 8): Promise<TrackInfo[]> {
   const token = await getAccessToken();
-  const res = await fetch(
+  const res = await spotifyFetch(
     `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=${limit}`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
@@ -432,7 +460,7 @@ export async function getTrending(count = 10): Promise<string[]> {
 
   try {
     const token = await getAccessToken();
-    const res = await fetch(
+    const res = await spotifyFetch(
       `https://api.spotify.com/v1/playlists/${TRENDING_PLAYLIST}/tracks?limit=${count}&fields=items(track(name,artists(name)))`,
       { headers: { Authorization: `Bearer ${token}` } }
     );

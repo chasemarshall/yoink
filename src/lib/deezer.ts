@@ -636,3 +636,31 @@ export async function fetchDeezerAudio(
     return null;
   }
 }
+
+export async function fetchDeezerTrackMetadata(deezerId: string): Promise<{
+  name: string; artist: string; albumArtist: string | null; album: string;
+  albumArt: string; duration: string; durationMs: number; isrc: string | null;
+  genre: string | null; releaseDate: string | null; explicit: boolean;
+  trackNumber: number | null; discNumber: number | null; totalTracks: number | null;
+} | null> {
+  try {
+    const res = await fetch(`https://api.deezer.com/2.0/track/${deezerId}`, {
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.error) return null;
+    const durationMs = (data.duration || 0) * 1000;
+    const minutes = Math.floor(durationMs / 60000);
+    const seconds = Math.floor((durationMs % 60000) / 1000);
+    return {
+      name: data.title || "Unknown", artist: data.artist?.name || "Unknown",
+      albumArtist: data.artist?.name || null, album: data.album?.title || "Unknown",
+      albumArt: data.album?.cover_xl || data.album?.cover_big || "",
+      duration: `${minutes}:${seconds.toString().padStart(2, "0")}`, durationMs,
+      isrc: data.isrc || null, genre: null, releaseDate: data.release_date || null,
+      explicit: data.explicit_lyrics || false, trackNumber: data.track_position ?? null,
+      discNumber: data.disk_number ?? null, totalTracks: null,
+    };
+  } catch { return null; }
+}

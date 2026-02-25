@@ -11,13 +11,14 @@ import {
 } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
-import { getTrackInfo, detectPlatform, extractYouTubeId } from "@/lib/spotify";
+import { getTrackInfo, detectPlatform, extractYouTubeId, type TrackInfo } from "@/lib/spotify";
 import { setExplicitTag } from "@/lib/mp4-advisory";
 import { ffmpegSemaphore } from "@/lib/semaphore";
 import { getYouTubeTrackInfo } from "@/lib/youtube";
 import { resolveToSpotify } from "@/lib/songlink";
 import { extractAppleMusicTrackId, lookupByItunesId, lookupItunesGenre, lookupItunesCatalogIds } from "@/lib/itunes";
 import { setCatalogIds } from "@/lib/mp4-catalog";
+import { fetchDeezerTrackMetadata } from "@/lib/deezer";
 import { fetchBestAudio } from "@/lib/audio-sources";
 import { fetchLyrics } from "@/lib/lyrics";
 import { rateLimit } from "@/lib/ratelimit";
@@ -117,7 +118,25 @@ export async function POST(request: NextRequest) {
         track = await getYouTubeTrackInfo(youtubeVideoId);
       }
     } else {
-      track = await getTrackInfo(url);
+      try {
+        track = await getTrackInfo(url);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "";
+        if (msg.includes("rate limited")) {
+          console.log("[download] Spotify rate limited, trying Deezer metadata fallback");
+          const resolved = await resolveToSpotify(url);
+          if (resolved?.deezerId) {
+            const dzMeta = await fetchDeezerTrackMetadata(resolved.deezerId);
+            if (dzMeta) {
+              console.log("[download] got metadata from Deezer fallback:", dzMeta.name);
+              track = { ...dzMeta, spotifyUrl: url, label: null, copyright: null } as TrackInfo;
+            }
+          }
+          if (!track) throw new Error("Spotify is temporarily rate limited — please try again in a few minutes");
+        } else {
+          throw e;
+        }
+      }
     }
 
     // Override genre with iTunes if requested
