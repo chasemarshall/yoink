@@ -14,23 +14,38 @@ function formatRetry(secs: number): string {
   return `~${mins} min`;
 }
 
-async function spotifyFetch(url: string, init?: RequestInit): Promise<Response> {
-  const now = Date.now();
-  if (now < rateLimitResetAt) {
-    const secsLeft = Math.ceil((rateLimitResetAt - now) / 1000);
-    throw new Error(`Spotify is rate limited — try again in ${formatRetry(secsLeft)}`);
+// Wraps fetch with rate limit tracking + retry with backoff
+async function spotifyFetch(url: string, init?: RequestInit, maxRetries = 2): Promise<Response> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    // Fast-fail if we're in a known rate limit window
+    const now = Date.now();
+    if (now < rateLimitResetAt) {
+      const secsLeft = Math.ceil((rateLimitResetAt - now) / 1000);
+      throw new Error(`Spotify is rate limited — try again in ${formatRetry(secsLeft)}`);
+    }
+
+    const res = await fetch(url, { signal: AbortSignal.timeout(15000), ...init });
+
+    if (res.status === 429) {
+      const retryAfter = parseInt(res.headers.get("Retry-After") || "5", 10);
+      console.log(`[spotify] 429 on ${url.split("/v1/")[1]?.split("?")[0] || url}, retry-after=${retryAfter}s (attempt ${attempt + 1}/${maxRetries + 1})`);
+
+      // If retry-after is short enough and we have retries left, wait and retry
+      if (attempt < maxRetries && retryAfter <= 10) {
+        await new Promise((r) => setTimeout(r, retryAfter * 1000));
+        continue;
+      }
+
+      // Otherwise, set the global cooldown and throw
+      rateLimitResetAt = Date.now() + retryAfter * 1000;
+      throw new Error(`Spotify is rate limited — try again in ${formatRetry(retryAfter)}`);
+    }
+
+    return res;
   }
 
-  const res = await fetch(url, { signal: AbortSignal.timeout(15000), ...init });
-
-  if (res.status === 429) {
-    const retryAfter = parseInt(res.headers.get("Retry-After") || "30", 10);
-    rateLimitResetAt = Date.now() + retryAfter * 1000;
-    console.log(`[spotify] rate limited — ${retryAfter}s retry-after`);
-    throw new Error(`Spotify is rate limited — try again in ${formatRetry(retryAfter)}`);
-  }
-
-  return res;
+  // shouldn't reach here
+  return fetch(url, { signal: AbortSignal.timeout(15000), ...init });
 }
 
 async function getAccessToken(): Promise<string> {
@@ -59,6 +74,12 @@ async function getAccessToken(): Promise<string> {
   };
 
   return cachedToken.access_token;
+}
+
+// Helper to make authenticated Spotify API calls with retry
+async function spotifyApi(url: string): Promise<Response> {
+  const token = await getAccessToken();
+  return spotifyFetch(url, { headers: { Authorization: `Bearer ${token}` } });
 }
 
 export function extractTrackId(url: string): string | null {
@@ -127,18 +148,16 @@ export interface TrackInfo {
   copyright: string | null;
   totalTracks: number | null;
   videoCover?: string;
+  previewUrl?: string | null;
 }
 
 export async function getTrackInfo(url: string): Promise<TrackInfo> {
   const trackId = extractTrackId(url);
   if (!trackId) throw new Error("Invalid Spotify track URL");
 
-  const token = await getAccessToken();
-  const res = await spotifyFetch(`https://api.spotify.com/v1/tracks/${trackId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await spotifyApi(`https://api.spotify.com/v1/tracks/${trackId}`);
 
-  if (!res.ok) throw new Error("Track not found");
+  if (!res.ok) throw new Error(`Track not found (${res.status})`);
 
   const data = await res.json();
 
@@ -152,14 +171,12 @@ export async function getTrackInfo(url: string): Promise<TrackInfo> {
 
     const [artistResult, albumResult] = await Promise.allSettled([
       artistId
-        ? fetch(`https://api.spotify.com/v1/artists/${artistId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then((r) => (r.ok ? r.json() : null))
+        ? spotifyApi(`https://api.spotify.com/v1/artists/${artistId}`)
+            .then((r) => (r.ok ? r.json() : null))
         : Promise.resolve(null),
       albumId
-        ? fetch(`https://api.spotify.com/v1/albums/${albumId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then((r) => (r.ok ? r.json() : null))
+        ? spotifyApi(`https://api.spotify.com/v1/albums/${albumId}`)
+            .then((r) => (r.ok ? r.json() : null))
         : Promise.resolve(null),
     ]);
 
@@ -188,6 +205,7 @@ export async function getTrackInfo(url: string): Promise<TrackInfo> {
     genre,
     releaseDate: data.album.release_date || null,
     spotifyUrl: data.external_urls.spotify,
+    previewUrl: data.preview_url || null,
     explicit: data.explicit ?? false,
     trackNumber: data.track_number ?? null,
     discNumber: data.disc_number ?? null,
@@ -207,13 +225,9 @@ export async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
   const playlistId = extractPlaylistId(url);
   if (!playlistId) throw new Error("Invalid Spotify playlist URL");
 
-  const token = await getAccessToken();
-  const res = await spotifyFetch(
-    `https://api.spotify.com/v1/playlists/${playlistId}`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+  const res = await spotifyApi(`https://api.spotify.com/v1/playlists/${playlistId}`);
 
-  if (!res.ok) throw new Error("Playlist not found");
+  if (!res.ok) throw new Error(`Playlist not found (${res.status})`);
 
   const data = await res.json();
 
@@ -227,9 +241,7 @@ export async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
     )] as string[];
     for (let i = 0; i < artistIds.length; i += 50) {
       const batch = artistIds.slice(i, i + 50);
-      const artistRes = await spotifyFetch(`https://api.spotify.com/v1/artists?ids=${batch.join(",")}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const artistRes = await spotifyApi(`https://api.spotify.com/v1/artists?ids=${batch.join(",")}`);
       if (artistRes.ok) {
         const artistData = await artistRes.json();
         for (const artist of artistData.artists) {
@@ -244,7 +256,7 @@ export async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
   }
 
   const tracks: TrackInfo[] = validItems
-    .map((item: { track: { name: string; artists: { id: string; name: string }[]; album: { name: string; artists?: { name: string }[]; images: { url: string }[]; release_date?: string; total_tracks?: number }; duration_ms: number; external_ids?: { isrc?: string }; external_urls: { spotify: string }; explicit?: boolean; track_number?: number; disc_number?: number } }) => ({
+    .map((item: { track: { name: string; artists: { id: string; name: string }[]; album: { name: string; artists?: { name: string }[]; images: { url: string }[]; release_date?: string; total_tracks?: number }; duration_ms: number; external_ids?: { isrc?: string }; external_urls: { spotify: string }; preview_url?: string | null; explicit?: boolean; track_number?: number; disc_number?: number } }) => ({
       name: item.track.name,
       artist: item.track.artists.map((a) => a.name).join(", "),
       albumArtist: item.track.album.artists?.map((a) => a.name).join(", ") || null,
@@ -256,6 +268,7 @@ export async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
       genre: genreMap.get(item.track.artists[0]?.id) || null,
       releaseDate: item.track.album.release_date || null,
       spotifyUrl: item.track.external_urls.spotify,
+      previewUrl: item.track.preview_url || null,
       explicit: item.track.explicit ?? false,
       trackNumber: item.track.track_number ?? null,
       discNumber: item.track.disc_number ?? null,
@@ -275,11 +288,7 @@ export async function getAlbumInfo(url: string): Promise<PlaylistInfo> {
   const albumId = extractAlbumId(url);
   if (!albumId) throw new Error("Invalid Spotify album URL");
 
-  const token = await getAccessToken();
-  const res = await spotifyFetch(
-    `https://api.spotify.com/v1/albums/${albumId}`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+  const res = await spotifyApi(`https://api.spotify.com/v1/albums/${albumId}`);
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
@@ -300,9 +309,7 @@ export async function getAlbumInfo(url: string): Promise<PlaylistInfo> {
     )] as string[];
     for (let i = 0; i < artistIds.length; i += 50) {
       const batch = artistIds.slice(i, i + 50);
-      const artistRes = await spotifyFetch(`https://api.spotify.com/v1/artists?ids=${batch.join(",")}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const artistRes = await spotifyApi(`https://api.spotify.com/v1/artists?ids=${batch.join(",")}`);
       if (artistRes.ok) {
         const artistData = await artistRes.json();
         for (const artist of artistData.artists) {
@@ -325,7 +332,7 @@ export async function getAlbumInfo(url: string): Promise<PlaylistInfo> {
   const albumArtist: string | null = data.artists?.map((a: { name: string }) => a.name).join(", ") || null;
 
   const tracks: TrackInfo[] = validItems
-    .map((item: { name: string; artists: { id: string; name: string }[]; duration_ms: number; external_ids?: { isrc?: string }; external_urls: { spotify: string }; explicit?: boolean; track_number?: number; disc_number?: number }) => ({
+    .map((item: { name: string; artists: { id: string; name: string }[]; duration_ms: number; external_ids?: { isrc?: string }; external_urls: { spotify: string }; preview_url?: string | null; explicit?: boolean; track_number?: number; disc_number?: number }) => ({
       name: item.name,
       artist: item.artists.map((a) => a.name).join(", "),
       albumArtist,
@@ -337,6 +344,7 @@ export async function getAlbumInfo(url: string): Promise<PlaylistInfo> {
       genre: genreMap.get(item.artists[0]?.id) || null,
       releaseDate,
       spotifyUrl: item.external_urls.spotify,
+      previewUrl: item.preview_url || null,
       explicit: item.explicit ?? false,
       trackNumber: item.track_number ?? null,
       discNumber: item.disc_number ?? null,
@@ -353,13 +361,11 @@ export async function getAlbumInfo(url: string): Promise<PlaylistInfo> {
 }
 
 export async function searchTracks(query: string, limit = 8): Promise<TrackInfo[]> {
-  const token = await getAccessToken();
-  const res = await spotifyFetch(
+  const res = await spotifyApi(
     `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=${limit}`,
-    { headers: { Authorization: `Bearer ${token}` } }
   );
 
-  if (!res.ok) throw new Error("Search failed");
+  if (!res.ok) throw new Error(`Search failed (${res.status})`);
 
   const data = await res.json();
   const items = data.tracks?.items || [];
@@ -372,6 +378,7 @@ export async function searchTracks(query: string, limit = 8): Promise<TrackInfo[
       duration_ms: number;
       external_ids?: { isrc?: string };
       external_urls: { spotify: string };
+      preview_url?: string | null;
       explicit?: boolean;
       track_number?: number;
       disc_number?: number;
@@ -387,6 +394,7 @@ export async function searchTracks(query: string, limit = 8): Promise<TrackInfo[
       genre: null,
       releaseDate: track.album.release_date || null,
       spotifyUrl: track.external_urls.spotify,
+      previewUrl: track.preview_url || null,
       explicit: track.explicit ?? false,
       trackNumber: track.track_number ?? null,
       discNumber: track.disc_number ?? null,
@@ -401,19 +409,13 @@ export async function getArtistTopTracks(url: string): Promise<PlaylistInfo> {
   const artistId = extractArtistId(url);
   if (!artistId) throw new Error("Invalid Spotify artist URL");
 
-  const token = await getAccessToken();
-
   const [artistRes, topTracksRes] = await Promise.all([
-    fetch(`https://api.spotify.com/v1/artists/${artistId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    }),
-    fetch(`https://api.spotify.com/v1/artists/${artistId}/top-tracks`, {
-      headers: { Authorization: `Bearer ${token}` },
-    }),
+    spotifyApi(`https://api.spotify.com/v1/artists/${artistId}`),
+    spotifyApi(`https://api.spotify.com/v1/artists/${artistId}/top-tracks`),
   ]);
 
-  if (!artistRes.ok) throw new Error("Artist not found");
-  if (!topTracksRes.ok) throw new Error("Could not fetch artist's top tracks");
+  if (!artistRes.ok) throw new Error(`Artist not found (${artistRes.status})`);
+  if (!topTracksRes.ok) throw new Error(`Could not fetch artist's top tracks (${topTracksRes.status})`);
 
   const artistData = await artistRes.json();
   const topTracksData = await topTracksRes.json();
@@ -421,7 +423,7 @@ export async function getArtistTopTracks(url: string): Promise<PlaylistInfo> {
   const artistGenre = artistData.genres?.[0] || null;
 
   const tracks: TrackInfo[] = topTracksData.tracks.map(
-    (track: { name: string; artists: { name: string }[]; album: { name: string; artists?: { name: string }[]; images: { url: string }[]; release_date?: string; total_tracks?: number }; duration_ms: number; external_ids?: { isrc?: string }; external_urls: { spotify: string }; explicit?: boolean; track_number?: number; disc_number?: number }) => ({
+    (track: { name: string; artists: { name: string }[]; album: { name: string; artists?: { name: string }[]; images: { url: string }[]; release_date?: string; total_tracks?: number }; duration_ms: number; external_ids?: { isrc?: string }; external_urls: { spotify: string }; preview_url?: string | null; explicit?: boolean; track_number?: number; disc_number?: number }) => ({
       name: track.name,
       artist: track.artists.map((a) => a.name).join(", "),
       albumArtist: track.album.artists?.map((a) => a.name).join(", ") || null,
@@ -433,6 +435,7 @@ export async function getArtistTopTracks(url: string): Promise<PlaylistInfo> {
       genre: artistGenre,
       releaseDate: track.album.release_date || null,
       spotifyUrl: track.external_urls.spotify,
+      previewUrl: track.preview_url || null,
       explicit: track.explicit ?? false,
       trackNumber: track.track_number ?? null,
       discNumber: track.disc_number ?? null,
@@ -451,7 +454,7 @@ export async function getArtistTopTracks(url: string): Promise<PlaylistInfo> {
 
 // Trending cache — refreshes every hour
 let trendingCache: { songs: string[]; expiresAt: number } | null = null;
-const TRENDING_PLAYLIST = "37i9dQZF1DXcBWIGoYBM5M"; // Today's Top Hits
+const TRENDING_PLAYLIST = "37i9dQZEVXbMDoHDwVN2tF"; // Top 50 - Global
 
 export async function getTrending(count = 10): Promise<string[]> {
   if (trendingCache && Date.now() < trendingCache.expiresAt) {
@@ -459,24 +462,32 @@ export async function getTrending(count = 10): Promise<string[]> {
   }
 
   try {
-    const token = await getAccessToken();
-    const res = await spotifyFetch(
-      `https://api.spotify.com/v1/playlists/${TRENDING_PLAYLIST}/tracks?limit=${count}&fields=items(track(name,artists(name)))`,
-      { headers: { Authorization: `Bearer ${token}` } }
+    const res = await spotifyApi(
+      `https://api.spotify.com/v1/playlists/${TRENDING_PLAYLIST}/tracks?limit=${count}`,
     );
 
-    if (!res.ok) return trendingCache?.songs || [];
+    if (!res.ok) {
+      console.error("[trending] spotify API error:", res.status);
+      return trendingCache?.songs || [];
+    }
 
     const data = await res.json();
-    const songs = data.items
-      .filter((item: { track: unknown }) => item.track)
-      .map((item: { track: { artists: { name: string }[]; name: string } }) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const songs = (data.items || [])
+      .filter((item: any) => item.track)
+      .map((item: any) =>
         `${item.track.artists[0]?.name} - ${item.track.name}`
       );
 
+    if (songs.length === 0) {
+      console.error("[trending] no tracks found in playlist response");
+      return trendingCache?.songs || [];
+    }
+
     trendingCache = { songs, expiresAt: Date.now() + 60 * 60 * 1000 };
     return songs;
-  } catch {
+  } catch (err) {
+    console.error("[trending] error:", err);
     return trendingCache?.songs || [];
   }
 }

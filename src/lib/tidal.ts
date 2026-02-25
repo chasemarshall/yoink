@@ -212,13 +212,26 @@ async function getManifest(
         continue;
       }
 
-      const text = await res.text();
-      if (text.trimStart().startsWith("<")) {
-        console.log(`[tidal] v1 quality ${quality}: received XML response, skipping`);
+      // Guard against HTML/XML error pages returned with 200 status
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType.includes("text/html") || contentType.includes("text/xml")) {
+        console.log(`[tidal] v1 quality ${quality}: got HTML/XML content-type, skipping`);
         continue;
       }
 
-      const data = JSON.parse(text);
+      const text = await res.text();
+      if (!text || text.trimStart().startsWith("<") || text.trimStart().startsWith("<!")) {
+        console.log(`[tidal] v1 quality ${quality}: non-JSON response, skipping`);
+        continue;
+      }
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        console.log(`[tidal] v1 quality ${quality}: invalid JSON, skipping`);
+        continue;
+      }
 
       if (data.encryptionType && data.encryptionType !== "NONE") {
         console.log(`[tidal] encrypted stream (${data.encryptionType}), skipping`);
