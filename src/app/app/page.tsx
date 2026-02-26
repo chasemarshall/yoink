@@ -337,7 +337,7 @@ export default function Home() {
         <div className="w-full bg-peach/10 border-b border-peach/20 px-4 py-2.5">
           <div className="max-w-xl mx-auto flex items-center justify-between gap-3">
             <p className="text-xs text-peach/80 leading-relaxed">
-              some downloads may be slower than usual — we&apos;re working around api limits. thanks for your patience.
+              hey — we&apos;ve been hitting spotify api limits all day today. downloads still work but may be a bit slower while we pull metadata from backup sources. sorry about that, we&apos;re on it.
             </p>
             <button
               onClick={() => setBannerDismissed(true)}
