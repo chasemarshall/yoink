@@ -61,12 +61,12 @@ export async function GET() {
 
   const env = {
     spotify: !!(process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET),
-    piped: process.env.PIPED_API_URL || "https://pipedapi.kavin.rocks",
+    piped: !!process.env.PIPED_API_URL,
     deezer: !!process.env.DEEZER_ARL,
     tidal: !!process.env.TIDAL_ACCESS_TOKEN,
     musixmatch: !!process.env.MUSIXMATCH_TOKEN,
     songlink: process.env.SONGLINK_ENABLED === "true",
-    lrclib_proxy: process.env.LRCLIB_PROXY_URL || null,
+    lrclib_proxy: !!process.env.LRCLIB_PROXY_URL,
   };
 
   const allOk = checks.every((c) => c.ok);
