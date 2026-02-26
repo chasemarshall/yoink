@@ -258,8 +258,8 @@ export default function LandingPage() {
             <Link href="/roadmap" className="hover:text-text transition-colors duration-200">roadmap</Link>
             <Link href="/terms" className="hover:text-text transition-colors duration-200">terms</Link>
             <Link href="/privacy" className="hover:text-text transition-colors duration-200">privacy</Link>
-            <a href="https://bsky.app/profile/yoinkify.lol" target="_blank" rel="noopener noreferrer" className="hover:text-sky transition-colors duration-200">bluesky</a>
-            <a href="https://chasefrazier.dev/tip" target="_blank" rel="noopener noreferrer" className="hover:text-peach transition-colors duration-200">tip jar</a>
+            <a href="https://bsky.app/profile/yoinkify.lol" target="_blank" rel="noopener noreferrer" className="hover:text-text transition-colors duration-200">bluesky</a>
+            <a href="https://chasefrazier.dev/tip" target="_blank" rel="noopener noreferrer" className="hover:text-text transition-colors duration-200">tip jar</a>
           </div>
         </div>
         <div className="space-y-3 text-[10px] text-overlay0/40 leading-relaxed">

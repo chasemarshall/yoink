@@ -181,8 +181,8 @@ export default function TermsPage() {
           <Link href="/players" className="text-green/60 hover:text-green transition-colors duration-200">players</Link>
           <Link href="/roadmap" className="hover:text-text transition-colors duration-200">roadmap</Link>
           <Link href="/privacy" className="hover:text-text transition-colors duration-200">privacy</Link>
-          <a href="https://bsky.app/profile/yoinkify.lol" target="_blank" rel="noopener noreferrer" className="hover:text-sky transition-colors duration-200">bluesky</a>
-          <a href="https://chasefrazier.dev/tip" target="_blank" rel="noopener noreferrer" className="hover:text-peach transition-colors duration-200">tip jar</a>
+          <a href="https://bsky.app/profile/yoinkify.lol" target="_blank" rel="noopener noreferrer" className="hover:text-text transition-colors duration-200">bluesky</a>
+          <a href="https://chasefrazier.dev/tip" target="_blank" rel="noopener noreferrer" className="hover:text-text transition-colors duration-200">tip jar</a>
         </div>
       </footer>
     </div>

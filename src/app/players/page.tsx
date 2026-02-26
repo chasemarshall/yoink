@@ -377,8 +377,8 @@ export default function PlayersPage() {
         <div className="flex items-center gap-3 sm:gap-4">
           <Link href="/how" className="text-mauve/60 hover:text-mauve transition-colors duration-200">local files</Link>
           <Link href="/roadmap" className="hover:text-text transition-colors duration-200">roadmap</Link>
-          <a href="https://bsky.app/profile/yoinkify.lol" target="_blank" rel="noopener noreferrer" className="hover:text-sky transition-colors duration-200">bluesky</a>
-          <a href="https://chasefrazier.dev/tip" target="_blank" rel="noopener noreferrer" className="hover:text-peach transition-colors duration-200">tip jar</a>
+          <a href="https://bsky.app/profile/yoinkify.lol" target="_blank" rel="noopener noreferrer" className="hover:text-text transition-colors duration-200">bluesky</a>
+          <a href="https://chasefrazier.dev/tip" target="_blank" rel="noopener noreferrer" className="hover:text-text transition-colors duration-200">tip jar</a>
         </div>
       </footer>
     </div>
