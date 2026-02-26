@@ -11,7 +11,8 @@ import {
 } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
-import { getTrackInfo, detectPlatform, extractYouTubeId, type TrackInfo } from "@/lib/spotify";
+import { getTrackInfo, detectPlatform, extractYouTubeId, isSpotifyRateLimited, type TrackInfo } from "@/lib/spotify";
+import { getDeezerTrackBySpotifyUrl } from "@/lib/deezer-metadata";
 import { setExplicitTag } from "@/lib/mp4-advisory";
 import { ffmpegSemaphore } from "@/lib/semaphore";
 import { getYouTubeTrackInfo } from "@/lib/youtube";
@@ -83,8 +84,18 @@ export async function POST(request: NextRequest) {
     if (platform === "apple-music") {
       const resolved = await resolveToSpotify(url);
       if (resolved?.spotifyUrl) {
-        track = await getTrackInfo(resolved.spotifyUrl);
-      } else {
+        try {
+          track = await getTrackInfo(resolved.spotifyUrl);
+        } catch {
+          // Spotify failed — try Deezer metadata fallback
+          const deezerTrack = await getDeezerTrackBySpotifyUrl(resolved.spotifyUrl);
+          if (deezerTrack) {
+            console.log("[download] apple music: got metadata from deezer fallback");
+            track = deezerTrack;
+          }
+        }
+      }
+      if (!track) {
         // Song.link failed — try iTunes Search API directly
         const itunesId = extractAppleMusicTrackId(url);
         if (itunesId) {
@@ -111,19 +122,35 @@ export async function POST(request: NextRequest) {
         try {
           track = await getTrackInfo(resolved.spotifyUrl);
         } catch {
-          // Fall through to YouTube-only metadata
+          // Spotify failed — try Deezer metadata fallback
+          const deezerTrack = await getDeezerTrackBySpotifyUrl(resolved.spotifyUrl);
+          if (deezerTrack) {
+            console.log("[download] youtube: got metadata from deezer fallback");
+            track = deezerTrack;
+          }
         }
       }
       if (!track) {
         track = await getYouTubeTrackInfo(youtubeVideoId);
       }
     } else {
-      try {
-        track = await getTrackInfo(url);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : "";
-        if (msg.includes("rate limited")) {
-          console.log("[download] Spotify rate limited, trying fallbacks");
+      // If we already know Spotify is rate limited, skip straight to fallback
+      if (isSpotifyRateLimited()) {
+        console.log("[download] Spotify rate limited (cached), skipping to fallback");
+        const deezerTrack = await getDeezerTrackBySpotifyUrl(url);
+        if (deezerTrack) {
+          console.log("[download] got metadata from deezer-metadata fallback");
+          track = { ...deezerTrack, spotifyUrl: url };
+        }
+      }
+
+      if (!track) {
+        try {
+          track = await getTrackInfo(url);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "";
+          if (msg.includes("rate limited")) {
+            console.log("[download] Spotify rate limited, trying fallbacks");
           // Strategy 1: song.link -> Deezer metadata (rate limited to ~8/min)
           const resolved = await resolveToSpotify(url);
           if (resolved?.deezerId) {
@@ -180,6 +207,7 @@ export async function POST(request: NextRequest) {
           throw e;
         }
       }
+      } // close if (!track)
     }
 
     // Override genre with iTunes if requested

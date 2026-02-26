@@ -118,6 +118,11 @@ async function cachedSpotifyGet<T>(url: string): Promise<T> {
   return data as T;
 }
 
+// Check if Spotify is currently in a rate limit cooldown
+export function isSpotifyRateLimited(): boolean {
+  return Date.now() < rateLimitResetAt;
+}
+
 export function extractTrackId(url: string): string | null {
   const match = url.match(/track[/:]([a-zA-Z0-9]+)/);
   return match ? match[1] : null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import FormatToggle, { type Format } from "@/components/FormatToggle";
@@ -13,6 +13,7 @@ interface TrackInfo {
   duration: string;
   spotifyUrl: string;
   explicit?: boolean;
+  previewUrl?: string | null;
 }
 
 interface QualityInfo {
@@ -52,6 +53,25 @@ export default function SearchPage() {
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [quality, setQuality] = useState<QualityInfo | null>(null);
   const [format, setFormat] = useState<Format>("mp3");
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [previewPlaying, setPreviewPlaying] = useState<string | null>(null);
+
+  const togglePreview = (url: string) => {
+    if (previewPlaying === url) {
+      audioRef.current?.pause();
+      setPreviewPlaying(null);
+      return;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    const audio = new Audio(url);
+    audio.volume = 0.5;
+    audio.play();
+    audio.onended = () => setPreviewPlaying(null);
+    audioRef.current = audio;
+    setPreviewPlaying(url);
+  };
 
   const handleSearch = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -87,6 +107,8 @@ export default function SearchPage() {
   };
 
   const handleBack = () => {
+    audioRef.current?.pause();
+    setPreviewPlaying(null);
     setSelectedTrack(null);
     setQuality(null);
     setState("results");
@@ -284,14 +306,34 @@ export default function SearchPage() {
               {state === "ready" && <div className="h-1" />}
 
               <div className="p-4 sm:p-6 flex gap-4 sm:gap-5">
-                <div className="w-[72px] h-[72px] sm:w-[100px] sm:h-[100px] flex-shrink-0">
+                <button
+                  className="w-[72px] h-[72px] sm:w-[100px] sm:h-[100px] flex-shrink-0 relative group"
+                  onClick={() => selectedTrack.previewUrl && togglePreview(selectedTrack.previewUrl)}
+                  disabled={!selectedTrack.previewUrl}
+                  title={selectedTrack.previewUrl ? "preview" : "no preview available"}
+                >
                   <img
                     src={selectedTrack.albumArt}
                     alt={selectedTrack.album}
                     className="art-glow w-full h-full rounded-lg object-cover animate-fade-in"
                     style={{ opacity: 0 }}
                   />
-                </div>
+                  {selectedTrack.previewUrl && (
+                    <div className="absolute inset-0 rounded-lg bg-black/0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center">
+                      <svg
+                        className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        {previewPlaying === selectedTrack.previewUrl ? (
+                          <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                        ) : (
+                          <path d="M8 5v14l11-7z" />
+                        )}
+                      </svg>
+                    </div>
+                  )}
+                </button>
                 <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5">
                   <p className="text-base font-bold text-text truncate animate-slide-in" style={{ opacity: 0 }}>
                     {selectedTrack.name}

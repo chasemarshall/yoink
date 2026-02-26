@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTrackInfo, getPlaylistInfo, getAlbumInfo, getArtistTopTracks, detectUrlType, detectPlatform, extractYouTubeId, type TrackInfo } from "@/lib/spotify";
+import { getTrackInfo, getPlaylistInfo, getAlbumInfo, getArtistTopTracks, detectUrlType, detectPlatform, extractYouTubeId, isSpotifyRateLimited, type TrackInfo } from "@/lib/spotify";
+import { getDeezerTrackBySpotifyUrl, getDeezerAlbumBySpotifyUrl } from "@/lib/deezer-metadata";
 import { getYouTubeTrackInfo } from "@/lib/youtube";
 import { resolveToSpotify } from "@/lib/songlink";
 import { lookupTidalVideoCover } from "@/lib/tidal";
@@ -13,6 +14,30 @@ async function enrichWithVideoCover(track: TrackInfo): Promise<TrackInfo> {
     // Never block metadata response
   }
   return track;
+}
+
+// Try Spotify first, fall back to Deezer if rate limited
+async function getTrackWithFallback(url: string): Promise<TrackInfo> {
+  // If we know Spotify is rate limited, go straight to Deezer
+  if (isSpotifyRateLimited()) {
+    console.log("[metadata] spotify rate limited, trying deezer fallback");
+    const deezerTrack = await getDeezerTrackBySpotifyUrl(url);
+    if (deezerTrack) return deezerTrack;
+    // If Deezer also fails, throw so the user sees the rate limit message
+    throw new Error("Spotify is rate limited and Deezer fallback failed — try again shortly");
+  }
+
+  try {
+    return await getTrackInfo(url);
+  } catch (e) {
+    // If it was a rate limit error, try Deezer
+    if (e instanceof Error && e.message.includes("rate limited")) {
+      console.log("[metadata] spotify rate limited mid-request, trying deezer fallback");
+      const deezerTrack = await getDeezerTrackBySpotifyUrl(url);
+      if (deezerTrack) return deezerTrack;
+    }
+    throw e;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -53,10 +78,14 @@ export async function POST(request: NextRequest) {
 
       const urlType = detectUrlType(resolved.spotifyUrl);
       if (urlType === "playlist") {
-        const playlist = await getPlaylistInfo(resolved.spotifyUrl);
-        return NextResponse.json({ type: "playlist", ...playlist });
+        try {
+          const playlist = await getPlaylistInfo(resolved.spotifyUrl);
+          return NextResponse.json({ type: "playlist", ...playlist });
+        } catch {
+          return NextResponse.json({ error: "couldn't fetch playlist info — try again shortly" }, { status: 500 });
+        }
       }
-      const track = await enrichWithVideoCover(await getTrackInfo(resolved.spotifyUrl));
+      const track = await enrichWithVideoCover(await getTrackWithFallback(resolved.spotifyUrl));
       return NextResponse.json({ type: "track", ...track });
     }
 
@@ -73,7 +102,7 @@ export async function POST(request: NextRequest) {
       const resolved = await resolveToSpotify(url);
       if (resolved?.spotifyUrl) {
         try {
-          const spotifyTrack = await enrichWithVideoCover(await getTrackInfo(resolved.spotifyUrl));
+          const spotifyTrack = await enrichWithVideoCover(await getTrackWithFallback(resolved.spotifyUrl));
           return NextResponse.json({
             type: "track",
             ...spotifyTrack,
@@ -95,7 +124,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Spotify — existing flow
+    // Spotify — try Spotify first, fall back to Deezer when rate limited
     const urlType = detectUrlType(url);
 
     if (!urlType) {
@@ -106,21 +135,48 @@ export async function POST(request: NextRequest) {
     }
 
     if (urlType === "playlist") {
-      const playlist = await getPlaylistInfo(url);
-      return NextResponse.json({ type: "playlist", ...playlist });
+      // Playlists can't easily fall back to Deezer — different IDs
+      try {
+        const playlist = await getPlaylistInfo(url);
+        return NextResponse.json({ type: "playlist", ...playlist });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Playlist fetch failed";
+        return NextResponse.json({ error: msg }, { status: 500 });
+      }
     }
 
     if (urlType === "album") {
-      const album = await getAlbumInfo(url);
-      return NextResponse.json({ type: "playlist", ...album });
+      // Try Spotify, fall back to Deezer
+      if (isSpotifyRateLimited()) {
+        console.log("[metadata] spotify rate limited, trying deezer album fallback");
+        const deezerAlbum = await getDeezerAlbumBySpotifyUrl(url);
+        if (deezerAlbum) {
+          return NextResponse.json({ type: "playlist", ...deezerAlbum });
+        }
+      }
+
+      try {
+        const album = await getAlbumInfo(url);
+        return NextResponse.json({ type: "playlist", ...album });
+      } catch (e) {
+        if (e instanceof Error && e.message.includes("rate limited")) {
+          console.log("[metadata] spotify rate limited mid-request, trying deezer album fallback");
+          const deezerAlbum = await getDeezerAlbumBySpotifyUrl(url);
+          if (deezerAlbum) {
+            return NextResponse.json({ type: "playlist", ...deezerAlbum });
+          }
+        }
+        throw e;
+      }
     }
 
     if (urlType === "artist") {
+      // Artist top tracks — no good Deezer fallback
       const artist = await getArtistTopTracks(url);
       return NextResponse.json({ type: "playlist", ...artist });
     }
 
-    const track = await enrichWithVideoCover(await getTrackInfo(url));
+    const track = await enrichWithVideoCover(await getTrackWithFallback(url));
     return NextResponse.json({ type: "track", ...track });
   } catch (error) {
     const message =
