@@ -103,7 +103,9 @@ export default function LandingPage() {
           >
             <div className="w-1 self-stretch rounded-full bg-peach/30 shrink-0" />
             <p className="text-xs text-subtext0/70 leading-relaxed flex-1">
-              hey — we&apos;ve been hitting spotify api limits today. downloads still work but might be a bit slower while we pull from backup sources. sorry about that, working on it.
+              hey — we removed deezer as an audio source. it relied on decrypting drm-protected content which we weren&apos;t comfortable with legally. audio now comes from tidal and youtube. lossless is still available via tidal. see the{" "}
+              <Link href="/roadmap" className="text-lavender hover:text-mauve underline transition-colors">roadmap</Link>{" "}
+              for details.
             </p>
             <button
               onClick={() => setBannerDismissed(true)}

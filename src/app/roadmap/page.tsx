@@ -85,6 +85,12 @@ const items: RoadmapItem[] = [
     tag: "audio",
   },
   {
+    title: "deezer source removed",
+    description: "deezer has been removed as an audio source. it relied on decrypting drm-protected streams using a session cookie, which we weren't comfortable with from a legal standpoint. the audio pipeline now uses tidal (lossless) and youtube (fallback). deezer's public api is still used for metadata when spotify is rate limited — that's just a normal api call, no drm involved.",
+    status: "shipped",
+    tag: "audio",
+  },
+  {
     title: "docker self-hosting",
     description: "dockerfile and docker-compose for running yoink on your own hardware. full control, no rate limits.",
     status: "shipped",
