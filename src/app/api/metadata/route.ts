@@ -5,6 +5,8 @@ import { getYouTubeTrackInfo } from "@/lib/youtube";
 import { resolveToSpotify } from "@/lib/songlink";
 import { lookupTidalVideoCover } from "@/lib/tidal";
 import { rateLimit } from "@/lib/ratelimit";
+import { metadataCache } from "@/lib/cache";
+import { getAppleMusicTrackBySpotifyUrl, getAppleMusicAlbumBySpotifyUrl } from "@/lib/itunes";
 
 async function enrichWithVideoCover(track: TrackInfo): Promise<TrackInfo> {
   try {
@@ -16,25 +18,33 @@ async function enrichWithVideoCover(track: TrackInfo): Promise<TrackInfo> {
   return track;
 }
 
-// Try Spotify first, fall back to Deezer if rate limited
+// Waterfall: Deezer public (has ISRC, better for audio matching) → Apple Music
+async function getTrackFallbacks(url: string): Promise<TrackInfo | null> {
+  console.log("[metadata] trying deezer public fallback");
+  const deezerTrack = await getDeezerTrackBySpotifyUrl(url);
+  if (deezerTrack) return deezerTrack;
+
+  console.log("[metadata] trying apple music fallback");
+  const amTrack = await getAppleMusicTrackBySpotifyUrl(url);
+  if (amTrack) return amTrack;
+
+  return null;
+}
+
+// Spotify first, then fallback waterfall
 async function getTrackWithFallback(url: string): Promise<TrackInfo> {
-  // If we know Spotify is rate limited, go straight to Deezer
   if (isSpotifyRateLimited()) {
-    console.log("[metadata] spotify rate limited, trying deezer fallback");
-    const deezerTrack = await getDeezerTrackBySpotifyUrl(url);
-    if (deezerTrack) return deezerTrack;
-    // If Deezer also fails, throw so the user sees the rate limit message
-    throw new Error("Spotify is rate limited and Deezer fallback failed — try again shortly");
+    const track = await getTrackFallbacks(url);
+    if (track) return track;
+    throw new Error("metadata temporarily unavailable — try again shortly");
   }
 
   try {
     return await getTrackInfo(url);
   } catch (e) {
-    // If it was a rate limit error, try Deezer
     if (e instanceof Error && e.message.includes("rate limited")) {
-      console.log("[metadata] spotify rate limited mid-request, trying deezer fallback");
-      const deezerTrack = await getDeezerTrackBySpotifyUrl(url);
-      if (deezerTrack) return deezerTrack;
+      const track = await getTrackFallbacks(url);
+      if (track) return track;
     }
     throw e;
   }
@@ -66,6 +76,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check cache before doing any API work
+    const cached = metadataCache.get(url);
+    if (cached) {
+      console.log("[metadata] cache hit:", url);
+      return NextResponse.json(cached);
+    }
+
     // Apple Music → resolve to Spotify via Song.link
     if (platform === "apple-music") {
       const resolved = await resolveToSpotify(url);
@@ -80,13 +97,17 @@ export async function POST(request: NextRequest) {
       if (urlType === "playlist") {
         try {
           const playlist = await getPlaylistInfo(resolved.spotifyUrl);
-          return NextResponse.json({ type: "playlist", ...playlist });
+          const result = { type: "playlist", ...playlist };
+          metadataCache.set(url, result);
+          return NextResponse.json(result);
         } catch {
           return NextResponse.json({ error: "couldn't fetch playlist info — try again shortly" }, { status: 500 });
         }
       }
       const track = await enrichWithVideoCover(await getTrackWithFallback(resolved.spotifyUrl));
-      return NextResponse.json({ type: "track", ...track });
+      const result = { type: "track", ...track };
+      metadataCache.set(url, result);
+      return NextResponse.json(result);
     }
 
     // YouTube → get info from Piped, try to find Spotify match for metadata
@@ -103,25 +124,29 @@ export async function POST(request: NextRequest) {
       if (resolved?.spotifyUrl) {
         try {
           const spotifyTrack = await enrichWithVideoCover(await getTrackWithFallback(resolved.spotifyUrl));
-          return NextResponse.json({
+          const result = {
             type: "track",
             ...spotifyTrack,
             _youtubeId: videoId,
             _originalPlatform: "youtube",
-          });
+          };
+          metadataCache.set(url, result);
+          return NextResponse.json(result);
         } catch {
           // Spotify lookup failed, use YouTube metadata
         }
       }
 
       const enrichedYt = await enrichWithVideoCover(ytInfo as TrackInfo);
-      return NextResponse.json({
+      const result = {
         type: "track",
         ...enrichedYt,
         spotifyUrl: "", // No Spotify match
         _youtubeId: videoId,
         _originalPlatform: "youtube",
-      });
+      };
+      metadataCache.set(url, result);
+      return NextResponse.json(result);
     }
 
     // Spotify — try Spotify first, fall back to Deezer when rate limited
@@ -138,7 +163,9 @@ export async function POST(request: NextRequest) {
       // Playlists can't easily fall back to Deezer — different IDs
       try {
         const playlist = await getPlaylistInfo(url);
-        return NextResponse.json({ type: "playlist", ...playlist });
+        const result = { type: "playlist", ...playlist };
+        metadataCache.set(url, result);
+        return NextResponse.json(result);
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Playlist fetch failed";
         return NextResponse.json({ error: msg }, { status: 500 });
@@ -146,24 +173,38 @@ export async function POST(request: NextRequest) {
     }
 
     if (urlType === "album") {
-      // Try Spotify, fall back to Deezer
+      // Waterfall: Spotify → song.link+Deezer → Apple Music → Deezer text search
+      const tryAlbumFallbacks = async () => {
+        const deezerAlbum = await getDeezerAlbumBySpotifyUrl(url); // song.link→Deezer first
+        if (deezerAlbum) return deezerAlbum;
+        console.log("[metadata] trying apple music album fallback");
+        const amAlbum = await getAppleMusicAlbumBySpotifyUrl(url);
+        if (amAlbum) return amAlbum;
+        return null;
+      };
+
       if (isSpotifyRateLimited()) {
-        console.log("[metadata] spotify rate limited, trying deezer album fallback");
-        const deezerAlbum = await getDeezerAlbumBySpotifyUrl(url);
-        if (deezerAlbum) {
-          return NextResponse.json({ type: "playlist", ...deezerAlbum });
+        const album = await tryAlbumFallbacks();
+        if (album) {
+          const result = { type: "playlist", ...album };
+          metadataCache.set(url, result);
+          return NextResponse.json(result);
         }
+        return NextResponse.json({ error: "metadata temporarily unavailable — try again shortly" }, { status: 503 });
       }
 
       try {
         const album = await getAlbumInfo(url);
-        return NextResponse.json({ type: "playlist", ...album });
+        const result = { type: "playlist", ...album };
+        metadataCache.set(url, result);
+        return NextResponse.json(result);
       } catch (e) {
         if (e instanceof Error && e.message.includes("rate limited")) {
-          console.log("[metadata] spotify rate limited mid-request, trying deezer album fallback");
-          const deezerAlbum = await getDeezerAlbumBySpotifyUrl(url);
-          if (deezerAlbum) {
-            return NextResponse.json({ type: "playlist", ...deezerAlbum });
+          const album = await tryAlbumFallbacks();
+          if (album) {
+            const result = { type: "playlist", ...album };
+            metadataCache.set(url, result);
+            return NextResponse.json(result);
           }
         }
         throw e;
@@ -173,11 +214,15 @@ export async function POST(request: NextRequest) {
     if (urlType === "artist") {
       // Artist top tracks — no good Deezer fallback
       const artist = await getArtistTopTracks(url);
-      return NextResponse.json({ type: "playlist", ...artist });
+      const result = { type: "playlist", ...artist };
+      metadataCache.set(url, result);
+      return NextResponse.json(result);
     }
 
     const track = await enrichWithVideoCover(await getTrackWithFallback(url));
-    return NextResponse.json({ type: "track", ...track });
+    const result = { type: "track", ...track };
+    metadataCache.set(url, result);
+    return NextResponse.json(result);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch info";

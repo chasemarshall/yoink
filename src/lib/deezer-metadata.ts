@@ -50,9 +50,11 @@ export async function getDeezerTrackBySpotifyUrl(url: string): Promise<TrackInfo
     let searchQuery = "";
     if (oembedRes.ok) {
       const oembed = await oembedRes.json();
-      // oembed.title is "trackname - artistname" or just the title
-      searchQuery = oembed.title || "";
-      console.log(`[deezer-fallback] got title from oEmbed: ${searchQuery}`);
+      const title = oembed.title || "";
+      const artist = oembed.author_name || "";
+      // Include artist name for much better accuracy on niche artists
+      searchQuery = artist ? `${artist} ${title}` : title;
+      console.log(`[deezer-fallback] got oEmbed: ${searchQuery}`);
     }
 
     if (!searchQuery) return null;
@@ -97,29 +99,69 @@ export async function getDeezerAlbumBySpotifyUrl(url: string): Promise<PlaylistI
   if (!albumId) return null;
 
   try {
-    // Get album title via oEmbed
-    const oembedRes = await fetch(
-      `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`,
-      { signal: AbortSignal.timeout(5000) }
-    );
-    if (!oembedRes.ok) return null;
-    const oembed = await oembedRes.json();
-    const searchQuery = oembed.title || "";
-    if (!searchQuery) return null;
+    // Try song.link first — resolves Spotify album IDs to Deezer IDs directly (much more reliable than text search)
+    let deezerAlbumId: string | null = null;
+    try {
+      const songlinkRes = await fetch(
+        `https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(url)}&userCountry=US`,
+        { signal: AbortSignal.timeout(10000) }
+      );
+      if (songlinkRes.ok) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data: any = await songlinkRes.json();
+        const deezerEntity = data.linksByPlatform?.deezer;
+        if (deezerEntity?.entityUniqueId) {
+          const deezerData = data.entitiesByUniqueId?.[deezerEntity.entityUniqueId];
+          if (deezerData?.id) {
+            deezerAlbumId = String(deezerData.id);
+            console.log(`[deezer-fallback] album resolved via song.link: ${deezerAlbumId}`);
+          }
+        }
+      }
+    } catch {
+      // song.link failed, fall through to text search
+    }
 
-    console.log(`[deezer-fallback] album oEmbed: ${searchQuery}`);
+    // Fall back to text search if song.link didn't find it
+    if (!deezerAlbumId) {
+      const oembedRes = await fetch(
+        `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`,
+        { signal: AbortSignal.timeout(5000) }
+      );
+      if (!oembedRes.ok) return null;
+      const oembed = await oembedRes.json();
+      const searchQuery = oembed.title || "";
+      if (!searchQuery) return null;
 
-    // Search Deezer for the album
-    const searchRes = await fetch(
-      `https://api.deezer.com/2.0/search/album?q=${encodeURIComponent(searchQuery)}&limit=3`,
-      { signal: AbortSignal.timeout(8000) }
-    );
-    if (!searchRes.ok) return null;
-    const searchData = await searchRes.json();
-    const albums = searchData.data || [];
-    if (albums.length === 0) return null;
+      const artist = oembed.author_name || "";
+      if (artist) searchQuery = `${artist} ${searchQuery}`;
+      console.log(`[deezer-fallback] album oEmbed fallback: ${searchQuery}`);
 
-    const deezerAlbumId = albums[0].id;
+      const searchRes = await fetch(
+        `https://api.deezer.com/2.0/search/album?q=${encodeURIComponent(searchQuery)}&limit=5`,
+        { signal: AbortSignal.timeout(8000) }
+      );
+      if (!searchRes.ok) return null;
+      const searchData = await searchRes.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const albums: any[] = searchData.data || [];
+      if (albums.length === 0) return null;
+
+      // Validate: find the closest title match, don't blindly take [0]
+      const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const normalizedQuery = normalize(searchQuery);
+      const exact = albums.find((a) => normalize(a.title) === normalizedQuery);
+      const best = exact ?? albums[0];
+
+      // Reject if titles share no meaningful overlap
+      const normalizedBest = normalize(best.title);
+      if (!normalizedBest.includes(normalizedQuery) && !normalizedQuery.includes(normalizedBest)) {
+        console.log(`[deezer-fallback] album text search: no match for "${searchQuery}", closest was "${best.title}" — bailing`);
+        return null;
+      }
+
+      deezerAlbumId = String(best.id);
+    }
 
     // Fetch full album with tracks
     const albumRes = await fetch(
@@ -130,7 +172,7 @@ export async function getDeezerAlbumBySpotifyUrl(url: string): Promise<PlaylistI
     const albumData = await albumRes.json();
     if (albumData.error) return null;
 
-    console.log(`[deezer-fallback] album matched: ${albumData.title} (${albumData.tracks?.data?.length || 0} tracks)`);
+    console.log(`[deezer-fallback] album fetched: ${albumData.title} (${albumData.tracks?.data?.length || 0} tracks)`);
 
     const tracks: TrackInfo[] = (albumData.tracks?.data || []).map(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -138,7 +180,7 @@ export async function getDeezerAlbumBySpotifyUrl(url: string): Promise<PlaylistI
     );
 
     return {
-      name: albumData.title || searchQuery,
+      name: albumData.title || "",
       image: albumData.cover_xl || albumData.cover_big || "",
       tracks,
     };

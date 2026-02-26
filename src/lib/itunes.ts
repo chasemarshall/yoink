@@ -1,4 +1,4 @@
-import type { TrackInfo } from "./spotify";
+import type { TrackInfo, PlaylistInfo } from "./spotify";
 
 export interface ItunesCatalogIds {
   trackId: number;
@@ -162,5 +162,106 @@ export async function searchItunesTrack(artist: string, title: string): Promise<
       trackNumber: result.trackNumber ?? null, discNumber: result.discNumber ?? null,
       label: null, copyright: result.copyright || null, totalTracks: result.trackCount ?? null,
     };
+  } catch { return null; }
+}
+
+export async function searchItunesAlbum(artist: string, albumName: string): Promise<PlaylistInfo | null> {
+  try {
+    const query = encodeURIComponent(`${artist} ${albumName}`.trim());
+    const searchRes = await fetch(
+      `https://itunes.apple.com/search?term=${query}&entity=album&limit=5`,
+      { signal: AbortSignal.timeout(10000) }
+    );
+    if (!searchRes.ok) return null;
+    const searchData = await searchRes.json();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const albums: any[] = searchData.results || [];
+    if (!albums.length) return null;
+
+    // Find best title match
+    const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const normalizedAlbum = normalize(albumName);
+    const best = albums.find((a) => normalize(a.collectionName) === normalizedAlbum) ?? albums[0];
+    if (!normalize(best.collectionName).includes(normalizedAlbum) && !normalizedAlbum.includes(normalize(best.collectionName))) {
+      return null;
+    }
+
+    // Fetch tracklist
+    const tracksRes = await fetch(
+      `https://itunes.apple.com/lookup?id=${best.collectionId}&entity=song`,
+      { signal: AbortSignal.timeout(10000) }
+    );
+    if (!tracksRes.ok) return null;
+    const tracksData = await tracksRes.json();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const trackItems: any[] = (tracksData.results || []).filter((r: any) => r.wrapperType === "track");
+    if (!trackItems.length) return null;
+
+    const coverArt = best.artworkUrl100?.replace("100x100bb", "600x600bb") ?? "";
+
+    const tracks: TrackInfo[] = trackItems.map((r) => {
+      const durationMs = r.trackTimeMillis || 0;
+      const minutes = Math.floor(durationMs / 60000);
+      const seconds = Math.floor((durationMs % 60000) / 1000);
+      return {
+        name: r.trackName || "Unknown",
+        artist: r.artistName || artist,
+        albumArtist: best.artistName || artist || null,
+        album: best.collectionName || albumName,
+        albumArt: coverArt,
+        duration: `${minutes}:${seconds.toString().padStart(2, "0")}`,
+        durationMs,
+        isrc: null,
+        genre: r.primaryGenreName || null,
+        releaseDate: r.releaseDate ? r.releaseDate.split("T")[0] : null,
+        spotifyUrl: "",
+        explicit: r.trackExplicitness === "explicit",
+        trackNumber: r.trackNumber ?? null,
+        discNumber: r.discNumber ?? null,
+        label: null,
+        copyright: best.copyright || null,
+        totalTracks: best.trackCount ?? null,
+      };
+    });
+
+    return {
+      name: best.collectionName || albumName,
+      image: coverArt,
+      tracks,
+    };
+  } catch { return null; }
+}
+
+// Given a Spotify URL, fetch the equivalent track from Apple Music via oEmbed
+export async function getAppleMusicTrackBySpotifyUrl(spotifyUrl: string): Promise<TrackInfo | null> {
+  try {
+    const oembedRes = await fetch(
+      `https://open.spotify.com/oembed?url=${encodeURIComponent(spotifyUrl)}`,
+      { signal: AbortSignal.timeout(5000) }
+    );
+    if (!oembedRes.ok) return null;
+    const oembed = await oembedRes.json();
+    const title = oembed.title || "";
+    const artist = oembed.author_name || "";
+    if (!title) return null;
+    console.log(`[apple-music] track fallback: ${artist} - ${title}`);
+    return searchItunesTrack(artist, title);
+  } catch { return null; }
+}
+
+// Given a Spotify URL, fetch the equivalent album from Apple Music via oEmbed
+export async function getAppleMusicAlbumBySpotifyUrl(spotifyUrl: string): Promise<PlaylistInfo | null> {
+  try {
+    const oembedRes = await fetch(
+      `https://open.spotify.com/oembed?url=${encodeURIComponent(spotifyUrl)}`,
+      { signal: AbortSignal.timeout(5000) }
+    );
+    if (!oembedRes.ok) return null;
+    const oembed = await oembedRes.json();
+    const albumName = oembed.title || "";
+    const artist = oembed.author_name || "";
+    if (!albumName) return null;
+    console.log(`[apple-music] album fallback: ${artist} - ${albumName}`);
+    return searchItunesAlbum(artist, albumName);
   } catch { return null; }
 }
