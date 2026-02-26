@@ -367,7 +367,7 @@ export default function Home() {
               <span className="text-lavender">k</span>
             </h1>
             <p className="text-sm text-subtext0/80 leading-relaxed max-w-sm">
-              paste a link. get the {format}.<br />
+              paste a spotify link. get the {format}.<br />
               tracks, playlists, albums. metadata included.
             </p>
           </div>
