@@ -15,6 +15,7 @@ interface TrackInfo {
   spotifyUrl: string;
   explicit?: boolean;
   videoCover?: string;
+  previewUrl?: string | null;
 }
 
 interface PlaylistInfo {
@@ -27,7 +28,12 @@ type TrackStatus = "pending" | "downloading" | "done" | "error";
 
 interface QualityInfo {
   source: string;
-  bitrate: string;
+  quality: string;
+  codec: string;
+  actualBitrate: number;
+  sampleRate: number;
+  bitDepth: number | null;
+  format: string;
 }
 
 type AppState = "idle" | "fetching" | "ready" | "downloading" | "done" | "error";
@@ -45,6 +51,25 @@ export default function Home() {
   const [genreSource, setGenreSource] = useState<"spotify" | "itunes">("spotify");
   const abortRef = useRef(false);
   const downloadTriggeredRef = useRef(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [previewPlaying, setPreviewPlaying] = useState<string | null>(null);
+
+  const togglePreview = (url: string) => {
+    if (previewPlaying === url) {
+      audioRef.current?.pause();
+      setPreviewPlaying(null);
+      return;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    const audio = new Audio(url);
+    audio.volume = 0.5;
+    audio.play();
+    audio.onended = () => setPreviewPlaying(null);
+    audioRef.current = audio;
+    setPreviewPlaying(url);
+  };
   // Enter key triggers download when track/playlist is ready
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -117,8 +142,13 @@ export default function Home() {
       }
 
       const audioSource = res.headers.get("X-Audio-Source") || "youtube";
-      const audioBitrate = res.headers.get("X-Audio-Quality") || "~160";
+      const audioQuality = res.headers.get("X-Audio-Quality") || "~160";
       const audioFormat = res.headers.get("X-Audio-Format") || "mp3";
+      const audioCodec = res.headers.get("X-Audio-Codec") || "";
+      const actualBitrate = parseInt(res.headers.get("X-Audio-Actual-Bitrate") || "0", 10);
+      const sampleRate = parseInt(res.headers.get("X-Audio-Sample-Rate") || "0", 10);
+      const bitDepthRaw = res.headers.get("X-Audio-Bit-Depth");
+      const bitDepth = bitDepthRaw ? parseInt(bitDepthRaw, 10) : null;
 
       const extMap: Record<string, string> = { flac: "flac", m4a: "m4a", alac: "m4a", mp3: "mp3" };
       const ext = extMap[audioFormat] || audioFormat;
@@ -131,7 +161,15 @@ export default function Home() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(downloadUrl);
-      return { source: audioSource, bitrate: audioBitrate };
+      return {
+        source: audioSource,
+        quality: audioQuality,
+        codec: audioCodec,
+        actualBitrate,
+        sampleRate,
+        bitDepth,
+        format: audioFormat,
+      };
     } catch {
       return false;
     }
@@ -276,6 +314,8 @@ export default function Home() {
   };
 
   const handleReset = () => {
+    audioRef.current?.pause();
+    setPreviewPlaying(null);
     setState("idle");
     setTrack(null);
     setPlaylist(null);
@@ -405,7 +445,12 @@ export default function Home() {
               {state === "ready" && <div className="h-1" />}
 
               <div className="p-4 sm:p-6 flex gap-4 sm:gap-5 stagger">
-                <div className="w-[72px] h-[72px] sm:w-[100px] sm:h-[100px] flex-shrink-0 relative">
+                <button
+                  className="w-[72px] h-[72px] sm:w-[100px] sm:h-[100px] flex-shrink-0 relative group"
+                  onClick={() => track.previewUrl && togglePreview(track.previewUrl)}
+                  disabled={!track.previewUrl}
+                  title={track.previewUrl ? "preview" : "no preview available"}
+                >
                   {track.videoCover ? (
                     <video
                       src={track.videoCover}
@@ -425,7 +470,22 @@ export default function Home() {
                       style={{ opacity: 0 }}
                     />
                   )}
-                </div>
+                  {track.previewUrl && (
+                    <div className="absolute inset-0 rounded-lg bg-black/0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center">
+                      <svg
+                        className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        {previewPlaying === track.previewUrl ? (
+                          <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                        ) : (
+                          <path d="M8 5v14l11-7z" />
+                        )}
+                      </svg>
+                    </div>
+                  )}
+                </button>
                 <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5">
                   <p className="text-base font-bold text-text truncate animate-slide-in" style={{ opacity: 0 }}>
                     {track.name}
@@ -443,7 +503,13 @@ export default function Home() {
                   </div>
                   {quality && state === "done" && (
                     <p className="text-[10px] text-overlay0/60 animate-fade-in" style={{ opacity: 0 }}>
-                      {quality.bitrate === "lossless" ? "lossless" : `${quality.source === "youtube" ? "~" : ""}${quality.bitrate}kbps`} via {quality.source}
+                      {quality.quality === "lossless"
+                        ? `lossless ${quality.format} ${quality.bitDepth || 16}-bit/${quality.sampleRate ? `${(quality.sampleRate / 1000).toFixed(1)}kHz` : "44.1kHz"}`
+                        : quality.actualBitrate > 0
+                          ? `${Math.round(quality.actualBitrate / 1000)}kbps ${quality.format}`
+                          : `${quality.quality}kbps ${quality.format}`
+                      }
+                      {" · "}{quality.source}
                     </p>
                   )}
                 </div>
@@ -573,7 +639,22 @@ export default function Home() {
                       <p className="text-xs text-overlay0 truncate">{t.artist}</p>
                     </div>
 
-                    {/* Duration */}
+                    {/* Preview + Duration */}
+                    {t.previewUrl && (
+                      <button
+                        onClick={() => togglePreview(t.previewUrl!)}
+                        className="flex-shrink-0 p-1 text-overlay0/40 hover:text-lavender transition-colors"
+                        title="preview"
+                      >
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                          {previewPlaying === t.previewUrl ? (
+                            <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                          ) : (
+                            <path d="M8 5v14l11-7z" />
+                          )}
+                        </svg>
+                      </button>
+                    )}
                     <span className="text-xs text-overlay0/50 flex-shrink-0">{t.duration}</span>
                   </div>
                 ))}
