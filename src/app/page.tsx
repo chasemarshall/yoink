@@ -75,7 +75,7 @@ export default function LandingPage() {
             >
               {formats[formatIndex]}
             </span>
-            . metadata, lyrics, cover art — all included.
+            . metadata, lyrics, cover art. no accounts, no ads.
           </p>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 pt-2">
             <Link
