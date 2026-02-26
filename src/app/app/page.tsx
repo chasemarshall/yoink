@@ -338,10 +338,10 @@ export default function Home() {
           {/* Status notice */}
           {!bannerDismissed && (
             <div
-              className="animate-fade-in-up flex items-start gap-3 border border-peach/15 rounded-lg px-4 py-3.5 bg-peach/[0.03]"
+              className="animate-fade-in-up flex items-start gap-3 border border-surface0/60 rounded-lg px-4 py-3.5 bg-mantle/40"
               style={{ opacity: 0 }}
             >
-              <div className="w-1 self-stretch rounded-full bg-peach/30 shrink-0" />
+              <div className="w-1 self-stretch rounded-full bg-peach/40 shrink-0" />
               <p className="text-xs text-subtext0/70 leading-relaxed flex-1">
                 hey — we&apos;ve been hitting spotify api limits today. downloads still work but might be a bit slower while we pull from backup sources. sorry about that, working on it.
               </p>
