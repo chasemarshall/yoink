@@ -226,8 +226,8 @@ export default function HowPage() {
                 go to your library. you&apos;ll see a playlist called <span className="text-text font-bold">Local Files</span> — it has a folder icon with a blue background. every file you save to your music folder shows up there with full metadata and album art, ready to play.
               </p>
               <div className="border border-surface0/60 rounded-lg p-3 bg-mantle/40 inline-flex items-center gap-3">
-                <div className="w-10 h-10 rounded bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-blue-400">
+                <div className="w-10 h-10 rounded bg-lavender/20 flex items-center justify-center flex-shrink-0">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-lavender">
                     <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
@@ -521,17 +521,11 @@ export default function HowPage() {
       {/* Footer */}
       <footer className="border-t border-surface0/40 px-6 py-4 flex items-center justify-between text-xs text-overlay0/50">
         <span>yoink</span>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Link href="/players" className="text-green/60 hover:text-green transition-colors duration-200">players</Link>
           <Link href="/roadmap" className="hover:text-text transition-colors duration-200">roadmap</Link>
           <a href="https://bsky.app/profile/yoinkify.lol" target="_blank" rel="noopener noreferrer" className="hover:text-sky transition-colors duration-200">bluesky</a>
-          <a
-            href="https://chasefrazier.dev/tip"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-peach transition-colors duration-200"
-          >
-            tip jar
-          </a>
+          <a href="https://chasefrazier.dev/tip" target="_blank" rel="noopener noreferrer" className="hover:text-peach transition-colors duration-200">tip jar</a>
         </div>
       </footer>
     </div>

@@ -33,7 +33,7 @@ export default function LandingPage() {
       <nav className="border-b border-surface0/60 px-6 py-4 flex items-center justify-between backdrop-blur-sm bg-base/80 sticky top-0 z-10">
         <div className="flex items-center gap-3">
           <Link href="/status" className="status-dot w-2 h-2 rounded-full bg-green hover:shadow-[0_0_8px_rgba(166,227,161,0.6)] transition-shadow" />
-          <span className="text-sm font-bold tracking-wider uppercase text-text">
+          <span className="text-sm font-bold tracking-wider uppercase text-text hover:text-lavender transition-colors cursor-default">
             yoink
           </span>
         </div>
@@ -259,6 +259,7 @@ export default function LandingPage() {
             <Link href="/terms" className="hover:text-text transition-colors duration-200">terms</Link>
             <Link href="/privacy" className="hover:text-text transition-colors duration-200">privacy</Link>
             <a href="https://bsky.app/profile/yoinkify.lol" target="_blank" rel="noopener noreferrer" className="hover:text-sky transition-colors duration-200">bluesky</a>
+            <a href="https://chasefrazier.dev/tip" target="_blank" rel="noopener noreferrer" className="hover:text-peach transition-colors duration-200">tip jar</a>
           </div>
         </div>
         <div className="space-y-3 text-[10px] text-overlay0/40 leading-relaxed">

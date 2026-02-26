@@ -374,17 +374,11 @@ export default function PlayersPage() {
       {/* Footer */}
       <footer className="border-t border-surface0/40 px-6 py-4 flex items-center justify-between text-xs text-overlay0/50">
         <span>yoink</span>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Link href="/how" className="text-mauve/60 hover:text-mauve transition-colors duration-200">local files</Link>
+          <Link href="/roadmap" className="hover:text-text transition-colors duration-200">roadmap</Link>
           <a href="https://bsky.app/profile/yoinkify.lol" target="_blank" rel="noopener noreferrer" className="hover:text-sky transition-colors duration-200">bluesky</a>
-          <a
-            href="https://chasefrazier.dev/tip"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-peach transition-colors duration-200"
-          >
-            tip jar
-          </a>
-          <span>metadata included</span>
+          <a href="https://chasefrazier.dev/tip" target="_blank" rel="noopener noreferrer" className="hover:text-peach transition-colors duration-200">tip jar</a>
         </div>
       </footer>
     </div>
