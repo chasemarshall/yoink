@@ -14,6 +14,10 @@ function formatRetry(secs: number): string {
   return `~${mins} min`;
 }
 
+// Max cooldown: 60s. Spotify sometimes sends absurd Retry-After values (90+ min)
+// which would brick the app. Cap it and let the next request try fresh.
+const MAX_COOLDOWN_MS = 60_000;
+
 // Wraps fetch with rate limit tracking + retry with backoff
 async function spotifyFetch(url: string, init?: RequestInit, maxRetries = 2): Promise<Response> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -28,17 +32,18 @@ async function spotifyFetch(url: string, init?: RequestInit, maxRetries = 2): Pr
 
     if (res.status === 429) {
       const retryAfter = parseInt(res.headers.get("Retry-After") || "5", 10);
-      console.log(`[spotify] 429 on ${url.split("/v1/")[1]?.split("?")[0] || url}, retry-after=${retryAfter}s (attempt ${attempt + 1}/${maxRetries + 1})`);
+      const cooldown = Math.min(retryAfter * 1000, MAX_COOLDOWN_MS);
+      console.log(`[spotify] 429 on ${url.split("/v1/")[1]?.split("?")[0] || url}, retry-after=${retryAfter}s, cooldown=${cooldown / 1000}s (attempt ${attempt + 1}/${maxRetries + 1})`);
 
-      // If retry-after is short enough and we have retries left, wait and retry
-      if (attempt < maxRetries && retryAfter <= 10) {
-        await new Promise((r) => setTimeout(r, retryAfter * 1000));
+      // If cooldown is short enough and we have retries left, wait and retry
+      if (attempt < maxRetries && cooldown <= 10_000) {
+        await new Promise((r) => setTimeout(r, cooldown));
         continue;
       }
 
-      // Otherwise, set the global cooldown and throw
-      rateLimitResetAt = Date.now() + retryAfter * 1000;
-      throw new Error(`Spotify is rate limited — try again in ${formatRetry(retryAfter)}`);
+      // Set capped global cooldown and throw
+      rateLimitResetAt = Date.now() + cooldown;
+      throw new Error(`Spotify is rate limited — try again in ${formatRetry(Math.ceil(cooldown / 1000))}`);
     }
 
     return res;
