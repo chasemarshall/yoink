@@ -69,7 +69,13 @@ export async function GET() {
     youtube: !!(process.env.PIPED_API_URL || true), // always available via default instance
   };
 
-  const allOk = checks.every((c) => c.ok) && !spotifyRateLimited;
+  // spotify can be "reachable" but rate limited — reflect that honestly
+  const spotifyCheck = checks.find((c) => c.name === "spotify");
+  if (spotifyCheck && spotifyRateLimited) {
+    spotifyCheck.ok = false;
+  }
+
+  const allOk = checks.every((c) => c.ok);
 
   return NextResponse.json({
     status: allOk ? "operational" : "degraded",

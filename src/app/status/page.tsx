@@ -55,17 +55,18 @@ const sourceLabels: Record<string, { label: string; description: string }> = {
   },
 };
 
-function StatusDot({ ok, pulse }: { ok: boolean; pulse?: boolean }) {
+function StatusDot({ ok, pulse, warn }: { ok: boolean; pulse?: boolean; warn?: boolean }) {
+  const color = ok
+    ? "bg-green shadow-[0_0_6px_rgba(166,227,161,0.4)]"
+    : warn
+      ? "bg-peach shadow-[0_0_6px_rgba(250,179,135,0.4)]"
+      : "bg-red shadow-[0_0_6px_rgba(243,139,168,0.4)]";
   return (
     <div className="relative flex items-center justify-center w-3 h-3">
       {pulse && ok && (
         <div className="absolute w-3 h-3 rounded-full bg-green/40 animate-ping" />
       )}
-      <div
-        className={`relative w-2 h-2 rounded-full ${
-          ok ? "bg-green shadow-[0_0_6px_rgba(166,227,161,0.4)]" : "bg-red shadow-[0_0_6px_rgba(243,139,168,0.4)]"
-        }`}
-      />
+      <div className={`relative w-2 h-2 rounded-full ${color}`} />
     </div>
   );
 }
@@ -135,12 +136,12 @@ export default function StatusPage() {
     <div className="min-h-screen bg-grid">
       {/* Nav */}
       <nav className="border-b border-surface0/60 px-6 py-4 flex items-center justify-between backdrop-blur-sm bg-base/80 sticky top-0 z-10">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="status-dot w-2 h-2 rounded-full bg-green" />
-          <span className="text-sm font-bold tracking-wider uppercase text-text group-hover:text-lavender transition-colors">
+        <div className="flex items-center gap-3">
+          <Link href="/status" className="status-dot w-2 h-2 rounded-full bg-green hover:shadow-[0_0_8px_rgba(166,227,161,0.6)] transition-shadow" />
+          <Link href="/" className="text-sm font-bold tracking-wider uppercase text-text hover:text-lavender transition-colors">
             yoink
-          </span>
-        </Link>
+          </Link>
+        </div>
         <Link
           href="/app"
           className="btn-press text-xs text-crust bg-lavender hover:bg-mauve px-4 py-2 rounded-md font-bold uppercase tracking-wider transition-colors duration-200"
@@ -279,7 +280,7 @@ export default function StatusPage() {
                       }}
                     >
                       <div className="flex items-center gap-4">
-                        <StatusDot ok={check.ok} pulse={check.ok} />
+                        <StatusDot ok={check.ok} pulse={check.ok} warn={!check.ok && check.name === "spotify" && data.spotifyRateLimited} />
                         <div className="space-y-0.5">
                           <p className="text-sm font-bold text-text">
                             {info.label}
@@ -293,10 +294,16 @@ export default function StatusPage() {
                         className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded ${
                           check.ok
                             ? "text-green/80 bg-green/10"
-                            : "text-red/80 bg-red/10"
+                            : check.name === "spotify" && data.spotifyRateLimited
+                              ? "text-peach/80 bg-peach/10"
+                              : "text-red/80 bg-red/10"
                         }`}
                       >
-                        {check.ok ? "ok" : "down"}
+                        {check.ok
+                          ? "ok"
+                          : check.name === "spotify" && data.spotifyRateLimited
+                            ? "limited"
+                            : "down"}
                       </span>
                     </div>
                   );
