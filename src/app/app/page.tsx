@@ -333,25 +333,30 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-grid">
       <Header />
 
-      {!bannerDismissed && (
-        <div className="w-full bg-peach/10 border-b border-peach/20 px-4 py-2.5">
-          <div className="max-w-xl mx-auto flex items-center justify-between gap-3">
-            <p className="text-xs text-peach/80 leading-relaxed">
-              hey — we&apos;ve been hitting spotify api limits all day today. downloads still work but may be a bit slower while we pull metadata from backup sources. sorry about that, we&apos;re on it.
-            </p>
-            <button
-              onClick={() => setBannerDismissed(true)}
-              className="text-peach/40 hover:text-peach/70 transition-colors shrink-0 text-sm"
-              aria-label="dismiss"
-            >
-              &times;
-            </button>
-          </div>
-        </div>
-      )}
-
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
         <div className="w-full max-w-xl space-y-8">
+          {/* Status notice */}
+          {!bannerDismissed && (
+            <div
+              className="animate-fade-in-up flex items-start gap-3 border border-peach/15 rounded-lg px-4 py-3.5 bg-peach/[0.03]"
+              style={{ opacity: 0 }}
+            >
+              <div className="w-1 self-stretch rounded-full bg-peach/30 shrink-0" />
+              <p className="text-xs text-subtext0/70 leading-relaxed flex-1">
+                hey — we&apos;ve been hitting spotify api limits today. downloads still work but might be a bit slower while we pull from backup sources. sorry about that, working on it.
+              </p>
+              <button
+                onClick={() => setBannerDismissed(true)}
+                className="text-overlay0/30 hover:text-overlay0/60 transition-colors shrink-0 mt-px"
+                aria-label="dismiss"
+              >
+                <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <path d="M2 2l8 8M10 2l-8 8" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           {/* Title */}
           <div className="space-y-3 animate-fade-in-up" style={{ opacity: 0 }}>
             <h1 className="text-4xl sm:text-5xl font-bold leading-tight">

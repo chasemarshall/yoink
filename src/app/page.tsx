@@ -15,6 +15,7 @@ const steps = [
 export default function LandingPage() {
   const [formatIndex, setFormatIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   useEffect(() => {
     const interval = setInterval(() => {
       setIsAnimating(true);
@@ -92,6 +93,30 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Status notice */}
+      {!bannerDismissed && (
+        <div className="max-w-2xl mx-auto px-6 pb-2">
+          <div
+            className="animate-fade-in-up flex items-start gap-3 border border-peach/15 rounded-lg px-4 py-3.5 bg-peach/[0.03]"
+            style={{ opacity: 0, animationDelay: "200ms" }}
+          >
+            <div className="w-1 self-stretch rounded-full bg-peach/30 shrink-0" />
+            <p className="text-xs text-subtext0/70 leading-relaxed flex-1">
+              hey — we&apos;ve been hitting spotify api limits today. downloads still work but might be a bit slower while we pull from backup sources. sorry about that, working on it.
+            </p>
+            <button
+              onClick={() => setBannerDismissed(true)}
+              className="text-overlay0/30 hover:text-overlay0/60 transition-colors shrink-0 mt-px"
+              aria-label="dismiss"
+            >
+              <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <path d="M2 2l8 8M10 2l-8 8" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Divider */}
       <div className="max-w-2xl mx-auto px-6">
