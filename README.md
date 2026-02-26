@@ -67,7 +67,6 @@ you'll need [ffmpeg](https://ffmpeg.org/download.html) installed locally.
 | variable | description |
 |---|---|
 | `PIPED_API_URL` | piped instance url (default: `pipedapi.kavin.rocks`) |
-| `DEEZER_ARL` | deezer session cookie for lossless audio |
 | `TIDAL_CLIENT_ID` | tidal app client id |
 | `TIDAL_CLIENT_SECRET` | tidal app client secret |
 | `TIDAL_ACCESS_TOKEN` | tidal access token |

@@ -56,8 +56,8 @@ async function processTrack(
     lookupItunesCatalogIds(track),
   ]);
 
-  // Only allow lossless output if source audio is actually lossless (FLAC from Deezer or Tidal)
-  const canLossless = preferLossless && (audio.source === "deezer" || audio.source === "tidal") && audio.format === "flac";
+  // Only allow lossless output if source audio is actually lossless (FLAC from Tidal)
+  const canLossless = preferLossless && audio.source === "tidal" && audio.format === "flac";
   const wantAlac = canLossless && requestedFormat === "alac";
   const wantFlac = canLossless && requestedFormat === "flac";
 
@@ -112,11 +112,7 @@ async function processTrack(
       if (hasArt) {
         ffmpegArgs.push("-i", artPath, "-map", "0:a", "-map", "1:0");
       }
-      if (audio.source === "deezer" && audio.format === "mp3") {
-        ffmpegArgs.push("-c:a", "copy");
-      } else {
-        ffmpegArgs.push("-c:a", "libmp3lame", "-b:a", "320k");
-      }
+      ffmpegArgs.push("-c:a", "libmp3lame", "-b:a", "320k");
       if (hasArt) {
         ffmpegArgs.push(
           "-c:v", "copy",

@@ -12,14 +12,13 @@ import {
 import { join } from "path";
 import { tmpdir } from "os";
 import { getTrackInfo, detectPlatform, extractYouTubeId, isSpotifyRateLimited, type TrackInfo } from "@/lib/spotify";
-import { getDeezerTrackBySpotifyUrl } from "@/lib/deezer-metadata";
+import { getDeezerTrackBySpotifyUrl, fetchDeezerTrackMetadata } from "@/lib/deezer-metadata";
 import { setExplicitTag } from "@/lib/mp4-advisory";
 import { ffmpegSemaphore } from "@/lib/semaphore";
 import { getYouTubeTrackInfo } from "@/lib/youtube";
 import { resolveToSpotify } from "@/lib/songlink";
 import { extractAppleMusicTrackId, lookupByItunesId, lookupItunesGenre, lookupItunesCatalogIds } from "@/lib/itunes";
 import { setCatalogIds } from "@/lib/mp4-catalog";
-import { fetchDeezerTrackMetadata } from "@/lib/deezer";
 import { fetchBestAudio } from "@/lib/audio-sources";
 import { fetchLyrics } from "@/lib/lyrics";
 import { rateLimit } from "@/lib/ratelimit";
@@ -116,7 +115,7 @@ export async function POST(request: NextRequest) {
       if (!youtubeVideoId) {
         return NextResponse.json({ error: "invalid youtube link" }, { status: 400 });
       }
-      // Try to find Spotify match for metadata + Deezer audio
+      // Try to find Spotify match for metadata
       const resolved = await resolveToSpotify(url);
       if (resolved?.spotifyUrl) {
         try {
@@ -226,8 +225,8 @@ export async function POST(request: NextRequest) {
     if (catalogIds) console.log(`[itunes] matched: cnID=${catalogIds.trackId} plID=${catalogIds.collectionId}`);
 
     // Step 3: Embed metadata using ffmpeg
-    // Only allow lossless output if source audio is actually lossless (FLAC from Deezer or Tidal)
-    const canLossless = preferLossless && (audio.source === "deezer" || audio.source === "tidal") && audio.format === "flac";
+    // Only allow lossless output if source audio is actually lossless (FLAC from Tidal)
+    const canLossless = preferLossless && audio.source === "tidal" && audio.format === "flac";
     const wantAlac = canLossless && requestedFormat === "alac";
     const wantFlac = canLossless && requestedFormat === "flac";
     tempDir = await mkdtemp(join(tmpdir(), "dl-"));
@@ -285,11 +284,7 @@ export async function POST(request: NextRequest) {
       if (hasArt) {
         ffmpegArgs.push("-i", artPath, "-map", "0:a", "-map", "1:0");
       }
-      if (audio.source === "deezer" && audio.format === "mp3") {
-        ffmpegArgs.push("-c:a", "copy"); // Already MP3, just add metadata
-      } else {
-        ffmpegArgs.push("-c:a", "libmp3lame", "-b:a", "320k");
-      }
+      ffmpegArgs.push("-c:a", "libmp3lame", "-b:a", "320k");
       if (hasArt) {
         ffmpegArgs.push(
           "-c:v", "copy",

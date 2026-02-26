@@ -80,7 +80,7 @@ const items: RoadmapItem[] = [
   },
   {
     title: "multi-source audio",
-    description: "waterfall audio pipeline — deezer, tidal, and youtube as sources. automatic fallback if one fails. lossless from deezer and tidal.",
+    description: "waterfall audio pipeline — tidal and youtube as sources. automatic fallback if one fails. lossless from tidal.",
     status: "shipped",
     tag: "audio",
   },

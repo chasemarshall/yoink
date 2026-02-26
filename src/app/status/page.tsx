@@ -12,7 +12,6 @@ interface StatusData {
   status: "operational" | "degraded";
   checks: StatusCheck[];
   audioSources: {
-    deezer: boolean;
     tidal: boolean;
     youtube: boolean;
   };
@@ -41,10 +40,6 @@ const serviceLabels: Record<string, { label: string; description: string }> = {
 };
 
 const sourceLabels: Record<string, { label: string; description: string }> = {
-  deezer: {
-    label: "deezer",
-    description: "lossless audio source",
-  },
   tidal: {
     label: "tidal",
     description: "hi-res audio source",
@@ -240,7 +235,7 @@ export default function StatusPage() {
                       </p>
                       <p className="text-xs text-subtext0/80 leading-relaxed">
                         metadata is temporarily being pulled from backup sources
-                        (deezer, itunes). downloads still work — just using
+                        (itunes). downloads still work — just using
                         alternate metadata while spotify cools down.
                       </p>
                     </div>

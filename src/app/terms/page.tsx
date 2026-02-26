@@ -12,7 +12,7 @@ const sections: Section[] = [
     title: "what yoink is",
     content: [
       "yoink is a free tool that lets you download music files from publicly available sources on the internet. we use spotify's public API for metadata (track info, album art, lyrics) and fetch audio from third-party services.",
-      "we are not affiliated with, endorsed by, or connected to spotify, apple, youtube, deezer, tidal, or any other streaming platform. all trademarks belong to their respective owners.",
+      "we are not affiliated with, endorsed by, or connected to spotify, apple, youtube, tidal, or any other streaming platform. all trademarks belong to their respective owners.",
     ],
   },
   {

@@ -64,7 +64,6 @@ export async function GET() {
   const spotifyRateLimited = isSpotifyRateLimited();
 
   const audioSources = {
-    deezer: !!process.env.DEEZER_ARL,
     tidal: !!process.env.TIDAL_ACCESS_TOKEN,
     youtube: !!(process.env.PIPED_API_URL || true), // always available via default instance
   };
