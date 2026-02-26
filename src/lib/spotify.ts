@@ -82,6 +82,37 @@ async function spotifyApi(url: string): Promise<Response> {
   return spotifyFetch(url, { headers: { Authorization: `Bearer ${token}` } });
 }
 
+// --- Response cache (10 min TTL) ---
+// Prevents duplicate API calls between metadata + download routes
+const apiCache = new Map<string, { data: unknown; expiresAt: number }>();
+const CACHE_TTL = 10 * 60 * 1000;
+
+async function cachedSpotifyGet<T>(url: string): Promise<T> {
+  const cached = apiCache.get(url);
+  if (cached && Date.now() < cached.expiresAt) {
+    return cached.data as T;
+  }
+
+  const res = await spotifyApi(url);
+  if (!res.ok) {
+    const status = res.status;
+    throw new Error(`Spotify API error (${status})`);
+  }
+
+  const data = await res.json();
+  apiCache.set(url, { data, expiresAt: Date.now() + CACHE_TTL });
+
+  // Evict old entries if cache gets too big
+  if (apiCache.size > 500) {
+    const now = Date.now();
+    for (const [key, val] of apiCache) {
+      if (now >= val.expiresAt) apiCache.delete(key);
+    }
+  }
+
+  return data as T;
+}
+
 export function extractTrackId(url: string): string | null {
   const match = url.match(/track[/:]([a-zA-Z0-9]+)/);
   return match ? match[1] : null;
@@ -155,11 +186,8 @@ export async function getTrackInfo(url: string): Promise<TrackInfo> {
   const trackId = extractTrackId(url);
   if (!trackId) throw new Error("Invalid Spotify track URL");
 
-  const res = await spotifyApi(`https://api.spotify.com/v1/tracks/${trackId}`);
-
-  if (!res.ok) throw new Error(`Track not found (${res.status})`);
-
-  const data = await res.json();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: any = await cachedSpotifyGet(`https://api.spotify.com/v1/tracks/${trackId}`);
 
   // Fetch genre from primary artist + album details (label/copyright) in parallel
   let genre: string | null = null;
@@ -169,14 +197,13 @@ export async function getTrackInfo(url: string): Promise<TrackInfo> {
     const artistId = data.artists[0]?.id;
     const albumId = data.album?.id;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [artistResult, albumResult] = await Promise.allSettled([
       artistId
-        ? spotifyApi(`https://api.spotify.com/v1/artists/${artistId}`)
-            .then((r) => (r.ok ? r.json() : null))
+        ? cachedSpotifyGet<any>(`https://api.spotify.com/v1/artists/${artistId}`).catch(() => null)
         : Promise.resolve(null),
       albumId
-        ? spotifyApi(`https://api.spotify.com/v1/albums/${albumId}`)
-            .then((r) => (r.ok ? r.json() : null))
+        ? cachedSpotifyGet<any>(`https://api.spotify.com/v1/albums/${albumId}`).catch(() => null)
         : Promise.resolve(null),
     ]);
 
@@ -225,11 +252,8 @@ export async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
   const playlistId = extractPlaylistId(url);
   if (!playlistId) throw new Error("Invalid Spotify playlist URL");
 
-  const res = await spotifyApi(`https://api.spotify.com/v1/playlists/${playlistId}`);
-
-  if (!res.ok) throw new Error(`Playlist not found (${res.status})`);
-
-  const data = await res.json();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: any = await cachedSpotifyGet(`https://api.spotify.com/v1/playlists/${playlistId}`);
 
   const validItems = data.tracks.items.filter((item: { track: unknown }) => item.track);
 
@@ -241,13 +265,11 @@ export async function getPlaylistInfo(url: string): Promise<PlaylistInfo> {
     )] as string[];
     for (let i = 0; i < artistIds.length; i += 50) {
       const batch = artistIds.slice(i, i + 50);
-      const artistRes = await spotifyApi(`https://api.spotify.com/v1/artists?ids=${batch.join(",")}`);
-      if (artistRes.ok) {
-        const artistData = await artistRes.json();
-        for (const artist of artistData.artists) {
-          if (artist?.genres?.length > 0) {
-            genreMap.set(artist.id, artist.genres[0]);
-          }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const artistData: any = await cachedSpotifyGet(`https://api.spotify.com/v1/artists?ids=${batch.join(",")}`);
+      for (const artist of artistData.artists) {
+        if (artist?.genres?.length > 0) {
+          genreMap.set(artist.id, artist.genres[0]);
         }
       }
     }
@@ -288,15 +310,8 @@ export async function getAlbumInfo(url: string): Promise<PlaylistInfo> {
   const albumId = extractAlbumId(url);
   if (!albumId) throw new Error("Invalid Spotify album URL");
 
-  const res = await spotifyApi(`https://api.spotify.com/v1/albums/${albumId}`);
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    console.error(`[spotify] album fetch failed: ${res.status} ${res.statusText} — ${body}`);
-    throw new Error(res.status === 404 ? "Album not found" : `Spotify API error (${res.status})`);
-  }
-
-  const data = await res.json();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: any = await cachedSpotifyGet(`https://api.spotify.com/v1/albums/${albumId}`);
 
   // Album track items are track objects directly (not wrapped in {track})
   const validItems = data.tracks.items.filter((item: { id: string }) => item.id);
@@ -309,13 +324,11 @@ export async function getAlbumInfo(url: string): Promise<PlaylistInfo> {
     )] as string[];
     for (let i = 0; i < artistIds.length; i += 50) {
       const batch = artistIds.slice(i, i + 50);
-      const artistRes = await spotifyApi(`https://api.spotify.com/v1/artists?ids=${batch.join(",")}`);
-      if (artistRes.ok) {
-        const artistData = await artistRes.json();
-        for (const artist of artistData.artists) {
-          if (artist?.genres?.length > 0) {
-            genreMap.set(artist.id, artist.genres[0]);
-          }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const artistData: any = await cachedSpotifyGet(`https://api.spotify.com/v1/artists?ids=${batch.join(",")}`);
+      for (const artist of artistData.artists) {
+        if (artist?.genres?.length > 0) {
+          genreMap.set(artist.id, artist.genres[0]);
         }
       }
     }
@@ -361,13 +374,10 @@ export async function getAlbumInfo(url: string): Promise<PlaylistInfo> {
 }
 
 export async function searchTracks(query: string, limit = 8): Promise<TrackInfo[]> {
-  const res = await spotifyApi(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: any = await cachedSpotifyGet(
     `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=${limit}`,
   );
-
-  if (!res.ok) throw new Error(`Search failed (${res.status})`);
-
-  const data = await res.json();
   const items = data.tracks?.items || [];
 
   return items.map(
@@ -409,16 +419,11 @@ export async function getArtistTopTracks(url: string): Promise<PlaylistInfo> {
   const artistId = extractArtistId(url);
   if (!artistId) throw new Error("Invalid Spotify artist URL");
 
-  const [artistRes, topTracksRes] = await Promise.all([
-    spotifyApi(`https://api.spotify.com/v1/artists/${artistId}`),
-    spotifyApi(`https://api.spotify.com/v1/artists/${artistId}/top-tracks`),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [artistData, topTracksData]: any[] = await Promise.all([
+    cachedSpotifyGet(`https://api.spotify.com/v1/artists/${artistId}`),
+    cachedSpotifyGet(`https://api.spotify.com/v1/artists/${artistId}/top-tracks`),
   ]);
-
-  if (!artistRes.ok) throw new Error(`Artist not found (${artistRes.status})`);
-  if (!topTracksRes.ok) throw new Error(`Could not fetch artist's top tracks (${topTracksRes.status})`);
-
-  const artistData = await artistRes.json();
-  const topTracksData = await topTracksRes.json();
 
   const artistGenre = artistData.genres?.[0] || null;
 
@@ -462,17 +467,11 @@ export async function getTrending(count = 10): Promise<string[]> {
   }
 
   try {
-    const res = await spotifyApi(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data: any = await cachedSpotifyGet(
       `https://api.spotify.com/v1/playlists/${TRENDING_PLAYLIST}/tracks?limit=${count}`,
     );
 
-    if (!res.ok) {
-      console.error("[trending] spotify API error:", res.status);
-      return trendingCache?.songs || [];
-    }
-
-    const data = await res.json();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const songs = (data.items || [])
       .filter((item: any) => item.track)
       .map((item: any) =>
