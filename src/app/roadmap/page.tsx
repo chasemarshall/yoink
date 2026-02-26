@@ -14,7 +14,7 @@ interface RoadmapItem {
 const items: RoadmapItem[] = [
   {
     title: "single track downloads",
-    description: "paste a spotify link, get an mp3 with full id3 metadata — title, artist, album, cover art, genre, release date.",
+    description: "paste a link, get an mp3 with full id3 metadata — title, artist, album, cover art, genre, release date.",
     status: "shipped",
     tag: "core",
   },
@@ -56,7 +56,7 @@ const items: RoadmapItem[] = [
   },
   {
     title: "apple music & youtube links",
-    description: "paste an apple music or youtube link — we resolve it to spotify for metadata, then download.",
+    description: "paste an apple music or youtube link — we resolve it across platforms for metadata, then download.",
     status: "shipped",
     tag: "platforms",
   },
@@ -128,7 +128,7 @@ const items: RoadmapItem[] = [
   },
   {
     title: "podcast support",
-    description: "paste a spotify podcast episode link and download it as an mp3.",
+    description: "paste a podcast episode link and download it as an mp3.",
     status: "planned",
     tag: "platforms",
   },

@@ -12,7 +12,7 @@ export default function Header() {
         </Link>
       </div>
       <div className="flex items-center gap-4">
-        <span className="text-xs text-overlay0 hidden sm:block">spotify downloader</span>
+        <span className="text-xs text-overlay0 hidden sm:block">music downloader</span>
         <a
           href="https://bsky.app/profile/yoinkify.lol"
           target="_blank"

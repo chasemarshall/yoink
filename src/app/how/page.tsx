@@ -61,7 +61,7 @@ export default function HowPage() {
             <span className="text-surface2 hidden sm:inline">→</span>
             <span className="text-text font-bold">save to your music folder</span>
             <span className="text-surface2 hidden sm:inline">→</span>
-            <span className="text-green font-bold">plays in spotify, ad-free</span>
+            <span className="text-green font-bold">plays in your library</span>
           </div>
         </div>
       </section>
@@ -485,7 +485,7 @@ export default function HowPage() {
             </div>
             <div className="pl-10 sm:pl-12">
               <p className="text-sm text-subtext0 leading-relaxed">
-                tap and hold a blank spot inside the folder, then tap <span className="text-text font-bold">Paste</span>. open spotify — your tracks show up under <span className="text-text font-bold">Your Library → Local Files</span>. no premium needed.
+                tap and hold a blank spot inside the folder, then tap <span className="text-text font-bold">Paste</span>. open spotify — your tracks show up under <span className="text-text font-bold">Your Library → Local Files</span>, ready to play.
               </p>
             </div>
           </div>

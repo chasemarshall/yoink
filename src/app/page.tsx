@@ -6,8 +6,8 @@ import Link from "next/link";
 const formats = ["flac", "alac", "mp3"];
 
 const steps = [
-  { num: "01", text: "paste a spotify link" },
-  { num: "02", text: "metadata pulled from spotify" },
+  { num: "01", text: "paste a link" },
+  { num: "02", text: "metadata pulled automatically" },
   { num: "03", text: "audio sourced from the web" },
   { num: "04", text: "tagged, converted, delivered" },
 ];
@@ -49,7 +49,7 @@ export default function LandingPage() {
       <section className="px-6 pt-20 sm:pt-32 pb-16 sm:pb-24 max-w-2xl mx-auto">
         <div className="space-y-6 animate-fade-in-up" style={{ opacity: 0 }}>
           <p className="text-xs text-lavender uppercase tracking-[0.3em] font-bold">
-            spotify to mp3 — and more
+            your music, your files
           </p>
           <h1 className="text-5xl sm:text-7xl font-bold leading-[0.95] tracking-tight">
             <span className="text-lavender">y</span>
@@ -59,7 +59,7 @@ export default function LandingPage() {
             <span className="text-lavender">k</span>
           </h1>
           <p className="text-lg text-subtext0/80 leading-relaxed max-w-md">
-            paste a spotify link. get the file in{" "}
+            paste a link. get the file in{" "}
             <span
               className={`text-lavender font-bold transition-all duration-300 ease-out origin-center ${
                 isAnimating
@@ -75,7 +75,7 @@ export default function LandingPage() {
             >
               {formats[formatIndex]}
             </span>
-            . metadata, lyrics, cover art. no accounts, no ads.
+            . metadata, lyrics, cover art — all included.
           </p>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 pt-2">
             <Link
