@@ -416,6 +416,7 @@ export default function StatusPage() {
           >
             roadmap
           </Link>
+          <a href="https://bsky.app/profile/yoinkify.lol" target="_blank" rel="noopener noreferrer" className="hover:text-sky transition-colors duration-200">bluesky</a>
           <a
             href="https://chasefrazier.dev/tip"
             target="_blank"

@@ -437,6 +437,7 @@ export default function SearchPage() {
       <footer className="border-t border-surface0/40 px-6 py-4 flex items-center justify-between text-xs text-overlay0/50">
         <span>yoink</span>
         <div className="flex items-center gap-4">
+          <a href="https://bsky.app/profile/yoinkify.lol" target="_blank" rel="noopener noreferrer" className="hover:text-sky transition-colors duration-200">bluesky</a>
           <a
             href="https://chasefrazier.dev/tip"
             target="_blank"

@@ -203,6 +203,7 @@ export default function PrivacyPage() {
         <div className="flex items-center gap-3 sm:gap-4">
           <Link href="/terms" className="hover:text-text transition-colors duration-200">terms</Link>
           <Link href="/roadmap" className="hover:text-text transition-colors duration-200">roadmap</Link>
+          <a href="https://bsky.app/profile/yoinkify.lol" target="_blank" rel="noopener noreferrer" className="hover:text-sky transition-colors duration-200">bluesky</a>
           <a
             href="https://chasefrazier.dev/tip"
             target="_blank"

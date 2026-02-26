@@ -737,6 +737,7 @@ export default function Home() {
           <Link href="/how" className="text-mauve/60 hover:text-mauve transition-colors duration-200 hidden sm:block">local files setup</Link>
           <Link href="/how" className="text-mauve/60 hover:text-mauve transition-colors duration-200 sm:hidden">local files</Link>
           <Link href="/roadmap" className="hover:text-text transition-colors duration-200">roadmap</Link>
+          <a href="https://bsky.app/profile/yoinkify.lol" target="_blank" rel="noopener noreferrer" className="hover:text-sky transition-colors duration-200">bluesky</a>
           <a
             href="https://chasefrazier.dev/tip"
             target="_blank"
