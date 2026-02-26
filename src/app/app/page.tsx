@@ -49,6 +49,7 @@ export default function Home() {
   const [quality, setQuality] = useState<QualityInfo | null>(null);
   const [format, setFormat] = useState<Format>("mp3");
   const [genreSource, setGenreSource] = useState<"spotify" | "itunes">("spotify");
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   const abortRef = useRef(false);
   const downloadTriggeredRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -331,6 +332,23 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-grid">
       <Header />
+
+      {!bannerDismissed && (
+        <div className="w-full bg-peach/10 border-b border-peach/20 px-4 py-2.5">
+          <div className="max-w-xl mx-auto flex items-center justify-between gap-3">
+            <p className="text-xs text-peach/80 leading-relaxed">
+              some downloads may be slower than usual — we&apos;re working around api limits. thanks for your patience.
+            </p>
+            <button
+              onClick={() => setBannerDismissed(true)}
+              className="text-peach/40 hover:text-peach/70 transition-colors shrink-0 text-sm"
+              aria-label="dismiss"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
         <div className="w-full max-w-xl space-y-8">
