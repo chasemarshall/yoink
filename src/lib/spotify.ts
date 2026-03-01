@@ -192,6 +192,24 @@ export interface TrackInfo {
   previewUrl?: string | null;
 }
 
+interface SpotifyArtistDetails {
+  genres?: string[];
+}
+
+interface SpotifyAlbumDetails {
+  label?: string;
+  copyrights?: Array<{ text?: string }>;
+}
+
+interface SpotifyTrendingResponse {
+  items?: Array<{
+    track?: {
+      name?: string;
+      artists?: Array<{ name?: string }>;
+    } | null;
+  }>;
+}
+
 export async function getTrackInfo(url: string): Promise<TrackInfo> {
   const trackId = extractTrackId(url);
   if (!trackId) throw new Error("Invalid Spotify track URL");
@@ -207,18 +225,20 @@ export async function getTrackInfo(url: string): Promise<TrackInfo> {
     const artistId = data.artists[0]?.id;
     const albumId = data.album?.id;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [artistResult, albumResult] = await Promise.allSettled([
       artistId
-        ? cachedSpotifyGet<any>(`https://api.spotify.com/v1/artists/${artistId}`).catch(() => null)
+        ? cachedSpotifyGet<SpotifyArtistDetails>(`https://api.spotify.com/v1/artists/${artistId}`).catch(() => null)
         : Promise.resolve(null),
       albumId
-        ? cachedSpotifyGet<any>(`https://api.spotify.com/v1/albums/${albumId}`).catch(() => null)
+        ? cachedSpotifyGet<SpotifyAlbumDetails>(`https://api.spotify.com/v1/albums/${albumId}`).catch(() => null)
         : Promise.resolve(null),
     ]);
 
-    if (artistResult.status === "fulfilled" && artistResult.value?.genres?.length > 0) {
-      genre = artistResult.value.genres[0];
+    if (artistResult.status === "fulfilled") {
+      const artistDetails = artistResult.value;
+      if (artistDetails?.genres?.length) {
+        genre = artistDetails.genres[0] || null;
+      }
     }
     if (albumResult.status === "fulfilled" && albumResult.value) {
       label = albumResult.value.label || null;
@@ -477,15 +497,14 @@ export async function getTrending(count = 10): Promise<string[]> {
   }
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data: any = await cachedSpotifyGet(
+    const data = await cachedSpotifyGet<SpotifyTrendingResponse>(
       `https://api.spotify.com/v1/playlists/${TRENDING_PLAYLIST}/tracks?limit=${count}`,
     );
 
     const songs = (data.items || [])
-      .filter((item: any) => item.track)
-      .map((item: any) =>
-        `${item.track.artists[0]?.name} - ${item.track.name}`
+      .filter((item): item is { track: { name?: string; artists?: Array<{ name?: string }> } } => Boolean(item.track))
+      .map((item) =>
+        `${item.track.artists?.[0]?.name || "Unknown"} - ${item.track.name || "Unknown"}`
       );
 
     if (songs.length === 0) {

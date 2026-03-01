@@ -2,7 +2,7 @@
 // Deploy: npx wrangler deploy workers/lrclib-proxy.js --name lrclib-proxy
 // Then set LRCLIB_PROXY_URL=https://lrclib-proxy.<your-subdomain>.workers.dev in Railway
 
-export default {
+const lrclibProxy = {
   async fetch(request) {
     const url = new URL(request.url);
     const target = new URL(`https://lrclib.net${url.pathname}${url.search}`);
@@ -17,3 +17,5 @@ export default {
     });
   },
 };
+
+export default lrclibProxy;

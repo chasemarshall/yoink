@@ -5,7 +5,7 @@ import { readFile, writeFile, unlink, mkdtemp, rmdir, readdir } from "fs/promise
 import { join } from "path";
 import { tmpdir } from "os";
 import { zipSync } from "fflate";
-import { getPlaylistInfo, getAlbumInfo, getArtistTopTracks, detectUrlType, isSpotifyRateLimited, type TrackInfo, type PlaylistInfo } from "@/lib/spotify";
+import { getPlaylistInfo, getAlbumInfo, getArtistTopTracks, detectUrlType, type TrackInfo, type PlaylistInfo } from "@/lib/spotify";
 import { getDeezerAlbumBySpotifyUrl } from "@/lib/deezer-metadata";
 import { lookupItunesGenre, lookupItunesCatalogIds } from "@/lib/itunes";
 import { fetchBestAudio } from "@/lib/audio-sources";

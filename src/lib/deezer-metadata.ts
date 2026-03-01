@@ -130,7 +130,7 @@ export async function getDeezerAlbumBySpotifyUrl(url: string): Promise<PlaylistI
       );
       if (!oembedRes.ok) return null;
       const oembed = await oembedRes.json();
-      const searchQuery = oembed.title || "";
+      let searchQuery = oembed.title || "";
       if (!searchQuery) return null;
 
       const artist = oembed.author_name || "";
